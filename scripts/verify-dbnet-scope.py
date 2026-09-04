@@ -9,10 +9,12 @@ allowed = {
     ".github/workflows/build_tachiyomiat.yml",
     ".github/workflows/pages.yml",
     ".github/workflows/release.yml",
+    "app/src/main/java/eu/kanade/tachiyomi/data/updater/AppUpdateChecker.kt",
     "app/src/main/java/eu/kanade/presentation/more/settings/screen/SettingsTranslationScreen.kt",
     "app/src/main/java/eu/kanade/translation/ChapterTranslator.kt",
     "app/src/main/java/eu/kanade/translation/translator/TextTranslator.kt",
     "app/src/test/java/eu/kanade/presentation/more/settings/screen/TranslationEngineSettingsVisibilityTest.kt",
+    "app/src/test/java/eu/kanade/tachiyomi/data/updater/AppUpdateRepositoryTest.kt",
     "app/src/test/java/tachiyomi/domain/translation/TranslationLlmPreferencesTest.kt",
     "domain/src/main/java/tachiyomi/domain/translation/TranslationPreferences.kt",
     "scripts/verify-dbnet-apk.py",
@@ -41,6 +43,7 @@ assert not obsolete_dependencies, (
 
 print(f"Scope verified against {BASE}: {len(changed)} files, only approved integration surface.")
 print("Normal ML Kit/Paddle engines and weights, translators, memory/cache/glossary, "
-      "SmartTranslationBlock/text fit, fonts, auto-scroll, updater and existing migrations "
+      "SmartTranslationBlock/text fit, fonts, auto-scroll and existing migrations "
       "are byte-identical.")
-print("Only the approved translator UI port and required clean-history workflow adaptations are allowlisted.")
+print("Only the approved translator UI port, updater repository migration, and required "
+      "clean-history workflow adaptations are allowlisted.")
