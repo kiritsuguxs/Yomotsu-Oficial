@@ -8,12 +8,10 @@
 
 O Yomotsu combina leitura, OCR e tradução automática diretamente no leitor, com foco em Português Brasileiro.
 
-[![Baixar APK](https://img.shields.io/badge/Baixar-APK-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/kiritsuguxs/Yomotsu/releases/latest)
+[![Baixar APK](https://img.shields.io/badge/Baixar-APK-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases/latest)
 
-[![Site oficial](https://img.shields.io/badge/Site-oficial-cf654b?style=for-the-badge&logo=googlechrome&logoColor=white)](https://kiritsuguxs.github.io/Yomotsu/)
-
-[![Versão](https://img.shields.io/github/v/release/kiritsuguxs/Yomotsu?label=versão&labelColor=27303D&color=0877d2)](https://github.com/kiritsuguxs/Yomotsu/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/kiritsuguxs/Yomotsu/total?label=downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=white)](https://github.com/kiritsuguxs/Yomotsu/releases)
+[![Versão](https://img.shields.io/github/v/release/kiritsuguxs/Yomotsu-Oficial?label=versão&labelColor=27303D&color=0877d2)](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/kiritsuguxs/Yomotsu-Oficial/total?label=downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=white)](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases)
 [![Android 8+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](#requisitos)
 [![Licença Apache 2.0](https://img.shields.io/badge/licença-Apache%202.0-0877d2)](./LICENSE)
 
@@ -48,14 +46,9 @@ O foco principal é oferecer traduções naturais para **Português Brasileiro**
 
 A versão mais recente está disponível na página de lançamentos:
 
-### [Baixar o Yomotsu](https://github.com/kiritsuguxs/Yomotsu/releases/latest)
+### [Baixar o Yomotsu](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases/latest)
 
 ## Requisitos
 
 - Android 8.0 ou superior.
 - Para DeepL, Gemini e OpenRouter, é necessária uma chave de API configurada pelo usuário.
-
-## Ajuda e privacidade
-
-- [Guia de instalação, tradução e solução de problemas](https://kiritsuguxs.github.io/Yomotsu/help.html)
-- [Política de privacidade do Yomotsu](https://kiritsuguxs.github.io/Yomotsu/privacy.html)
