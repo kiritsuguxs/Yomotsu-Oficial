@@ -25,8 +25,11 @@ jobs:
 
       - name: Preparar branch do site
         run: |
-          git fetch origin gh-pages:refs/remotes/origin/gh-pages
-          git worktree add /tmp/yomotsu-pages origin/gh-pages
+          if git fetch origin gh-pages:refs/remotes/origin/gh-pages; then
+            git worktree add /tmp/yomotsu-pages origin/gh-pages
+          else
+            git worktree add --orphan -b gh-pages /tmp/yomotsu-pages
+          fi
 
       - name: Sincronizar arquivos
         run: |

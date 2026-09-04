@@ -5,6 +5,7 @@ import subprocess
 
 BASE = "origin/main"
 allowed = {
+    ".github/workflows/build.yml",
     ".github/workflows/build_tachiyomiat.yml",
     ".github/workflows/pages.yml",
     ".github/workflows/release.yml",
