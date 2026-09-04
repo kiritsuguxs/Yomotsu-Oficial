@@ -3,7 +3,7 @@ name: Publicar site do Yomotsu
 on:
   push:
     branches:
-      - yomotsu-independent
+      - main
     paths:
       - "site/**"
       - ".github/workflows/pages.yml"

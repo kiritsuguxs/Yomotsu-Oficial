@@ -1,36 +1,21 @@
 #!/usr/bin/env python3
-"""Reject accidental edits outside the explicitly approved DBNet integration surface."""
+"""Reject edits outside the approved translator UI port and repository migration."""
 from pathlib import Path
 import subprocess
 
-BASE = "1eaf6ea959fa31f2ed50c6fbc05486efa103d0e9"
+BASE = "origin/main"
 allowed = {
-    ".github/workflows/build_tachiyomiat.yml", "YOMOTSU_CHANGELOG.md",
-    "app/build.gradle.kts", "app/proguard-rules.pro", "app/src/main/AndroidManifest.xml",
-    "app/src/debug/AndroidManifest.xml", "settings.gradle.kts",
-    "app/src/main/java/eu/kanade/tachiyomi/App.kt",
-    "app/src/main/java/eu/kanade/translation/ChapterTranslator.kt",
-    "app/src/main/java/eu/kanade/translation/model/PageTranslation.kt",
-    "app/src/main/java/eu/kanade/translation/model/TranslationBlockGrouper.kt",
-    "app/src/main/java/eu/kanade/translation/model/TranslationCleanupGeometry.kt",
-    "app/src/main/java/eu/kanade/translation/presentation/PagerTranslationsView.kt",
-    "app/src/main/java/eu/kanade/translation/presentation/TranslationCleanupBlock.kt",
-    "app/src/main/java/eu/kanade/translation/presentation/WebtoonTranslationsView.kt",
-    "app/src/main/java/eu/kanade/translation/recognizer/OcrModels.kt",
-    "app/src/test/java/eu/kanade/translation/model/TranslationBlockGrouperTest.kt",
+    ".github/workflows/build_tachiyomiat.yml",
+    ".github/workflows/pages.yml",
+    ".github/workflows/release.yml",
     "app/src/main/java/eu/kanade/presentation/more/settings/screen/SettingsTranslationScreen.kt",
-    "domain/src/main/java/tachiyomi/domain/translation/TranslationPreferences.kt",
-    "scripts/test-dbnet-core.sh", "scripts/verify-dbnet-apk.py", "scripts/verify-dbnet-scope.py",
+    "app/src/test/java/eu/kanade/presentation/more/settings/screen/TranslationEngineSettingsVisibilityTest.kt",
+    "scripts/verify-dbnet-apk.py",
+    "scripts/verify-dbnet-scope.py",
 }
-prefixes = (
-    "app/src/main/java/eu/kanade/translation/detection/",
-    "app/src/test/java/eu/kanade/translation/detection/",
-    "app/src/androidTest/java/eu/kanade/translation/detection/",
-    "app/src/debug/java/eu/kanade/translation/detection/",
-    "dbnet-native/", "docs/",
-)
-changed = subprocess.check_output(["git", "diff", "--name-only", BASE, "HEAD"], text=True).splitlines()
-invalid = [path for path in changed if path not in allowed and not path.startswith(prefixes)]
+subprocess.run(["git", "fetch", "--quiet", "origin", "main"], check=True)
+changed = subprocess.check_output(["git", "diff", "--name-only", f"{BASE}...HEAD"], text=True).splitlines()
+invalid = [path for path in changed if path not in allowed]
 assert not invalid, f"Unexpected protected changes: {invalid}"
 
 forbidden_imports = (
@@ -53,4 +38,4 @@ print(f"Scope verified against {BASE}: {len(changed)} files, only approved integ
 print("Normal ML Kit/Paddle engines and weights, translators, memory/cache/glossary, "
       "SmartTranslationBlock/text fit, fonts, auto-scroll, updater and existing migrations "
       "are byte-identical.")
-print("DBNet mask consumer and grouping glue are explicitly allowlisted.")
+print("Only the approved translator UI port and required clean-history workflow adaptations are allowlisted.")

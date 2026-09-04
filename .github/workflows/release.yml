@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   get_tag:
-    if: github.repository == 'kiritsuguxs/Yomotsu'
+    if: github.repository == 'kiritsuguxs/Yomotsu-Oficial'
     name: Extrair versão
     runs-on: ubuntu-24.04
     outputs:
@@ -45,7 +45,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   build:
-    if: github.repository == 'kiritsuguxs/Yomotsu'
+    if: github.repository == 'kiritsuguxs/Yomotsu-Oficial'
     name: Compilar Yomotsu
     runs-on: ubuntu-24.04
     needs: get_tag
@@ -90,7 +90,7 @@ jobs:
           path: Yomotsu-*.apk
 
   release:
-    if: github.repository == 'kiritsuguxs/Yomotsu'
+    if: github.repository == 'kiritsuguxs/Yomotsu-Oficial'
     name: Criar Release oficial
     runs-on: ubuntu-24.04
     needs: [get_tag, build]
@@ -147,7 +147,7 @@ jobs:
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
         with:
           tag_name: ${{ needs.get_tag.outputs.tag }}
-          target_commitish: yomotsu-independent
+          target_commitish: main
           name: Yomotsu ${{ needs.get_tag.outputs.version }}
           generate_release_notes: false
           body_path: RELEASE_NOTES.md

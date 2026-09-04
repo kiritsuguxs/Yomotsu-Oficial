@@ -2,6 +2,7 @@ package eu.kanade.presentation.more.settings.screen
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import eu.kanade.presentation.more.settings.Preference
 import eu.kanade.translation.data.TranslationFont
@@ -15,8 +16,30 @@ import kotlinx.collections.immutable.toImmutableMap
 import tachiyomi.domain.translation.TranslationPreferences
 import tachiyomi.i18n.at.ATMR
 import tachiyomi.presentation.core.i18n.stringResource
+import tachiyomi.presentation.core.util.collectAsState
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+
+internal enum class TranslationEngineSetting {
+    LLM_API_KEY,
+    LLM_MODEL,
+    DEEPL_API_KEY,
+}
+
+internal fun translationEngineSettings(engine: TextTranslators): List<TranslationEngineSetting> {
+    return when (engine) {
+        TextTranslators.GEMINI,
+        TextTranslators.OPENROUTER,
+        -> listOf(
+            TranslationEngineSetting.LLM_API_KEY,
+            TranslationEngineSetting.LLM_MODEL,
+        )
+        TextTranslators.DEEPL -> listOf(TranslationEngineSetting.DEEPL_API_KEY)
+        TextTranslators.MLKIT,
+        TextTranslators.GOOGLE,
+        -> emptyList()
+    }
+}
 
 object SettingsTranslationScreen : SearchableSettings {
     @ReadOnlyComposable
@@ -97,16 +120,21 @@ object SettingsTranslationScreen : SearchableSettings {
         translationPreferences: TranslationPreferences,
     ): Preference.PreferenceGroup {
         val engines = TextTranslators.entries
-        return Preference.PreferenceGroup(
-            title = stringResource(ATMR.strings.pref_group_engine),
-            preferenceItems = persistentListOf(
+        val enginePreference = translationPreferences.translationEngine()
+        val selectedEngineValue by enginePreference.collectAsState()
+        val selectedEngine = engines.getOrNull(selectedEngineValue) ?: TextTranslators.MLKIT
+        val engineSettings = translationEngineSettings(selectedEngine)
+        val items = buildList<Preference.PreferenceItem<out Any, out Any>> {
+            add(
                 Preference.PreferenceItem.ListPreference(
-                    preference = translationPreferences.translationEngine(),
+                    preference = enginePreference,
                     title = stringResource(ATMR.strings.pref_translator_engine),
                     entries = engines.withIndex()
                         .associate { it.index to getTranslatorLabel(it.value) }
                         .toImmutableMap(),
                 ),
+            )
+            add(
                 Preference.PreferenceItem.ListPreference(
                     preference = translationPreferences.translationFallbackEngine(),
                     title = stringResource(ATMR.strings.pref_translation_fallback),
@@ -114,17 +142,37 @@ object SettingsTranslationScreen : SearchableSettings {
                         .associate { it.preferenceValue to getFallbackLabel(it) }
                         .toImmutableMap(),
                 ),
-                Preference.PreferenceItem.EditTextPreference(
-                    preference = translationPreferences.translationEngineApiKey(),
-                    subtitle = stringResource(ATMR.strings.pref_sub_engine_api_key),
-                    title = stringResource(ATMR.strings.pref_engine_api_key),
-                ),
-                Preference.PreferenceItem.EditTextPreference(
-                    preference = translationPreferences.deepLApiKey(),
-                    subtitle = "Chave da API DeepL (Free ou Pro)",
-                    title = "DeepL API Key",
-                ),
-            ),
+            )
+            if (TranslationEngineSetting.LLM_API_KEY in engineSettings) {
+                add(
+                    Preference.PreferenceItem.EditTextPreference(
+                        preference = translationPreferences.translationEngineApiKey(),
+                        subtitle = stringResource(ATMR.strings.pref_sub_engine_api_key),
+                        title = stringResource(ATMR.strings.pref_engine_api_key),
+                    ),
+                )
+            }
+            if (TranslationEngineSetting.LLM_MODEL in engineSettings) {
+                add(
+                    Preference.PreferenceItem.EditTextPreference(
+                        preference = translationPreferences.translationEngineModel(),
+                        title = stringResource(ATMR.strings.pref_engine_model),
+                    ),
+                )
+            }
+            if (TranslationEngineSetting.DEEPL_API_KEY in engineSettings) {
+                add(
+                    Preference.PreferenceItem.EditTextPreference(
+                        preference = translationPreferences.deepLApiKey(),
+                        subtitle = "Chave da API DeepL (Free ou Pro)",
+                        title = "DeepL API Key",
+                    ),
+                )
+            }
+        }
+        return Preference.PreferenceGroup(
+            title = stringResource(ATMR.strings.pref_group_engine),
+            preferenceItems = items,
         )
     }
 
@@ -135,10 +183,6 @@ object SettingsTranslationScreen : SearchableSettings {
         return Preference.PreferenceGroup(
             title = stringResource(ATMR.strings.pref_group_advanced),
             preferenceItems = persistentListOf(
-                Preference.PreferenceItem.EditTextPreference(
-                    preference = translationPreferences.translationEngineModel(),
-                    title = stringResource(ATMR.strings.pref_engine_model),
-                ),
                 Preference.PreferenceItem.EditTextPreference(
                     preference = translationPreferences.translationEngineTemperature(),
                     title = stringResource(ATMR.strings.pref_engine_temperature),
