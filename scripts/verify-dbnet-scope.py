@@ -9,6 +9,7 @@ allowed = {
     ".github/workflows/build_tachiyomiat.yml",
     ".github/workflows/pages.yml",
     ".github/workflows/release.yml",
+    "app/build.gradle.kts",
     "app/src/main/java/eu/kanade/tachiyomi/data/updater/AppUpdateChecker.kt",
     "app/src/main/java/eu/kanade/presentation/more/settings/screen/SettingsTranslationScreen.kt",
     "app/src/main/java/eu/kanade/translation/ChapterTranslator.kt",
