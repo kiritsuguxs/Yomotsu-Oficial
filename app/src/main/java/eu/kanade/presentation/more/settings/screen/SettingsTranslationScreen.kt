@@ -124,6 +124,8 @@ object SettingsTranslationScreen : SearchableSettings {
         val selectedEngineValue by enginePreference.collectAsState()
         val selectedEngine = engines.getOrNull(selectedEngineValue) ?: TextTranslators.MLKIT
         val engineSettings = translationEngineSettings(selectedEngine)
+        val llmProvider = selectedEngine.llmProvider
+        llmProvider?.let(translationPreferences::migrateLegacyLlmSettings)
         val items = buildList<Preference.PreferenceItem<out Any, out Any>> {
             add(
                 Preference.PreferenceItem.ListPreference(
@@ -146,7 +148,7 @@ object SettingsTranslationScreen : SearchableSettings {
             if (TranslationEngineSetting.LLM_API_KEY in engineSettings) {
                 add(
                     Preference.PreferenceItem.EditTextPreference(
-                        preference = translationPreferences.translationEngineApiKey(),
+                        preference = translationPreferences.llmApiKey(requireNotNull(llmProvider)),
                         subtitle = stringResource(ATMR.strings.pref_sub_engine_api_key),
                         title = stringResource(ATMR.strings.pref_engine_api_key),
                     ),
@@ -155,7 +157,7 @@ object SettingsTranslationScreen : SearchableSettings {
             if (TranslationEngineSetting.LLM_MODEL in engineSettings) {
                 add(
                     Preference.PreferenceItem.EditTextPreference(
-                        preference = translationPreferences.translationEngineModel(),
+                        preference = translationPreferences.llmModel(requireNotNull(llmProvider)),
                         title = stringResource(ATMR.strings.pref_engine_model),
                     ),
                 )

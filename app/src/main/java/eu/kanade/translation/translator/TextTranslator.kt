@@ -3,6 +3,7 @@ package eu.kanade.translation.translator
 import eu.kanade.translation.model.PageTranslation
 import eu.kanade.translation.recognizer.TextRecognizerLanguage
 import tachiyomi.core.common.preference.Preference
+import tachiyomi.domain.translation.TranslationLlmProvider
 import tachiyomi.domain.translation.TranslationPreferences
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -26,11 +27,14 @@ data class ComicTranslationContext(
     }
 }
 
-enum class TextTranslators(val label: String) {
+enum class TextTranslators(
+    val label: String,
+    val llmProvider: TranslationLlmProvider? = null,
+) {
     MLKIT("MlKit (On Device)"),
     GOOGLE("Google Translate"),
-    GEMINI("Gemini AI [API KEY]"),
-    OPENROUTER("OpenRouter [API KEY]"),
+    GEMINI("Gemini AI [API KEY]", TranslationLlmProvider.GEMINI),
+    OPENROUTER("OpenRouter [API KEY]", TranslationLlmProvider.OPENROUTER),
     DEEPL("DeepL [API KEY]");
 
     fun build(
@@ -63,8 +67,9 @@ enum class TextTranslators(val label: String) {
         val temperature = pref.translationEngineTemperature().get().toFloatOrNull()
             ?.coerceIn(0f, 0.5f)
             ?: 0.3f
-        val modelName = pref.translationEngineModel().get()
-        val apiKey = pref.translationEngineApiKey().get()
+        llmProvider?.let(pref::migrateLegacyLlmSettings)
+        val modelName = llmProvider?.let { pref.llmModel(it).get() }.orEmpty()
+        val apiKey = llmProvider?.let { pref.llmApiKey(it).get() }.orEmpty()
         return when (this) {
             MLKIT -> MLKitTranslator(fromLang, toLang)
             GOOGLE -> GoogleTranslator(fromLang, toLang)

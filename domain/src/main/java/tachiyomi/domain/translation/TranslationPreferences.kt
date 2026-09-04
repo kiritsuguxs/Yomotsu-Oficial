@@ -2,9 +2,24 @@ package tachiyomi.domain.translation
 
 import tachiyomi.core.common.preference.PreferenceStore
 
+enum class TranslationLlmProvider(
+    val preferenceKey: String,
+    val defaultModel: String,
+) {
+    GEMINI("gemini", "gemini-1.5-pro"),
+    OPENROUTER("openrouter", "gemini-1.5-pro"),
+}
+
 class TranslationPreferences(
     private val preferenceStore: PreferenceStore,
 ) {
+
+    private val llmApiKeys = TranslationLlmProvider.entries.associateWith { provider ->
+        preferenceStore.getString("translation_${provider.preferenceKey}_api_key", "")
+    }
+    private val llmModels = TranslationLlmProvider.entries.associateWith { provider ->
+        preferenceStore.getString("translation_${provider.preferenceKey}_model", provider.defaultModel)
+    }
 
     fun autoTranslateAfterDownload() = preferenceStore.getBoolean("auto_translate_after_download", false)
     fun autoTranslateManga(mangaId: Long) =
@@ -28,4 +43,22 @@ class TranslationPreferences(
 
     // DeepL uses its own authentication and translation endpoint rather than an LLM API.
     fun deepLApiKey() = preferenceStore.getString("deepl_api_key", "")
+
+    fun llmApiKey(provider: TranslationLlmProvider) = llmApiKeys.getValue(provider)
+
+    fun llmModel(provider: TranslationLlmProvider) = llmModels.getValue(provider)
+
+    fun migrateLegacyLlmSettings(provider: TranslationLlmProvider) {
+        val providerApiKey = llmApiKeys.getValue(provider)
+        val legacyApiKey = translationEngineApiKey()
+        if (!providerApiKey.isSet() && legacyApiKey.isSet()) {
+            providerApiKey.set(legacyApiKey.get())
+        }
+
+        val providerModel = llmModels.getValue(provider)
+        val legacyModel = translationEngineModel()
+        if (!providerModel.isSet() && legacyModel.isSet()) {
+            providerModel.set(legacyModel.get())
+        }
+    }
 }

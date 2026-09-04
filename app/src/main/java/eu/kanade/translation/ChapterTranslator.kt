@@ -79,17 +79,22 @@ internal data class TextTranslatorConfiguration(
             preferences: TranslationPreferences,
             fromLang: TextRecognizerLanguage,
             toLang: TextTranslatorLanguage,
-        ) = TextTranslatorConfiguration(
-            primaryEngine = preferences.translationEngine().get(),
-            fallbackEngine = preferences.translationFallbackEngine().get(),
-            fromLang = fromLang,
-            toLang = toLang,
-            model = preferences.translationEngineModel().get(),
-            apiKey = preferences.translationEngineApiKey().get(),
-            temperature = preferences.translationEngineTemperature().get(),
-            maxOutputTokens = preferences.translationEngineMaxOutputTokens().get(),
-            deepLApiKey = preferences.deepLApiKey().get(),
-        )
+        ): TextTranslatorConfiguration {
+            val primaryEngine = preferences.translationEngine().get()
+            val llmProvider = TextTranslators.entries.getOrNull(primaryEngine)?.llmProvider
+            llmProvider?.let(preferences::migrateLegacyLlmSettings)
+            return TextTranslatorConfiguration(
+                primaryEngine = primaryEngine,
+                fallbackEngine = preferences.translationFallbackEngine().get(),
+                fromLang = fromLang,
+                toLang = toLang,
+                model = llmProvider?.let { preferences.llmModel(it).get() }.orEmpty(),
+                apiKey = llmProvider?.let { preferences.llmApiKey(it).get() }.orEmpty(),
+                temperature = preferences.translationEngineTemperature().get(),
+                maxOutputTokens = preferences.translationEngineMaxOutputTokens().get(),
+                deepLApiKey = preferences.deepLApiKey().get(),
+            )
+        }
     }
 }
 
