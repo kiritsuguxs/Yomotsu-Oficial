@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="pref_category_translations">Translations</string>
+    <string name="pref_translation_summary">Automatic Translations</string>
+    <string name="manga_translate">Translate</string>
+    <string name="error_mlkit_language_unsupported">MLKit doesn't support this language</string>
+    <string name="error_paddle_ocr_english_only">PaddleOCR in this test supports English source text only</string>
+    <string name="pref_show_translations">Show Translations</string>
+    <string name="pref_translate_after_downloading">Translate After Downloading</string>
+    <string name="pref_translate_sound_effects">Translate sound effects</string>
+    <string name="pref_translate_sound_effects_summary">Keep disabled to preserve sound effects in their original language</string>
+    <string name="pref_reader_font">Reader Font</string>
+    <string name="pref_group_setup">Translation Setup</string>
+    <string name="pref_translate_from">Translate From</string>
+    <string name="pref_translate_to">Translate To</string>
+    <string name="language_chinese">Chinese (traditional/simplified)</string>
+    <string name="language_japanese">Japanese</string>
+    <string name="language_korean">Korean</string>
+    <string name="language_english">English</string>
+    <string name="pref_group_engine">Translator</string>
+    <string name="pref_translator_engine">Translator Engine</string>
+    <string name="pref_translation_fallback">Fallback after a failure</string>
+    <string name="translation_fallback_none">None (keep progress and report the error)</string>
+    <string name="translator_mlkit">ML Kit (On Device)</string>
+    <string name="translator_google">Google Translate</string>
+    <string name="translator_gemini">Gemini AI [API KEY]</string>
+    <string name="translator_openrouter">OpenRouter [API KEY]</string>
+    <string name="pref_group_ocr">OCR</string>
+    <string name="pref_ocr_engine">OCR Engine</string>
+    <string name="ocr_mlkit">ML Kit (On Device)</string>
+    <string name="ocr_paddle_english">PaddleOCR (optimized for English)</string>
+    <string name="pref_sub_engine_api_key">Your Secret Key</string>
+    <string name="pref_engine_api_key">LLM Api Key</string>
+    <string name="pref_group_advanced">Advanced Settings</string>
+    <string name="pref_engine_model">LLM Model</string>
+    <string name="pref_engine_temperature">LLM Temperature</string>
+    <string name="pref_engine_max_output">LLM Max Output Token Count</string>
+    <string name="translation_editor_title">Edit speech balloon</string>
+    <string name="translation_editor_original">Original: %1$s</string>
+    <string name="translation_editor_field">Translation</string>
+    <string name="translation_editor_retranslate">Retranslate</string>
+    <string name="translation_editor_retranslating">Retranslating…</string>
+    <string name="translation_editor_error">Could not update this speech balloon.</string>
+    <string name="translation_manual_action">Add manual translation</string>
+    <string name="translation_manual_title">Add manual translation</string>
+    <string name="translation_manual_hint">The translation will be placed around the point you held.</string>
+    <string name="translation_manual_original_field">Original text (optional)</string>
+    <string name="translation_notification_group">Translations</string>
+    <string name="translation_notification_progress_channel">Translation progress</string>
+    <string name="translation_notification_error_channel">Translation errors</string>
+    <string name="translation_notification_preparing">Preparing translation…</string>
+    <string name="translation_notification_page_progress">Translating page %1$d of %2$d</string>
+    <string name="translation_notification_text_progress">Translating the text from %1$d pages</string>
+    <string name="translation_notification_chapter_progress">Chapter %1$d of %2$d</string>
+    <string name="translation_notification_error">Could not finish the translation</string>
+</resources>

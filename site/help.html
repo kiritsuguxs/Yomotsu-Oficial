@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ajuda — Yomotsu</title>
+  <meta name="description" content="Guia em Português Brasileiro para instalar, configurar e solucionar problemas no Yomotsu.">
+  <meta name="theme-color" content="#0a2022">
+  <link rel="canonical" href="https://kiritsuguxs.github.io/Yomotsu/help.html">
+  <link rel="stylesheet" href="./docs.css">
+</head>
+<body>
+  <header class="topbar shell">
+    <a class="brand" href="./">Yomotsu</a>
+    <nav aria-label="Navegação"><a href="./">Início</a><a href="./privacy.html">Privacidade</a><a href="https://github.com/kiritsuguxs/Yomotsu/releases/latest">Download</a></nav>
+  </header>
+  <main class="shell">
+    <p class="eyebrow">Documentação oficial</p>
+    <h1>Ajuda do Yomotsu</h1>
+    <p class="lead">Instalação, tradução automática, APIs e respostas rápidas para os problemas mais comuns.</p>
+
+    <nav class="toc" aria-label="Índice desta página">
+      <strong>Nesta página</strong>
+      <ul>
+        <li><a href="#getting-started">Primeiros passos</a></li>
+        <li><a href="#translation">Configurar tradução</a></li>
+        <li><a href="#api-keys">Chaves de API</a></li>
+        <li><a href="#storage">Downloads e armazenamento</a></li>
+        <li><a href="#cloudflare">Cloudflare e WebView</a></li>
+        <li><a href="#tracking">Rastreadores</a></li>
+        <li><a href="#source-migration">Migrar uma fonte</a></li>
+        <li><a href="#library-update">Atualização da biblioteca</a></li>
+      </ul>
+    </nav>
+
+    <section id="getting-started">
+      <h2>Primeiros passos</h2>
+      <ol>
+        <li>Baixe o APK recomendado na página de <a href="https://github.com/kiritsuguxs/Yomotsu/releases/latest">Releases</a>.</li>
+        <li>Autorize a instalação pelo navegador ou gerenciador de arquivos quando o Android solicitar.</li>
+        <li>Adicione um repositório de extensões confiável e instale apenas as fontes que você utiliza.</li>
+        <li>Adicione uma obra à biblioteca e baixe o capítulo que deseja traduzir.</li>
+      </ol>
+      <p class="note">Atualizações oficiais podem ser instaladas por cima da versão anterior sem apagar biblioteca, downloads ou configurações.</p>
+    </section>
+
+    <section id="translation">
+      <h2>Configurar a tradução</h2>
+      <p>Em uma instalação nova, o Yomotsu já começa configurado para traduzir de <strong>inglês para Português Brasileiro</strong>. Você pode trocar qualquer um dos idiomas nas configurações.</p>
+      <ol>
+        <li>Abra <strong>Mais → Configurações → Tradução</strong>.</li>
+        <li>Escolha o idioma original do capítulo e <strong>Português (Brasil)</strong> como destino.</li>
+        <li>Selecione ML Kit, Google Tradutor, DeepL, Gemini ou OpenRouter.</li>
+        <li>Se quiser, ative a tradução automática depois de cada download.</li>
+        <li>Mantenha a tradução de efeitos sonoros desligada para preservar as onomatopeias originais.</li>
+      </ol>
+      <h3>Glossário por obra</h3>
+      <p>No menu da obra, abra <strong>Glossário de tradução</strong> e salve nomes, títulos ou habilidades. O termo preferido será reutilizado naquela obra.</p>
+      <h3>Editar ou retraduzir um balão</h3>
+      <p>Durante a leitura de um capítulo já traduzido, pressione e segure o texto de um balão. Você poderá corrigir a tradução manualmente ou tocar em <strong>Retraduzir</strong>. A retradução usa o mecanismo selecionado nas configurações — ML Kit, Google Tradutor, DeepL, Gemini ou OpenRouter — e salva apenas aquele balão.</p>
+      <h3>Encaixe automático</h3>
+      <p>Linhas de OCR que pertencem ao mesmo balão são agrupadas antes da tradução. O leitor ajusta tamanho, quebra, posição e contraste do texto e também reconhece fundos claros, escuros ou coloridos. Em desenhos muito irregulares, confira o resultado e use o editor individual quando necessário.</p>
+      <h3>Nenhum texto foi detectado</h3>
+      <p>Confirme se o idioma original selecionado corresponde ao capítulo. Imagens muito pequenas, borradas, verticais ou com fontes decorativas também podem reduzir a precisão do OCR.</p>
+    </section>
+
+    <section id="api-keys">
+      <h2>Chaves de API</h2>
+      <ul>
+        <li><strong>ML Kit:</strong> funciona no dispositivo e não exige chave.</li>
+        <li><strong>Google Tradutor:</strong> usa o mecanismo integrado e não exige uma chave pessoal.</li>
+        <li><strong>DeepL:</strong> informe uma chave Free ou Pro no campo próprio.</li>
+        <li><strong>Gemini e OpenRouter:</strong> informe a chave, o modelo e os limites nas opções avançadas.</li>
+      </ul>
+      <p>As chaves são armazenadas localmente nas preferências do aplicativo. Não compartilhe capturas de tela que exibam esses campos.</p>
+    </section>
+
+    <section id="storage">
+      <h2>Downloads e armazenamento</h2>
+      <p>Escolha uma pasta à qual o Android permita acesso permanente. Se os capítulos desaparecerem depois de trocar a pasta, selecione novamente o local em <strong>Configurações → Dados e armazenamento</strong>.</p>
+      <p>O Yomotsu pode salvar capítulos como CBZ. As traduções ficam em arquivos próprios e são aplicadas pelo leitor sem alterar as imagens originais.</p>
+    </section>
+
+    <section id="cloudflare">
+      <h2>Cloudflare e WebView</h2>
+      <p>Quando uma fonte mostrar uma verificação, abra-a no WebView do Yomotsu, conclua o desafio e tente novamente. Mantenha o Android System WebView e o navegador atualizados. Algumas fontes podem continuar indisponíveis por decisão do próprio site.</p>
+    </section>
+
+    <section id="tracking">
+      <h2>Rastreadores</h2>
+      <p>Os rastreadores sincronizam seu progresso com serviços externos. Entre na conta em <strong>Configurações → Rastreamento</strong> e vincule cada obra manualmente quando necessário. O funcionamento e a privacidade dependem do serviço escolhido.</p>
+    </section>
+
+    <section id="source-migration">
+      <h2>Migrar uma fonte</h2>
+      <p>Use a migração quando uma extensão parar de funcionar. Selecione a fonte antiga, escolha uma fonte nova e confira cuidadosamente o título correspondente antes de confirmar. Capítulos baixados da fonte anterior não são movidos automaticamente.</p>
+    </section>
+
+    <section id="library-update">
+      <h2>Atualização da biblioteca</h2>
+      <p>Atualizações muito grandes podem ser limitadas para proteger os sites e o aparelho. Divida a biblioteca em categorias ou reduza os downloads automáticos. Em caso de erro, atualize a extensão, teste a fonte no WebView e tente novamente mais tarde.</p>
+    </section>
+  </main>
+  <footer class="footer shell"><span>Yomotsu — tradução integrada para quadrinhos.</span><span><a href="https://github.com/kiritsuguxs/Yomotsu">GitHub</a> · <a href="./privacy.html">Privacidade</a></span></footer>
+</body>
+</html>

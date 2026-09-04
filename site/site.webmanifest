@@ -1,0 +1,9 @@
+{
+  "name": "Yomotsu",
+  "short_name": "Yomotsu",
+  "description": "Leitor de mangás com tradução automática integrada.",
+  "start_url": "/Yomotsu/",
+  "display": "standalone",
+  "background_color": "#0a2022",
+  "theme_color": "#0a2022"
+}

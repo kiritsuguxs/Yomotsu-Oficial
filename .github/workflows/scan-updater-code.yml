@@ -1,0 +1,26 @@
+name: Mapear atualizador do Yomotsu
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Localizar atualizador e releases
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== ARQUIVOS POR NOME ==='
+          find . -type f \( -iname '*update*' -o -iname '*release*' -o -iname '*version*' \) -not -path './.git/*' | sort | head -n 500
+          echo
+          echo '=== REFERENCIAS NO CODIGO ==='
+          grep -RInE --include='*.kt' --include='*.java' --include='*.kts' --include='*.xml' \
+            'kiritsuguxs/Yomotsu|releases/latest|releases|UpdateChecker|updateChecker|AppUpdate|Release|prerelease|tag_name|versionName|releaseNotes|changelog' \
+            app core domain data presentation source-api gradle* build.gradle* 2>/dev/null | head -n 1200 || true

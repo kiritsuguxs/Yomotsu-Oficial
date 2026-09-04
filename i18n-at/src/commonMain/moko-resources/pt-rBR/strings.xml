@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="pref_category_translations">Traduções</string>
+    <string name="pref_translation_summary">Traduções automáticas</string>
+    <string name="manga_translate">Traduzir</string>
+    <string name="error_mlkit_language_unsupported">O ML Kit não oferece suporte a este idioma</string>
+    <string name="error_paddle_ocr_english_only">O PaddleOCR desta versão de teste reconhece apenas textos em inglês</string>
+    <string name="pref_show_translations">Mostrar traduções</string>
+    <string name="pref_translate_after_downloading">Traduzir após o download</string>
+    <string name="pref_translate_sound_effects">Traduzir efeitos sonoros</string>
+    <string name="pref_translate_sound_effects_summary">Mantenha desativado para preservar os efeitos sonoros no idioma original</string>
+    <string name="pref_reader_font">Fonte do leitor</string>
+    <string name="pref_group_setup">Configuração da tradução</string>
+    <string name="pref_translate_from">Traduzir de</string>
+    <string name="pref_translate_to">Traduzir para</string>
+    <string name="language_chinese">Chinês (tradicional/simplificado)</string>
+    <string name="language_japanese">Japonês</string>
+    <string name="language_korean">Coreano</string>
+    <string name="language_english">Inglês</string>
+    <string name="pref_group_engine">Tradutor</string>
+    <string name="pref_translator_engine">Mecanismo de tradução</string>
+    <string name="pref_translation_fallback">Reserva após uma falha</string>
+    <string name="translation_fallback_none">Nenhum (manter progresso e informar o erro)</string>
+    <string name="translator_mlkit">ML Kit (no dispositivo)</string>
+    <string name="translator_google">Google Translate</string>
+    <string name="translator_gemini">Gemini AI [CHAVE DE API]</string>
+    <string name="translator_openrouter">OpenRouter [CHAVE DE API]</string>
+    <string name="pref_group_ocr">OCR</string>
+    <string name="pref_ocr_engine">Mecanismo de OCR</string>
+    <string name="ocr_mlkit">ML Kit (no dispositivo)</string>
+    <string name="ocr_paddle_english">PaddleOCR (otimizado para inglês)</string>
+    <string name="pref_sub_engine_api_key">Sua chave secreta</string>
+    <string name="pref_engine_api_key">Chave da API de LLM</string>
+    <string name="pref_group_advanced">Configurações avançadas</string>
+    <string name="pref_engine_model">Modelo de LLM</string>
+    <string name="pref_engine_temperature">Temperatura da LLM</string>
+    <string name="pref_engine_max_output">Limite de tokens de saída da LLM</string>
+    <string name="translation_editor_title">Editar balão</string>
+    <string name="translation_editor_original">Original: %1$s</string>
+    <string name="translation_editor_field">Tradução</string>
+    <string name="translation_editor_retranslate">Retraduzir</string>
+    <string name="translation_editor_retranslating">Retraduzindo…</string>
+    <string name="translation_editor_error">Não foi possível atualizar este balão.</string>
+    <string name="translation_manual_action">Adicionar tradução manual</string>
+    <string name="translation_manual_title">Adicionar tradução manual</string>
+    <string name="translation_manual_hint">A tradução será posicionada ao redor do ponto que você segurou.</string>
+    <string name="translation_manual_original_field">Texto original (opcional)</string>
+    <string name="translation_notification_group">Traduções</string>
+    <string name="translation_notification_progress_channel">Progresso da tradução</string>
+    <string name="translation_notification_error_channel">Erros de tradução</string>
+    <string name="translation_notification_preparing">Preparando tradução…</string>
+    <string name="translation_notification_page_progress">Traduzindo página %1$d de %2$d</string>
+    <string name="translation_notification_text_progress">Traduzindo os textos de %1$d páginas</string>
+    <string name="translation_notification_chapter_progress">Capítulo %1$d de %2$d</string>
+    <string name="translation_notification_error">Não foi possível concluir a tradução</string>
+</resources>

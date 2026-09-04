@@ -1,0 +1,47 @@
+name: Publicar site do Yomotsu
+
+on:
+  push:
+    branches:
+      - yomotsu-independent
+    paths:
+      - "site/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-source
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v6
+
+      - name: Preparar branch do site
+        run: |
+          git fetch origin gh-pages:refs/remotes/origin/gh-pages
+          git worktree add /tmp/yomotsu-pages origin/gh-pages
+
+      - name: Sincronizar arquivos
+        run: |
+          rsync -a --delete --exclude='.git' site/ /tmp/yomotsu-pages/
+          touch /tmp/yomotsu-pages/.nojekyll
+
+      - name: Publicar site
+        working-directory: /tmp/yomotsu-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          if git diff --cached --quiet; then
+            echo "O site já está atualizado."
+            exit 0
+          fi
+          git commit -m "Publicar site de ${GITHUB_SHA::7}"
+          git push origin HEAD:gh-pages

@@ -1,0 +1,43 @@
+Yomotsu Y19 experimental DBNet detector — third-party notices
+
+This optional detector adapts Houri/houri-engine and Yakuyomi detector code.
+PineappleTwilight/houri-engine revision:
+85351aa3822fe2611f68cfd092972e6ac573f203
+https://github.com/PineappleTwilight/houri-engine/tree/85351aa3822fe2611f68cfd092972e6ac573f203
+Houri reference: dc2b4af3ed3c4374849cbd9b7964db051a464a25.
+
+Adapted detector-only files: Detector.kt (DbnetPostprocessor), ImageOps.kt
+(DbnetPixels / DbnetService resize), Geometry.kt (DbnetGeometry),
+NcnnBackend.kt and ncnn_jni.cpp (DbnetSession / DbnetNativeBackend / dbnet_jni.cpp),
+and NCNN build configuration. Original author/project credits are retained here
+and in source headers. Upstream detector code is GPL-3.0; full text is included
+in GPL-3.0.txt. This experiment includes modifications made for Yomotsu in 2026:
+bounded immutable geometry, shape/handle validation, neutral coordinates,
+stream-verified external models and a separate Android process. It does not
+include upstream OCR, translation, renderer, inpainting or storage pipeline.
+
+Corresponding Yomotsu source and build scripts for this experimental binary:
+https://github.com/kiritsuguxs/Yomotsu/tree/agent/y19-yakuyomi-dbnet-test1
+The build's exact commit is recorded in the app and GitHub Actions run. When
+redistributing, retain the corresponding source revision and all notices;
+the combined work containing GPL detector code is conveyed under GPL-3.0
+requirements. Existing Yomotsu/Mihon/Tachiyomi and other component notices and
+licenses are not removed or relicensed by this notice.
+
+Models are NOT in this APK. The optional download uses dbnet_detect.ncnn.param
+and dbnet_detect.ncnn.bin from joyeli/yakuyomi-engine models-v3, declared GPL-3.0
+and attributed to zyddnys/manga-image-translator. Model ancestor:
+detect-20241225.ckpt, manga-image-translator beta-0.3. The pinned exporter cites
+d5a3eee. Exact byte counts, SHA-256 pins, source/export provenance and unresolved
+upstream revision discrepancies are documented in docs/yakuyomi-dbnet-upstream.md.
+
+NCNN 1.0.20260718: Copyright (C) 2017 Tencent. All rights reserved.
+Redistributed under BSD-3-Clause; see ncnn-BSD-3-Clause.txt.
+Bundled glslang 16.1.0 and contributors: see glslang-LICENSE.txt.
+Android NDK r28c statically linked runtime components: see NDK-NOTICE.txt.
+Native archives are fetched only from the exact engine revision above, with
+SHA-256 of the source archive fixed in CMakeLists.txt. No mutable native binary
+is selected at build time. Upstream does not identify exact NCNN/glslang source
+commits or a reproducible build recipe; this remains a provenance limitation.
+Vendor license texts were retrieved from Tencent/ncnn/LICENSE.txt and
+KhronosGroup/glslang/LICENSE.txt and are retained in this source distribution.

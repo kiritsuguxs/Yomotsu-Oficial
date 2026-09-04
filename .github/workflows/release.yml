@@ -1,0 +1,157 @@
+name: Release oficial do Yomotsu
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  get_tag:
+    if: github.repository == 'kiritsuguxs/Yomotsu'
+    name: Extrair versão
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.extract.outputs.tag }}
+      version: ${{ steps.extract.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Obter versão do aplicativo
+        id: extract
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(sed -n 's/^[[:space:]]*versionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n1)
+          if [[ -z "$VERSION" ]]; then
+            echo "Não foi possível encontrar versionName em app/build.gradle.kts" >&2
+            exit 1
+          fi
+          EXPECTED_TAG="v${VERSION}"
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+            if [[ "$TAG" != "$EXPECTED_TAG" ]]; then
+              echo "A tag $TAG não corresponde à versão atual $EXPECTED_TAG" >&2
+              exit 1
+            fi
+          else
+            TAG="$EXPECTED_TAG"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  build:
+    if: github.repository == 'kiritsuguxs/Yomotsu'
+    name: Compilar Yomotsu
+    runs-on: ubuntu-24.04
+    needs: get_tag
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Configurar JDK
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          java-version-file: .github/.java-version
+          distribution: temurin
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb
+      - name: Aplicar identidade visual do Yomotsu
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 --decode branding/yomotsu-icon.png.b64 > "$RUNNER_TEMP/yomotsu-icon.png"
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            mkdir -p "app/src/main/res/mipmap-$density"
+            cp "$RUNNER_TEMP/yomotsu-icon.png" "app/src/main/res/mipmap-$density/ic_launcher.png"
+          done
+      - name: Compilar release com atualizador
+        env:
+          MIHON_GITHUB_RELEASE: "true"
+          storeFileBase64: ${{ secrets.storeFileBase64 }}
+          storePassword: ${{ secrets.storePassword }}
+          keyAlias: ${{ secrets.keyAlias }}
+          keyPassword: ${{ secrets.keyPassword }}
+        run: ./gradlew assembleRelease -Penable-updater
+      - name: Preparar APKs da Release
+        run: |
+          set -e
+          mv app/build/outputs/apk/release/app-arm64-v8a-release.apk Yomotsu-${{ needs.get_tag.outputs.version }}.apk
+          mv app/build/outputs/apk/release/app-armeabi-v7a-release.apk Yomotsu-armeabi-v7a-${{ needs.get_tag.outputs.version }}.apk
+          mv app/build/outputs/apk/release/app-x86-release.apk Yomotsu-x86-${{ needs.get_tag.outputs.version }}.apk
+          mv app/build/outputs/apk/release/app-x86_64-release.apk Yomotsu-x86_64-${{ needs.get_tag.outputs.version }}.apk
+      - name: Enviar APKs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: yomotsu-release
+          path: Yomotsu-*.apk
+
+  release:
+    if: github.repository == 'kiritsuguxs/Yomotsu'
+    name: Criar Release oficial
+    runs-on: ubuntu-24.04
+    needs: [get_tag, build]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Baixar APKs
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: yomotsu-release
+      - name: Montar notas da versão
+        env:
+          VERSION: ${{ needs.get_tag.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          NOTES=$(awk -v version="$VERSION" '
+            $0 == "## " version {found=1; next}
+            found && /^## / {exit}
+            found {print}
+          ' YOMOTSU_CHANGELOG.md)
+
+          if [[ -z "${NOTES//[[:space:]]/}" ]]; then
+            NOTES="- Melhorias e correções no Yomotsu."
+          fi
+
+          {
+            echo "## Yomotsu $VERSION"
+            echo
+            echo "### Novidades"
+            echo "$NOTES"
+            echo
+            echo "### Download"
+            echo "**Recomendado para Android 64 bits:** \`Yomotsu-$VERSION.apk\`"
+            echo
+            echo "O APK principal é a versão ARM64 otimizada e mais leve. Builds para arquiteturas antigas ou alternativas continuam disponíveis quando necessário."
+          } > RELEASE_NOTES.md
+      - name: Preparar Release existente
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.get_tag.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG já existe; ela será atualizada e publicada."
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease=false --title "Yomotsu ${{ needs.get_tag.outputs.version }}"
+          else
+            echo "Release $TAG ainda não existe; uma nova será criada."
+          fi
+      - name: Criar ou atualizar Release do Yomotsu
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
+        with:
+          tag_name: ${{ needs.get_tag.outputs.tag }}
+          target_commitish: yomotsu-independent
+          name: Yomotsu ${{ needs.get_tag.outputs.version }}
+          generate_release_notes: false
+          body_path: RELEASE_NOTES.md
+          files: Yomotsu-*.apk
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}

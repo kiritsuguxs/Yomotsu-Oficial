@@ -1,0 +1,27 @@
+name: Mapear código de tradução do Yomotsu
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Localizar arquivos relacionados à tradução
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== ARQUIVOS POR NOME ==='
+          find . -type f \( -iname '*translat*' -o -iname '*ocr*' -o -iname '*reader*' -o -iname '*overlay*' -o -iname '*bitmap*' \) \
+            -not -path './.git/*' | sort | head -n 400
+          echo
+          echo '=== REFERENCIAS NO CODIGO ==='
+          grep -RInE --include='*.kt' --include='*.java' --include='*.kts' \
+            'translate|translation|translator|ocr|TextRecognizer|recogniz|overlay|translated|ML Kit|MlKit|bitmap' \
+            app core domain data presentation source-api 2>/dev/null | head -n 800 || true

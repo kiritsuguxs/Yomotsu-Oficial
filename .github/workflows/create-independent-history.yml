@@ -1,0 +1,46 @@
+name: Criar histórico independente do Yomotsu
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  create-independent-history:
+    name: Criar branch independente
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout do código atual
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Criar histórico órfão preservando o código
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "kiritsuguxs"
+          git config user.email "224443838+kiritsuguxs@users.noreply.github.com"
+
+          # Salva a árvore exata do código atual antes de abandonar o histórico antigo.
+          SOURCE_TREE="$(git rev-parse HEAD^{tree})"
+
+          # Cria diretamente um commit raiz (sem pais) usando a mesma árvore de arquivos.
+          ROOT_COMMIT="$(printf '%s\n' 'Yomotsu 0.20.4-Y1' | git commit-tree "$SOURCE_TREE")"
+
+          # Valida localmente que o novo commit realmente não possui pai.
+          test "$(git rev-list --count "$ROOT_COMMIT")" -eq 1
+          test "$(git rev-list --parents -n 1 "$ROOT_COMMIT" | wc -w)" -eq 1
+
+          # Só publica depois das validações acima.
+          git push --force origin "$ROOT_COMMIT":refs/heads/yomotsu-independent
+
+      - name: Confirmar histórico independente
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --force origin yomotsu-independent:refs/remotes/origin/yomotsu-independent
+          test "$(git rev-list --count origin/yomotsu-independent)" -eq 1
+          test "$(git rev-list --parents -n 1 origin/yomotsu-independent | wc -w)" -eq 1
+          echo "Branch yomotsu-independent criada com um único commit raiz."

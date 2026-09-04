@@ -1,0 +1,61 @@
+name: Publish approved Yomotsu release
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'ID da compilacao aprovada'
+        required: true
+        type: string
+      version:
+        description: 'Versao aprovada, ex: 0.20.4-Y5'
+        required: true
+        type: string
+      release_notes:
+        description: 'Notas da versao'
+        required: false
+        default: 'Nova versao oficial do Yomotsu.'
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download approved APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.run_id }}
+          name: Yomotsu-${{ inputs.version }}-arm64
+          path: dist
+
+      - name: Verify approved APK
+        shell: bash
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          test -f "dist/Yomotsu-${VERSION}-arm64.apk"
+          sha256sum "dist/Yomotsu-${VERSION}-arm64.apk"
+
+      - name: Publish official release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          NOTES: ${{ inputs.release_notes }}
+        run: |
+          set -euo pipefail
+          TAG="v${VERSION}"
+          APK="dist/Yomotsu-${VERSION}-arm64.apk"
+
+          if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK" --repo "${{ github.repository }}" --clobber
+            echo "$NOTES" | gh release edit "$TAG" --repo "${{ github.repository }}" --title "Yomotsu ${VERSION}" --notes-file - --latest
+          else
+            echo "$NOTES" | gh release create "$TAG" "$APK" --repo "${{ github.repository }}" --target "${{ github.ref_name }}" --title "Yomotsu ${VERSION}" --notes-file - --latest
+          fi
