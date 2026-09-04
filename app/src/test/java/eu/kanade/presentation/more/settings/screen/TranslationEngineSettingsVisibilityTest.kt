@@ -2,7 +2,9 @@ package eu.kanade.presentation.more.settings.screen
 
 import eu.kanade.translation.translator.TextTranslators
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import tachiyomi.domain.translation.TranslationLlmProvider
 
 class TranslationEngineSettingsVisibilityTest {
 
@@ -29,5 +31,14 @@ class TranslationEngineSettingsVisibilityTest {
             listOf(TranslationEngineSetting.DEEPL_API_KEY),
             translationEngineSettings(TextTranslators.DEEPL),
         )
+    }
+
+    @Test
+    fun `LLM engines map to independent provider preferences`() {
+        assertEquals(TranslationLlmProvider.GEMINI, TextTranslators.GEMINI.llmProvider)
+        assertEquals(TranslationLlmProvider.OPENROUTER, TextTranslators.OPENROUTER.llmProvider)
+        assertNull(TextTranslators.MLKIT.llmProvider)
+        assertNull(TextTranslators.GOOGLE.llmProvider)
+        assertNull(TextTranslators.DEEPL.llmProvider)
     }
 }

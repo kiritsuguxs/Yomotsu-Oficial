@@ -9,7 +9,11 @@ allowed = {
     ".github/workflows/pages.yml",
     ".github/workflows/release.yml",
     "app/src/main/java/eu/kanade/presentation/more/settings/screen/SettingsTranslationScreen.kt",
+    "app/src/main/java/eu/kanade/translation/ChapterTranslator.kt",
+    "app/src/main/java/eu/kanade/translation/translator/TextTranslator.kt",
     "app/src/test/java/eu/kanade/presentation/more/settings/screen/TranslationEngineSettingsVisibilityTest.kt",
+    "app/src/test/java/tachiyomi/domain/translation/TranslationLlmPreferencesTest.kt",
+    "domain/src/main/java/tachiyomi/domain/translation/TranslationPreferences.kt",
     "scripts/verify-dbnet-apk.py",
     "scripts/verify-dbnet-scope.py",
 }
