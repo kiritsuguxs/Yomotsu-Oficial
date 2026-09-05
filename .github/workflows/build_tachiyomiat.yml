@@ -1,235 +1,32 @@
-name: Build Yomotsu APK
-
+name: Transfer verified Y22 recognizer
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
-      - 'agent/y*'
-    paths-ignore:
-      - 'README.md'
-      - 'site/**'
-      - '.github/workflows/pages.yml'
-      - '.github/workflows/publish-approved-release.yml'
-
-concurrency:
-  group: build-yomotsu-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: ['agent/y22-ppocrv6-small-test1']
 permissions:
-  contents: read
-  actions: read
-
+  contents: write
 jobs:
-  build:
+  transfer:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Guard experimental scope against unchanged official base
-        run: python3 scripts/verify-dbnet-scope.py
-
-      - name: Extract current Yomotsu version
-        id: version
-        shell: bash
-        run: |
-          set -euo pipefail
-          VERSION="$(sed -n 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)"
-          if [ -z "$VERSION" ]; then
-            echo "Could not extract versionName from app/build.gradle.kts" >&2
-            exit 1
-          fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Building Yomotsu $VERSION APK"
-
-      - name: Guard Yomotsu update identity
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -Fq 'applicationId = "app.mihon.tachiyomiat"' app/build.gradle.kts
-          grep -Fq 'versionCode = 80' app/build.gradle.kts
-          grep -Fq 'versionName = "0.20.4-Y21"' app/build.gradle.kts
-          grep -Fq 'class TranslationJob' app/src/main/java/eu/kanade/translation/TranslationJob.kt
-          grep -Fq 'fun onPageProgress' app/src/main/java/eu/kanade/translation/TranslationNotifier.kt
-          grep -Fq 'enum class OcrEngineType' app/src/main/java/eu/kanade/translation/recognizer/OcrEngineType.kt
-          grep -Fq 'class OcrEngineManager' app/src/main/java/eu/kanade/translation/recognizer/OcrEngineManager.kt
-          grep -Fq 'class MlKitOcrEngine' app/src/main/java/eu/kanade/translation/recognizer/MlKitOcrEngine.kt
-          grep -Fq 'class PaddleOcrEngine' app/src/main/java/eu/kanade/translation/recognizer/PaddleOcrEngine.kt
-          grep -Fq 'OpenCVUtils.init(appContext)' app/src/main/java/eu/kanade/translation/recognizer/PaddleOcrEngine.kt
-          grep -Fq 'recBatchSize: Int = 4' ppocr-sdk/src/main/java/com/paddle/ocr/PaddleOCRConfig.kt
-          ! grep -Rq 'autoTranslateAfterDownload' app/src/main/java
-          test -s ppocr-sdk/src/main/assets/models/det/inference.onnx
-          test -s ppocr-sdk/src/main/assets/models/rec/inference.onnx
-          test -s ppocr-sdk/src/main/assets/models/rec/inference.yml
-          printf '%s  %s\n' \
-            'a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d' \
-            'ppocr-sdk/src/main/assets/models/det/inference.onnx' | sha256sum -c -
-          printf '%s  %s\n' \
-            'b5f833dfc5d0eb71da397b4efa06ebeee9b431b690a47d6af40d77d8eabc557f' \
-            'ppocr-sdk/src/main/assets/models/rec/inference.onnx' | sha256sum -c -
-          printf '%s  %s\n' \
-            '27e91d0582f40168aa218303c76e184bc78fa7a5d105aad0cfbad8458b441067' \
-            'ppocr-sdk/src/main/assets/models/rec/inference.yml' | sha256sum -c -
-          ! grep -Rqi 'tesseract' app/src domain/src ppocr-sdk/src/main/java
-          ! grep -RqiE 'TranslatedCbz|generateTranslatedCbz|GENERATE_CBZ|translation_.*cbz|TRANSLATED_CBZ' \
-            app/src domain/src i18n-at/src
-          ! grep -Rq 'mihonapp/mihon-preview' app/src/main/java/eu/kanade/tachiyomi/data/updater
-          test ! -f .github/FUNDING.yml
-
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version-file: .github/.java-version
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Verify all existing and DBNet unit tests and migrations
-        run: |
-          ./gradlew testDebugUnitTest verifySqlDelightMigration --stacktrace
-
-      - name: Summarize unit test results
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          from xml.etree import ElementTree
-          import json
-          suites = [ElementTree.parse(p).getroot() for p in Path('.').glob('**/build/test-results/testDebugUnitTest/TEST-*.xml')]
-          assert suites, 'Missing test results'
-          totals = {key: sum(int(s.get(key, '0')) for s in suites) for key in ('tests', 'failures', 'errors', 'skipped')}
-          print(json.dumps(totals, indent=2))
-          assert totals['failures'] == totals['errors'] == 0
-          PY
-
-      - name: Verify native buffer contracts
-        run: |
-          g++ -std=c++17 -fsanitize=address,undefined -fno-omit-frame-pointer \
-            -I dbnet-native/src/main/cpp \
-            dbnet-native/src/test/cpp/buffer_contract_test.cpp -o "$RUNNER_TEMP/dbnet-buffer-tests"
-          "$RUNNER_TEMP/dbnet-buffer-tests"
-
-      - name: Prepare Yomotsu branding
-        run: |
-          base64 --decode branding/yomotsu-icon.png.b64 > "$RUNNER_TEMP/yomotsu-icon.png"
-          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
-            mkdir -p "app/src/main/res/mipmap-$density"
-            cp "$RUNNER_TEMP/yomotsu-icon.png" "app/src/main/res/mipmap-$density/ic_launcher.png"
-          done
-
-      - name: Build arm64 APK with updater
-        env:
-          MIHON_GITHUB_RELEASE: "true"
-          storeFileBase64: ${{ secrets.storeFileBase64 }}
-          storePassword: ${{ secrets.storePassword }}
-          keyAlias: ${{ secrets.keyAlias }}
-          keyPassword: ${{ secrets.keyPassword }}
-        run: ./gradlew assembleRelease -Penable-updater --stacktrace
-
-      - name: Package Yomotsu APK
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          set -euo pipefail
-          mkdir -p dist
-          apk_path="$(find app/build/outputs/apk/release -type f -name '*arm64-v8a*.apk' | head -n 1)"
-          test -n "$apk_path"
-          cp "$apk_path" "dist/Yomotsu-${VERSION}-arm64.apk"
-
-      - name: Verify APK identity and PaddleOCR assets
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          apk_path="dist/Yomotsu-${VERSION}-arm64.apk"
-          asset_dir="$RUNNER_TEMP/paddleocr-assets"
-          mkdir -p "$asset_dir/det" "$asset_dir/rec"
-          unzip -p "$apk_path" assets/models/det/inference.onnx > "$asset_dir/det/inference.onnx"
-          unzip -p "$apk_path" assets/models/rec/inference.onnx > "$asset_dir/rec/inference.onnx"
-          unzip -p "$apk_path" assets/models/rec/inference.yml > "$asset_dir/rec/inference.yml"
-          printf '%s  %s\n' \
-            'a431985659dc921974177a95adcfbb90fd9e51989a5e04d70d0b75f597b6e61d' \
-            "$asset_dir/det/inference.onnx" | sha256sum -c -
-          printf '%s  %s\n' \
-            'b5f833dfc5d0eb71da397b4efa06ebeee9b431b690a47d6af40d77d8eabc557f' \
-            "$asset_dir/rec/inference.onnx" | sha256sum -c -
-          printf '%s  %s\n' \
-            '27e91d0582f40168aa218303c76e184bc78fa7a5d105aad0cfbad8458b441067' \
-            "$asset_dir/rec/inference.yml" | sha256sum -c -
-          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
-          test -x "$AAPT"
-          badging="$("$AAPT" dump badging "$apk_path")"
-          grep -Fq \
-            "package: name='app.mihon.tachiyomiat' versionCode='80' versionName='0.20.4-Y21'" \
-            <<< "$badging"
-
-      - name: Verify APK signature
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
-          test -x "$APKSIGNER"
-          signature="$("$APKSIGNER" verify --verbose --print-certs "dist/Yomotsu-${VERSION}-arm64.apk")"
-          printf '%s\n' "$signature"
-          # Canonical signer from the v0.20.4-Y12 arm64 release APK.
-          grep -Fq \
-            'certificate SHA-256 digest: 0a72eafb442d14f10893a7cbd4b6034292d18d786dceda0f55f8d854a515ede6' \
-            <<< "$signature"
-
-      - name: Verify DBNet packaging and measure APK delta
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: python3 scripts/verify-dbnet-apk.py "dist/Yomotsu-${VERSION}-arm64.apk"
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Yomotsu-${{ steps.version.outputs.version }}-arm64
-          path: dist/*
-          if-no-files-found: error
-
-      - name: Upload reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-reports
-          path: |
-            **/build/reports/**
-            **/build/*.log
-          if-no-files-found: ignore
-
-  dbnet-process-death:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version-file: .github/.java-version
-      - uses: gradle/actions/setup-gradle@v4
-      - name: Enable emulator acceleration
+      - name: Reassemble exact uploaded model as a Git blob
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-      - name: Kill disposable DBNet worker and verify reader fallback
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          arch: x86_64
-          disable-animations: true
-          script: ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=eu.kanade.translation.detection.DbnetProcessDeathTest,eu.kanade.translation.detection.DbnetCleanupMaskLayoutTest,eu.kanade.translation.detection.DbnetExifCoordinateSafetyTest --stacktrace
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: dbnet-process-death-reports
-          path: app/build/reports/androidTests/**
-          if-no-files-found: ignore
+          python3 - <<'PY'
+          import base64, hashlib, json, os, urllib.request
+          from pathlib import Path
+          data = b''.join(Path(f'.y22-model-upload/rec.part{i}').read_bytes() for i in range(2))
+          assert len(data) == 21159378
+          assert hashlib.sha256(data).hexdigest() == '5435fd747c9e0efe15a96d0b378d5bd157e9492ed8fd80edf08f30d02fa24634'
+          request = urllib.request.Request(
+              'https://api.github.com/repos/kiritsuguxs/Yomotsu-Oficial/git/blobs',
+              data=json.dumps({'content': base64.b64encode(data).decode(), 'encoding': 'base64'}).encode(),
+              headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json'},
+              method='POST',
+          )
+          with urllib.request.urlopen(request) as response:
+              result = json.load(response)
+          assert result['sha'] == '7c052944eb4f25cd3a38e4dbef8794430dc40f6b'
+          print('Verified complete recognizer blob:', result['sha'])
+          PY
