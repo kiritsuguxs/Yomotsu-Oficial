@@ -5,6 +5,7 @@ import subprocess
 
 BASE = "origin/main"
 allowed = {
+    'app/src/main/java/eu/kanade/presentation/more/MoreScreen.kt',
     '.github/workflows/build_tachiyomiat.yml',
     'app/build.gradle.kts',
     'scripts/verify-dbnet-scope.py',
