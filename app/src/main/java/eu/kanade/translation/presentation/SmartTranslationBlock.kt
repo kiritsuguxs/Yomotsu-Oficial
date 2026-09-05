@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,7 +15,9 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
@@ -46,6 +49,8 @@ fun SmartTranslationBlock(
     val height = (region.height * scaleFactor).pxToDp()
     val rotation = block.angle.takeIf { abs(it) in 12f..78f } ?: 0f
     val cleanText = normalizeTranslationText(block.translation)
+    val textMeasurer = rememberTextMeasurer()
+    val baseTextStyle = LocalTextStyle.current
     if (cleanText.isEmpty()) {
         if (onLongClick != null) {
             Box(
@@ -84,14 +89,15 @@ fun SmartTranslationBlock(
             val outerHeightPx = with(density) { height.roundToPx() }
             val sourceSymbolHeightSp = block.withReliableSourceMetrics().symHeight * scaleFactor /
                 (density.density * density.fontScale).coerceAtLeast(0.0001f)
-            val fontSizeCeiling = (sourceSymbolHeightSp * SOURCE_FONT_SIZE_MULTIPLIER)
+            val sourceFontSizeCeiling = (sourceSymbolHeightSp * SOURCE_FONT_SIZE_MULTIPLIER)
                 .roundToInt()
                 .coerceIn(ABSOLUTE_MIN_FONT_SIZE_SP, MAX_FONT_SIZE_SP)
+            val fontSizeCeiling = TranslationTextFit.maximumFontSize(sourceFontSizeCeiling, block.balloonDetected)
 
             var fitted: FittedTranslationText? = null
             var readableFloorFallback: FittedTranslationText? = null
             val profiles = TranslationFitPolicy.progressiveProfiles(block)
-            for ((profileIndex, profile) in profiles.withIndex()) {
+            for (profile in profiles) {
                 if (fitted != null) break
                 val envelopeWidthPx = (outerWidthPx * profile.widthRatio).toInt().coerceAtLeast(1)
                 val envelopeHeightPx = (outerHeightPx * profile.heightRatio).toInt().coerceAtLeast(1)
@@ -104,22 +110,25 @@ fun SmartTranslationBlock(
                 )
                 val innerWidthPx = (envelopeWidthPx * rotationScale).toInt().coerceAtLeast(1)
                 val innerHeightPx = (envelopeHeightPx * rotationScale).toInt().coerceAtLeast(1)
-                val innerWidth = with(density) { innerWidthPx.toDp() }
                 val minimum = profile.minimumFontSizeSp.coerceAtMost(fontSizeCeiling)
-                val selection = TranslationFontSizeSearch.selectWithFloor(
+                val selection = TranslationTextFit.select(
                     minimum = minimum,
                     maximum = fontSizeCeiling,
                 ) { candidate ->
-                    val paragraph = subcompose("paragraph-$profileIndex-$candidate") {
-                        TranslationText(
-                            text = cleanText,
-                            fontSizeSp = candidate,
-                            fontFamily = fontFamily,
-                            color = block.foregroundColor?.let { Color(it) } ?: Color.Black,
-                            width = innerWidth,
-                        )
-                    }[0].measure(Constraints(maxWidth = innerWidthPx))
-                    paragraph.height <= innerHeightPx
+                    val paragraph = textMeasurer.measure(
+                        text = cleanText,
+                        style = translationTextStyle(baseTextStyle, candidate, fontFamily),
+                        constraints = Constraints(minWidth = innerWidthPx, maxWidth = innerWidthPx),
+                        softWrap = true,
+                        overflow = TextOverflow.Clip,
+                    )
+                    TranslationTextFit.Measurement(
+                        fits = !paragraph.hasVisualOverflow && paragraph.size.height <= innerHeightPx,
+                        keepsWords = TranslationTextFit.keepsWords(
+                            cleanText,
+                            (0 until paragraph.lineCount - 1).map { paragraph.getLineEnd(it, visibleEnd = true) },
+                        ),
+                    )
                 }
                 val candidate = FittedTranslationText(innerWidthPx, innerHeightPx, selection.fontSizeSp)
                 if (selection.fits) {
@@ -171,16 +180,19 @@ private fun TranslationText(
         softWrap = true,
         overflow = TextOverflow.Clip,
         textAlign = TextAlign.Center,
-        style = androidx.compose.ui.text.TextStyle(
-            lineBreak = LineBreak.Paragraph,
-            // Automatic hyphenation turns ordinary Portuguese words into
-            // artifacts such as "CON- VOCADOS" in narrow speech balloons.
-            // Compose still wraps naturally at spaces with hyphenation off.
-            hyphens = Hyphens.None,
-        ),
+        style = translationTextStyle(LocalTextStyle.current, fontSizeSp, fontFamily),
         modifier = modifier.width(width),
     )
 }
+
+internal fun translationTextStyle(base: TextStyle, fontSizeSp: Int, fontFamily: FontFamily): TextStyle = base.copy(
+    fontSize = fontSizeSp.sp,
+    lineHeight = (fontSizeSp * 0.98f).sp,
+    fontFamily = fontFamily,
+    textAlign = TextAlign.Center,
+    lineBreak = LineBreak.Paragraph,
+    hyphens = Hyphens.None,
+)
 
 private data class FittedTranslationText(
     val widthPx: Int,

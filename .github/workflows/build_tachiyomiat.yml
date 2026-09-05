@@ -104,7 +104,18 @@ jobs:
           storePassword: ${{ secrets.storePassword }}
           keyAlias: ${{ secrets.keyAlias }}
           keyPassword: ${{ secrets.keyPassword }}
-        run: ./gradlew assembleRelease -Penable-updater --stacktrace
+        run: ./gradlew assembleRelease -Penable-updater -Pandroid.injected.build.abi=arm64-v8a --stacktrace
+
+      - name: Test Paddle buffers and conservative Bubble fitting
+        run: >-
+          ./gradlew :app:testDebugUnitTest
+          --tests 'eu.kanade.translation.recognizer.FloatTensorOutputTest'
+          --tests 'eu.kanade.translation.recognizer.RecognitionBatchPlannerTest'
+          --tests 'eu.kanade.translation.presentation.TranslationTextFitTest'
+          --tests 'eu.kanade.translation.presentation.TranslationFontSizeSearchTest'
+          --tests 'eu.kanade.translation.presentation.TranslationFitPolicyTest'
+          --tests 'eu.kanade.translation.presentation.TranslationRotationFitTest'
+          --stacktrace
 
       - name: Package Yomotsu APK
         env:
@@ -162,7 +173,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Yomotsu-Y22-PP-OCRv6-Small-test1-arm64
+          name: Yomotsu-Y22-Paddle-speed-Bubble-fit-arm64
           path: dist/*
           if-no-files-found: error
 
@@ -197,7 +208,7 @@ jobs:
           api-level: 35
           arch: x86_64
           disable-animations: true
-          script: ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=eu.kanade.translation.recognizer.PaddleOcrV6SmokeTest --stacktrace
+          script: ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=eu.kanade.translation.recognizer.PaddleOcrV6SmokeTest,eu.kanade.translation.presentation.TranslationTextFitAndroidTest --stacktrace
       - uses: actions/upload-artifact@v4
         if: always()
         with:

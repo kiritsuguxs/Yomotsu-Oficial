@@ -142,7 +142,7 @@ class ORTSessionManager(
                     .orElseThrow { Exception("No output tensor found") }
                 val outputTensor = ortValue as? OnnxTensor
                     ?: throw Exception("Output is not an ONNX tensor")
-                Pair(copyFloatBuffer(outputTensor.floatBuffer), outputTensor.info.shape)
+                Pair(FloatTensorOutput.read(outputTensor.floatBuffer), outputTensor.info.shape)
             } catch (t: Throwable) {
                 throw OCRError.InferenceFailed(modelName, t)
             }
@@ -150,8 +150,15 @@ class ORTSessionManager(
             result.close()
         }
     }
+}
 
-    private fun copyFloatBuffer(buffer: FloatBuffer): FloatArray {
+object FloatTensorOutput {
+    fun read(buffer: FloatBuffer): FloatArray {
+        // ORT getFloatBuffer() already owns a copy independent of the native Result.
+        // Reuse that complete heap array instead of copying the v6 vocabulary tensor again.
+        if (buffer.hasArray() && buffer.arrayOffset() == 0 && buffer.limit() == buffer.array().size) {
+            return buffer.array()
+        }
         val duplicate = buffer.duplicate()
         duplicate.rewind()
         val output = FloatArray(duplicate.remaining())

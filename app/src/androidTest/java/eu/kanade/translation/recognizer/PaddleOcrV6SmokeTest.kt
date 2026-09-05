@@ -9,12 +9,16 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.paddle.ocr.PaddleOCR
 import com.paddle.ocr.model.ModelConfig
+import com.paddle.ocr.preprocess.RecPreprocessor
 import com.paddle.ocr.util.OpenCVUtils
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.opencv.core.CvType
+import org.opencv.core.Mat
+import org.opencv.core.Scalar
 
 @RunWith(AndroidJUnit4::class)
 class PaddleOcrV6SmokeTest {
@@ -45,9 +49,37 @@ class PaddleOcrV6SmokeTest {
                 assertTrue("Recognized text: ${line.text}", line.text.contains("HELLO"))
                 assertTrue("Recognized text: ${line.text}", line.text.contains("WORLD"))
             }
+            val repeated = ocr.recognize(bitmap)
+            assertEquals("Reused sessions preserve text, boxes and confidence", result.results, repeated.results)
         } finally {
             ocr.release()
             bitmap.recycle()
+        }
+    }
+
+    @Test
+    fun reusedPreprocessBufferPreservesRgbNormalizationShapesAndPadding() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        assertTrue(OpenCVUtils.init(context))
+        val widths = listOf(14, 7, 29)
+        val bgr = listOf(Scalar(0.0, 255.0, 0.0), Scalar(255.0, 0.0, 255.0), Scalar(0.0, 0.0, 255.0))
+        val rgb = listOf(floatArrayOf(-1f, 1f, -1f), floatArrayOf(1f, -1f, 1f), floatArrayOf(1f, -1f, -1f))
+        val crops = widths.mapIndexed { index, width -> Mat(48, width, CvType.CV_8UC3, bgr[index]) }
+        try {
+            val result = RecPreprocessor.preprocessBatch(crops)
+            assertTrue(longArrayOf(3, 3, 48, 29).contentEquals(result.shape))
+            for (batch in 0..2) {
+                for (channel in 0..2) {
+                    for (row in 0 until 48) {
+                        for (column in 0 until 29) {
+                            val expected = if (column < widths[batch]) rgb[batch][channel] else 0f
+                            assertEquals(expected, result.tensorData[((batch * 3 + channel) * 48 + row) * 29 + column], 0f)
+                        }
+                    }
+                }
+            }
+        } finally {
+            crops.forEach { it.release() }
         }
     }
 }

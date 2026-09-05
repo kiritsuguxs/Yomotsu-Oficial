@@ -83,12 +83,12 @@ object RecPreprocessor {
         // Build tensor data
         val channelSize = FIXED_HEIGHT * maxW
         val tensorData = FloatArray(n * 3 * channelSize)
+        val buf = FloatArray(channelSize)
         for (b in 0 until n) {
             val mat = paddedMats[b]
             val channels = mutableListOf<Mat>()
             Core.split(mat, channels)
             for (c in 0..2) {
-                val buf = FloatArray(channelSize)
                 channels[c].get(0, 0, buf)
                 System.arraycopy(buf, 0, tensorData, (b * 3 + c) * channelSize, channelSize)
                 channels[c].release()
