@@ -97,15 +97,6 @@ jobs:
             cp "$RUNNER_TEMP/yomotsu-icon.png" "app/src/main/res/mipmap-$density/ic_launcher.png"
           done
 
-      - name: Build arm64 APK with updater
-        env:
-          MIHON_GITHUB_RELEASE: "true"
-          storeFileBase64: ${{ secrets.storeFileBase64 }}
-          storePassword: ${{ secrets.storePassword }}
-          keyAlias: ${{ secrets.keyAlias }}
-          keyPassword: ${{ secrets.keyPassword }}
-        run: ./gradlew assembleRelease -Penable-updater -Pandroid.injected.build.abi=arm64-v8a --stacktrace
-
       - name: Test Paddle buffers and conservative Bubble fitting
         run: >-
           ./gradlew :app:testDebugUnitTest
@@ -117,16 +108,36 @@ jobs:
           --tests 'eu.kanade.translation.presentation.TranslationRotationFitTest'
           --stacktrace
 
+      - name: Build arm64 APK with updater
+        env:
+          MIHON_GITHUB_RELEASE: "true"
+          storeFileBase64: ${{ secrets.storeFileBase64 }}
+          storePassword: ${{ secrets.storePassword }}
+          keyAlias: ${{ secrets.keyAlias }}
+          keyPassword: ${{ secrets.keyPassword }}
+        run: ./gradlew assembleRelease -Penable-updater -Pandroid.injected.build.abi=arm64-v8a --stacktrace
+
       - name: Package Yomotsu APK
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
           mkdir -p dist
-          # The injected ABI builds one APK without an ABI suffix in its filename.
-          mapfile -t apk_paths < <(find app/build/outputs/apk/release -type f -name '*.apk')
-          test "${#apk_paths[@]}" -eq 1
-          cp "${apk_paths[0]}" "dist/Yomotsu-${VERSION}-arm64.apk"
+          # IDE ABI injection can use an intermediates APK directory. Select by
+          # actual package identity and native ABI, independent of output naming.
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
+          apk_path=""
+          while IFS= read -r candidate; do
+            badging="$("$AAPT" dump badging "$candidate")"
+            if grep -Fq "package: name='app.mihon.tachiyomiat' versionCode='80' versionName='0.20.4-Y21'" <<< "$badging" &&
+               grep -Eq "^native-code: 'arm64-v8a'[[:space:]]*$" <<< "$badging"; then
+              apk_path="$candidate"
+              break
+            fi
+          done < <(find app/build -type f -name '*.apk' | sort)
+          test -n "$apk_path"
+          echo "Packaging verified ARM64 APK: $apk_path"
+          cp "$apk_path" "dist/Yomotsu-${VERSION}-arm64.apk"
 
       - name: Verify APK identity and PaddleOCR assets
         env:
