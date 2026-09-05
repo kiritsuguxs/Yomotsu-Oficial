@@ -123,9 +123,10 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          apk_path="$(find app/build/outputs/apk/release -type f -name '*arm64-v8a*.apk' | head -n 1)"
-          test -n "$apk_path"
-          cp "$apk_path" "dist/Yomotsu-${VERSION}-arm64.apk"
+          # The injected ABI builds one APK without an ABI suffix in its filename.
+          mapfile -t apk_paths < <(find app/build/outputs/apk/release -type f -name '*.apk')
+          test "${#apk_paths[@]}" -eq 1
+          cp "${apk_paths[0]}" "dist/Yomotsu-${VERSION}-arm64.apk"
 
       - name: Verify APK identity and PaddleOCR assets
         env:
@@ -151,6 +152,7 @@ jobs:
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
           test -x "$AAPT"
           badging="$("$AAPT" dump badging "$apk_path")"
+          grep -Eq "^native-code: 'arm64-v8a'[[:space:]]*$" <<< "$badging"
           grep -Fq \
             "package: name='app.mihon.tachiyomiat' versionCode='80' versionName='0.20.4-Y21'" \
             <<< "$badging"

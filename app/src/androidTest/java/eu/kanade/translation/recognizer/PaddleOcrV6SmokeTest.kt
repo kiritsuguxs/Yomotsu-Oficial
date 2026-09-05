@@ -9,6 +9,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.paddle.ocr.PaddleOCR
 import com.paddle.ocr.model.ModelConfig
+import com.paddle.ocr.preprocess.RecPreprocessResult
 import com.paddle.ocr.preprocess.RecPreprocessor
 import com.paddle.ocr.util.OpenCVUtils
 import kotlinx.coroutines.runBlocking
@@ -16,9 +17,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.opencv.core.CvType
-import org.opencv.core.Mat
-import org.opencv.core.Scalar
 
 @RunWith(AndroidJUnit4::class)
 class PaddleOcrV6SmokeTest {
@@ -62,11 +60,23 @@ class PaddleOcrV6SmokeTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         assertTrue(OpenCVUtils.init(context))
         val widths = listOf(14, 7, 29)
-        val bgr = listOf(Scalar(0.0, 255.0, 0.0), Scalar(255.0, 0.0, 255.0), Scalar(0.0, 0.0, 255.0))
+        // OpenCV is an implementation dependency of ppocr-sdk. Exercise its runtime
+        // boundary without exposing it to the app or adding a test dependency.
+        val matClass = Class.forName("org.opencv.core.Mat")
+        val scalarClass = Class.forName("org.opencv.core.Scalar")
+        val scalarConstructor = scalarClass.getConstructor(java.lang.Double.TYPE, java.lang.Double.TYPE, java.lang.Double.TYPE)
+        val bgr = listOf(
+            scalarConstructor.newInstance(0.0, 255.0, 0.0),
+            scalarConstructor.newInstance(255.0, 0.0, 255.0),
+            scalarConstructor.newInstance(0.0, 0.0, 255.0),
+        )
         val rgb = listOf(floatArrayOf(-1f, 1f, -1f), floatArrayOf(1f, -1f, 1f), floatArrayOf(1f, -1f, -1f))
-        val crops = widths.mapIndexed { index, width -> Mat(48, width, CvType.CV_8UC3, bgr[index]) }
+        val matConstructor = matClass.getConstructor(Integer.TYPE, Integer.TYPE, Integer.TYPE, scalarClass)
+        val cv8uc3 = Class.forName("org.opencv.core.CvType").getField("CV_8UC3").getInt(null)
+        val crops = widths.mapIndexed { index, width -> matConstructor.newInstance(48, width, cv8uc3, bgr[index]) }
         try {
-            val result = RecPreprocessor.preprocessBatch(crops)
+            val result = RecPreprocessor::class.java.getMethod("preprocessBatch", List::class.java)
+                .invoke(RecPreprocessor, crops) as RecPreprocessResult
             assertTrue(longArrayOf(3, 3, 48, 29).contentEquals(result.shape))
             for (batch in 0..2) {
                 for (channel in 0..2) {
@@ -79,7 +89,7 @@ class PaddleOcrV6SmokeTest {
                 }
             }
         } finally {
-            crops.forEach { it.release() }
+            crops.forEach { matClass.getMethod("release").invoke(it) }
         }
     }
 }
