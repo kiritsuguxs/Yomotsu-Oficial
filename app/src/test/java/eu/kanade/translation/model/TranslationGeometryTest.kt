@@ -7,6 +7,32 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class TranslationGeometryTest {
+    @Test
+    fun `IoU and directional coverage distinguish overlap from containment`() {
+        val first = TranslationRegion(0f, 0f, 10f, 10f)
+        val overlap = TranslationRegion(5f, 0f, 10f, 10f)
+        val inner = TranslationRegion(2f, 2f, 2f, 2f)
+        assertEquals(1f, first.intersectionOverUnion(first))
+        assertEquals(1f / 3f, first.intersectionOverUnion(overlap), 0.00001f)
+        assertEquals(first.intersectionOverUnion(overlap), overlap.intersectionOverUnion(first))
+        assertEquals(0.5f, first.overlapFraction(overlap))
+        assertEquals(1f, inner.overlapFraction(first))
+        assertEquals(0.04f, first.overlapFraction(inner), 0.00001f)
+    }
+
+    @Test
+    fun `disjoint touching and invalid geometry have zero overlap`() {
+        val first = TranslationRegion(0f, 0f, 10f, 10f)
+        listOf(
+            TranslationRegion(10f, 0f, 10f, 10f),
+            TranslationRegion(20f, 0f, 10f, 10f),
+            first.copy(width = 0f), first.copy(height = -1f),
+            first.copy(x = Float.NaN), first.copy(width = Float.POSITIVE_INFINITY),
+        ).forEach {
+            assertEquals(0f, first.intersectionOverUnion(it))
+            assertEquals(0f, it.overlapFraction(first))
+        }
+    }
 
     @Test
     fun `cleanup region expands OCR bounds and stays inside page`() {

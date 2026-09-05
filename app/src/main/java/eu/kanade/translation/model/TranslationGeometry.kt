@@ -4,6 +4,32 @@ import kotlin.math.max
 
 const val CURRENT_TRANSLATION_GEOMETRY_VERSION = 2
 
+/** Directional coverage; invalid or empty rectangles carry no geometric evidence. */
+fun TranslationRegion.overlapFraction(other: TranslationRegion): Float {
+    val area = validArea()
+    if (area == 0.0 || other.validArea() == 0.0) return 0f
+    return (intersectionArea(other) / area).toFloat().coerceIn(0f, 1f)
+}
+
+fun TranslationRegion.intersectionOverUnion(other: TranslationRegion): Float {
+    val first = validArea()
+    val second = other.validArea()
+    if (first == 0.0 || second == 0.0) return 0f
+    val intersection = intersectionArea(other)
+    return (intersection / (first + second - intersection)).toFloat().coerceIn(0f, 1f)
+}
+
+private fun TranslationRegion.validArea(): Double =
+    if (x.isFinite() && y.isFinite() && width.isFinite() && height.isFinite() && width > 0f && height > 0f) {
+        width.toDouble() * height
+    } else {
+        0.0
+    }
+
+private fun TranslationRegion.intersectionArea(other: TranslationRegion): Double =
+    (minOf(x.toDouble() + width, other.x.toDouble() + other.width) - maxOf(x, other.x)).coerceAtLeast(0.0) *
+        (minOf(y.toDouble() + height, other.y.toDouble() + other.height) - maxOf(y, other.y)).coerceAtLeast(0.0)
+
 /**
  * Conservative fallback used by old translation files and whenever a balloon
  * cannot be detected from the page pixels.

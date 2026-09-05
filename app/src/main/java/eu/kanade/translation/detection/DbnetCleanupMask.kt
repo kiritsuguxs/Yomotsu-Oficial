@@ -278,15 +278,24 @@ class DbnetCleanupMask private constructor(
                 if (row.isNotEmpty()) base[y] = row
             }
 
+            // One extra original-page pixel only for sparse, high-confidence, large line masks.
+            // Keep the exact member quads and the existing density/output caps as hard limits.
+            val basePixels = base.values.sumOf { row -> row.sumOf { it.length.toLong() } }
+            val refine = basePixels * 100L <= permissionPixels * 10L && permissions.all { line ->
+                val top = kotlin.math.hypot(line.topRight.x - line.topLeft.x, line.topRight.y - line.topLeft.y)
+                val side = kotlin.math.hypot(line.bottomLeft.x - line.topLeft.x, line.bottomLeft.y - line.topLeft.y)
+                line.confidence >= 0.95f && minOf(top, side) >= 24f
+            }
+            val dilationRadius = DILATION_RADIUS + if (refine) 1 else 0
             val output = ArrayList<Int>()
             var ownerErasedPixels = 0L
             permitted.forEach { (y, permissionRuns) ->
                 val expanded = mutableListOf<Interval>()
-                for (sourceY in y - DILATION_RADIUS..y + DILATION_RADIUS) {
+                for (sourceY in y - dilationRadius..y + dilationRadius) {
                     base[sourceY]?.forEach { run ->
                         expanded += Interval(
-                            (run.start - DILATION_RADIUS).coerceAtLeast(0),
-                            (run.end + DILATION_RADIUS).coerceAtMost(pageWidth - 1),
+                            (run.start - dilationRadius).coerceAtLeast(0),
+                            (run.end + dilationRadius).coerceAtMost(pageWidth - 1),
                         )
                     }
                 }

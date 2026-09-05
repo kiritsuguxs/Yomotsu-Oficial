@@ -51,8 +51,8 @@ jobs:
         run: |
           set -euo pipefail
           grep -Fq 'applicationId = "app.mihon.tachiyomiat"' app/build.gradle.kts
-          grep -Fq 'versionCode = 79' app/build.gradle.kts
-          grep -Fq 'versionName = "0.20.4-Y20"' app/build.gradle.kts
+          grep -Fq 'versionCode = 80' app/build.gradle.kts
+          grep -Fq 'versionName = "0.20.4-Y21-experimental"' app/build.gradle.kts
           grep -Fq 'class TranslationJob' app/src/main/java/eu/kanade/translation/TranslationJob.kt
           grep -Fq 'fun onPageProgress' app/src/main/java/eu/kanade/translation/TranslationNotifier.kt
           grep -Fq 'enum class OcrEngineType' app/src/main/java/eu/kanade/translation/recognizer/OcrEngineType.kt
@@ -165,7 +165,7 @@ jobs:
           test -x "$AAPT"
           badging="$("$AAPT" dump badging "$apk_path")"
           grep -Fq \
-            "package: name='app.mihon.tachiyomiat' versionCode='79' versionName='0.20.4-Y20'" \
+            "package: name='app.mihon.tachiyomiat' versionCode='80' versionName='0.20.4-Y21-experimental'" \
             <<< "$badging"
 
       - name: Verify APK signature

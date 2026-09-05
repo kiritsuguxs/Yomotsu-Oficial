@@ -20,6 +20,29 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class DbnetCleanupMaskTest {
+    @Test fun `high confidence sparse large glyph mask gains only one extra pixel inside permission`() {
+        val permission = line(2f, 2f, 30f, 30f).copy(confidence = 0.98f)
+        val prepared = prepare(
+            32, 32, mask(32, 32, 32, 32, setOf(15 to 15, 2 to 2)),
+            listOf(group(0, permission)),
+        )
+        val erased = pixels(requireNotNull(prepared.blocks.single().dbnetCleanupMask), 32, 32)
+        assertTrue(18 to 15 in erased, "Cover the third-pixel glyph fringe")
+        assertFalse(19 to 15 in erased, "Never grow more than three pixels")
+        assertTrue(erased.all { (x, y) -> x in 2..29 && y in 2..29 })
+        assertTrue(erased.size < 100, "Sparse glyphs must not turn into a solid rectangle")
+    }
+
+    @Test fun `uncertain mask keeps the existing two pixel expansion`() {
+        val prepared = prepare(
+            32, 32, mask(32, 32, 32, 32, setOf(15 to 15)),
+            listOf(group(0, line(2f, 2f, 30f, 30f).copy(confidence = 0.8f))),
+        )
+        val erased = pixels(requireNotNull(prepared.blocks.single().dbnetCleanupMask), 32, 32)
+        assertTrue(17 to 15 in erased)
+        assertFalse(18 to 15 in erased)
+    }
+
     @Test fun `mask keeps glyphs inside translated member quads and removes outside pixels`() {
         val inside = line(0f, 0f, 4f, 4f)
         val prepared = prepare(

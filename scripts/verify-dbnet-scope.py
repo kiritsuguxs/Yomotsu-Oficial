@@ -1,26 +1,22 @@
 #!/usr/bin/env python3
-"""Reject edits outside the approved translator UI port and repository migration."""
+"""Reject edits outside the approved Y21 recovery and bounded mask experiment."""
 from pathlib import Path
 import subprocess
 
 BASE = "origin/main"
 allowed = {
-    ".github/workflows/build.yml",
-    ".github/workflows/build_tachiyomiat.yml",
-    ".github/workflows/pages.yml",
-    ".github/workflows/release.yml",
-    "app/build.gradle.kts",
-    "app/src/main/java/eu/kanade/tachiyomi/data/updater/AppUpdateChecker.kt",
-    "app/src/main/java/eu/kanade/presentation/more/settings/screen/SettingsTranslationScreen.kt",
-    "app/src/main/java/eu/kanade/translation/ChapterTranslator.kt",
-    "app/src/main/java/eu/kanade/translation/translator/TextTranslator.kt",
-    "app/src/test/java/eu/kanade/presentation/more/settings/screen/TranslationEngineSettingsVisibilityTest.kt",
-    "app/src/test/java/eu/kanade/tachiyomi/data/updater/AppUpdateRepositoryTest.kt",
-    "app/src/test/java/tachiyomi/domain/translation/TranslationLlmPreferencesTest.kt",
-    "domain/src/main/java/tachiyomi/domain/translation/TranslationPreferences.kt",
-    "scripts/verify-dbnet-apk.py",
-    "scripts/verify-dbnet-scope.py",
+    '.github/workflows/build_tachiyomiat.yml',
+    'app/build.gradle.kts',
+    'scripts/verify-dbnet-scope.py',
+    'app/src/main/java/eu/kanade/translation/ChapterTranslator.kt',
+    'app/src/main/java/eu/kanade/translation/model/TranslationRecoveryPolicy.kt',
+    'app/src/main/java/eu/kanade/translation/model/TranslationGeometry.kt',
+    'app/src/main/java/eu/kanade/translation/detection/DbnetCleanupMask.kt',
+    'app/src/test/java/eu/kanade/translation/model/TranslationRecoveryPolicyTest.kt',
+    'app/src/test/java/eu/kanade/translation/model/TranslationGeometryTest.kt',
+    'app/src/test/java/eu/kanade/translation/detection/DbnetCleanupMaskTest.kt',
 }
+
 subprocess.run(["git", "fetch", "--quiet", "origin", "main"], check=True)
 changed = subprocess.check_output(["git", "diff", "--name-only", f"{BASE}...HEAD"], text=True).splitlines()
 invalid = [path for path in changed if path not in allowed]
@@ -46,5 +42,5 @@ print(f"Scope verified against {BASE}: {len(changed)} files, only approved integ
 print("Normal ML Kit/Paddle engines and weights, translators, memory/cache/glossary, "
       "SmartTranslationBlock/text fit, fonts, auto-scroll and existing migrations "
       "are byte-identical.")
-print("Only the approved translator UI port, updater repository migration, and required "
-      "clean-history workflow adaptations are allowlisted.")
+print("Only the approved Y21 classification, geometry, mask, tests, version, and required "
+      "workflow adaptations are allowlisted.")

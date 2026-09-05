@@ -14,6 +14,7 @@ import eu.kanade.translation.model.PageTranslation
 import eu.kanade.translation.model.Translation
 import eu.kanade.translation.model.TranslationBlock
 import eu.kanade.translation.model.TranslationBlockGrouper
+import eu.kanade.translation.model.TranslationRecoveryPolicy
 import eu.kanade.translation.model.TranslationRegion
 import eu.kanade.translation.model.normalizeTranslationText
 import eu.kanade.translation.model.withReliableSourceMetrics
@@ -372,10 +373,7 @@ class ChapterTranslator(
     }
 
     private fun isTranslatableBlock(block: TranslationBlock): Boolean {
-        val layout = block.layoutRegion ?: return false
-        val widthToHeight = layout.width / layout.height.coerceAtLeast(1f)
-        if (widthToHeight < MIN_TRANSLATABLE_WIDTH_TO_HEIGHT) return false
-        return block.balloonDetected || block.backgroundColor != null
+        return TranslationRecoveryPolicy.isTranslatable(block)
     }
 
     private fun decodeAnalysisBitmap(file: UniFile, width: Int, height: Int): Bitmap? = runCatching {
@@ -496,6 +494,5 @@ class ChapterTranslator(
         const val NANOS_PER_MILLISECOND = 1_000_000L
         const val MAX_ANALYSIS_PIXELS = 6_000_000L
         const val MIN_ANALYSIS_WIDTH = 128
-        const val MIN_TRANSLATABLE_WIDTH_TO_HEIGHT = 0.38f
     }
 }
