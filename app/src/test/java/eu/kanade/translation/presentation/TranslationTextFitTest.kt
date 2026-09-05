@@ -40,8 +40,24 @@ class TranslationTextFitTest {
         }
         assertEquals(13, result.fontSizeSp)
         assertTrue(result.fits)
+        assertFalse(result.keepsWords)
         assertFalse(TranslationTextFit.select(6, 25) {
             TranslationTextFit.Measurement(false, true)
         }.fits)
+    }
+
+    @Test
+    fun `signals when another existing safe envelope can avoid a split`() {
+        val narrow = TranslationTextFit.select(6, 25) { size ->
+            TranslationTextFit.Measurement(size <= 13, false)
+        }
+        val wider = TranslationTextFit.select(5, 25) { size ->
+            TranslationTextFit.Measurement(size <= 13, size <= 7)
+        }
+        assertTrue(narrow.fits)
+        assertFalse(narrow.keepsWords)
+        assertTrue(wider.fits)
+        assertTrue(wider.keepsWords)
+        assertEquals(7, wider.fontSizeSp)
     }
 }

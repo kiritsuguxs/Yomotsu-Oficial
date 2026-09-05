@@ -95,6 +95,7 @@ fun SmartTranslationBlock(
             val fontSizeCeiling = TranslationTextFit.maximumFontSize(sourceFontSizeCeiling, block.balloonDetected)
 
             var fitted: FittedTranslationText? = null
+            var splitWordFallback: FittedTranslationText? = null
             var readableFloorFallback: FittedTranslationText? = null
             val profiles = TranslationFitPolicy.progressiveProfiles(block)
             for (profile in profiles) {
@@ -131,14 +132,18 @@ fun SmartTranslationBlock(
                     )
                 }
                 val candidate = FittedTranslationText(innerWidthPx, innerHeightPx, selection.fontSizeSp)
-                if (selection.fits) {
+                if (selection.fits && selection.keepsWords) {
                     fitted = candidate
+                } else if (selection.fits) {
+                    // Try the remaining existing safe envelopes before accepting
+                    // an emergency word split; retain the original fitting fallback.
+                    if (splitWordFallback == null) splitWordFallback = candidate
                 } else {
                     readableFloorFallback = candidate
                 }
             }
 
-            val selected = fitted ?: requireNotNull(readableFloorFallback)
+            val selected = fitted ?: splitWordFallback ?: requireNotNull(readableFloorFallback)
             val innerWidth = with(density) { selected.widthPx.toDp() }
 
             val placeable = subcompose("final") {
