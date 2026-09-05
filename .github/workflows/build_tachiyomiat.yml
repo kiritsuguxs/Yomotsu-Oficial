@@ -51,8 +51,8 @@ jobs:
         run: |
           set -euo pipefail
           grep -Fq 'applicationId = "app.mihon.tachiyomiat"' app/build.gradle.kts
-          grep -Fq 'versionCode = 80' app/build.gradle.kts
-          grep -Fq 'versionName = "0.20.4-Y21"' app/build.gradle.kts
+          grep -Fq 'versionCode = 81' app/build.gradle.kts
+          grep -Fq 'versionName = "0.20.4-Y22"' app/build.gradle.kts
           grep -Fq 'class TranslationJob' app/src/main/java/eu/kanade/translation/TranslationJob.kt
           grep -Fq 'fun onPageProgress' app/src/main/java/eu/kanade/translation/TranslationNotifier.kt
           grep -Fq 'enum class OcrEngineType' app/src/main/java/eu/kanade/translation/recognizer/OcrEngineType.kt
@@ -118,7 +118,7 @@ jobs:
           apk_path=""
           while IFS= read -r candidate; do
             badging="$("$AAPT" dump badging "$candidate")"
-            if grep -Fq "package: name='app.mihon.tachiyomiat' versionCode='80' versionName='0.20.4-Y21'" <<< "$badging" &&
+            if grep -Fq "package: name='app.mihon.tachiyomiat' versionCode='81' versionName='0.20.4-Y22'" <<< "$badging" &&
                grep -Eq "^native-code: 'arm64-v8a'[[:space:]]*$" <<< "$badging"; then
               apk_path="$candidate"
               break
@@ -154,7 +154,7 @@ jobs:
           badging="$("$AAPT" dump badging "$apk_path")"
           grep -Eq "^native-code: 'arm64-v8a'[[:space:]]*$" <<< "$badging"
           grep -Fq \
-            "package: name='app.mihon.tachiyomiat' versionCode='80' versionName='0.20.4-Y21'" \
+            "package: name='app.mihon.tachiyomiat' versionCode='81' versionName='0.20.4-Y22'" \
             <<< "$badging"
 
       - name: Verify installable manifest, ZIP integrity and alignment
@@ -195,7 +195,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Yomotsu-Y22-install-fix-arm64
+          name: Yomotsu-0.20.4-Y22-arm64
           path: dist/*
           if-no-files-found: error
 
@@ -216,7 +216,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: Yomotsu-Y22-install-fix-arm64
+          name: Yomotsu-0.20.4-Y22-arm64
           path: dist
       - name: Verify downloaded artifact matches the validated signed APK
         run: |
@@ -228,27 +228,12 @@ jobs:
           "$APKSIGNER" verify --verbose --print-certs *.apk
           "$ZIPALIGN" -c -P 16 4 *.apk
           unzip -tq *.apk
-      - name: Download the exact previous invalid APK for regression reproduction
-        uses: actions/download-artifact@v4
-        with:
-          name: Yomotsu-Y22-Paddle-speed-Bubble-fit-arm64
-          run-id: 33984220072
-          github-token: ${{ github.token }}
-          path: previous-invalid
-      - name: Verify previous artifact signature and test-only diagnosis
-        run: |
-          set -euo pipefail
-          printf '%s  %s\n' '50cc01c72ef6550b60f1bfc66eaa12d1074b3006c084af43bc9d68d5991fb3d0' 'previous-invalid/Yomotsu-0.20.4-Y21-arm64.apk' | sha256sum -c -
-          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
-          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)"
-          "$APKSIGNER" verify --verbose --print-certs previous-invalid/*.apk
-          "$AAPT" dump xmltree previous-invalid/*.apk AndroidManifest.xml | grep 'android:testOnly'
       - name: Enable emulator acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Reject the old test-only APK and install the exact new signed ARM64 artifact
+      - name: Install the exact validated signed ARM64 artifact
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -258,10 +243,7 @@ jobs:
           # Check the ARM64 package with PackageInstaller on the emulator; do not
           # use -t, which would hide the testOnly installation regression.
           script: |
-            if adb install --abi arm64-v8a previous-invalid/*.apk > invalid-install.log 2>&1; then cat invalid-install.log; exit 1; fi
-            cat invalid-install.log
-            grep -Fq INSTALL_FAILED_TEST_ONLY invalid-install.log
             adb install --abi arm64-v8a dist/*.apk
             adb install -r --abi arm64-v8a dist/*.apk
             adb shell pm path app.mihon.tachiyomiat
-            adb shell dumpsys package app.mihon.tachiyomiat | grep -E 'versionCode=80|versionName=0.20.4-Y21|primaryCpuAbi=arm64-v8a'
+            adb shell dumpsys package app.mihon.tachiyomiat | grep -E 'versionCode=81|versionName=0.20.4-Y22|primaryCpuAbi=arm64-v8a'

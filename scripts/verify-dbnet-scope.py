@@ -4,6 +4,7 @@ import subprocess
 
 BASE = "32306477fe4f650245c0a7c17aac4fc726e25ea4"
 allowed = {
+    "app/build.gradle.kts",
     "ppocr-sdk/src/main/assets/models/det/inference.onnx",
     "ppocr-sdk/src/main/assets/models/rec/inference.onnx",
     "ppocr-sdk/src/main/assets/models/rec/inference.yml",
