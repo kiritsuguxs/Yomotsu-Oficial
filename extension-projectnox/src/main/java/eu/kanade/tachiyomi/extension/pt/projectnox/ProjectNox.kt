@@ -113,7 +113,7 @@ class ProjectNox : HttpSource() {
      * The response has a `nodes` array where index 0 is layout data and index 1 is page data.
      */
     private fun parseSvelteResponse(response: Response): JsonObject {
-        val body = response.body.string()
+        val body = response.body?.string().orEmpty()
         val root = json.parseToJsonElement(body).jsonObject
         val nodes = root["nodes"]!!.jsonArray
 
@@ -206,7 +206,7 @@ class ProjectNox : HttpSource() {
      * Parse a single manga from the obra details endpoint (used for slug search / deep links).
      */
     private fun parseSlugSearchResponse(response: Response): MangasPage {
-        val body = response.body.string()
+        val body = response.body?.string().orEmpty()
         val root = json.parseToJsonElement(body).jsonObject
         val nodes = root["nodes"]!!.jsonArray
         val pageNode = nodes[1].jsonObject
@@ -236,7 +236,7 @@ class ProjectNox : HttpSource() {
     // ======================== Catalog Parser ========================
 
     private fun parseCatalogResponse(response: Response): MangasPage {
-        val body = response.body.string()
+        val body = response.body?.string().orEmpty()
         val root = json.parseToJsonElement(body).jsonObject
         val nodes = root["nodes"]!!.jsonArray
         val pageNode = nodes[1].jsonObject
@@ -286,7 +286,7 @@ class ProjectNox : HttpSource() {
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
-        val body = response.body.string()
+        val body = response.body?.string().orEmpty()
         val root = json.parseToJsonElement(body).jsonObject
         val nodes = root["nodes"]!!.jsonArray
         val pageNode = nodes[1].jsonObject
@@ -341,7 +341,7 @@ class ProjectNox : HttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val body = response.body.string()
+        val body = response.body?.string().orEmpty()
         val root = json.parseToJsonElement(body).jsonObject
         val nodes = root["nodes"]!!.jsonArray
         val pageNode = nodes[1].jsonObject
@@ -379,7 +379,7 @@ class ProjectNox : HttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> {
-        val body = response.body.string()
+        val body = response.body?.string().orEmpty()
         val root = json.parseToJsonElement(body).jsonObject
         val nodes = root["nodes"]!!.jsonArray
         val pageNode = nodes[1].jsonObject
