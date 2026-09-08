@@ -1,0 +1,107 @@
+name: Build Extension APK
+
+on:
+  push:
+    branches:
+      - extensão
+    paths:
+      - 'extension-projectnox/**'
+  pull_request:
+    branches:
+      - extensão
+    paths:
+      - 'extension-projectnox/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Project Nox Extension
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x extension-projectnox/gradlew
+        working-directory: .
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug
+        working-directory: extension-projectnox
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-nox-extension-debug
+          path: extension-projectnox/build/outputs/apk/debug/*.apk
+          retention-days: 30
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/extensão'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x extension-projectnox/gradlew
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease
+        working-directory: extension-projectnox
+
+      - name: Get version info
+        id: version
+        run: |
+          VERSION=$(grep 'versionName' extension-projectnox/build.gradle.kts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "ext-projectnox-v${{ steps.version.outputs.version }}"
+          name: "Project Nox Extension v${{ steps.version.outputs.version }}"
+          body: |
+            ## 🎮 Project Nox - Extensão Mihon/Yomotsu
+
+            Extensão para leitura de mangás, manhwas e webtoons do site Project Nox.
+
+            ### Funcionalidades:
+            - 📖 Catálogo completo com navegação
+            - 🔍 Busca por nome
+            - 🏷️ Filtros por formato (Manhwa, Manga, Manhua)
+            - 📊 Filtro por status (Em andamento, Completo, etc.)
+            - 🎯 Filtro por gêneros e tags
+            - 📑 Ordenação (Recentes, Populares, A-Z)
+            - 🔗 Deep links (abrir links do site direto no app)
+
+            ### Instalação:
+            1. Baixe o APK abaixo
+            2. Instale no seu dispositivo Android
+            3. Abra o Mihon/Yomotsu e a extensão aparecerá automaticamente
+
+          files: |
+            extension-projectnox/build/outputs/apk/release/*.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

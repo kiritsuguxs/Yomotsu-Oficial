@@ -1,0 +1,131 @@
+name: Build & Release Project Nox Extension
+
+on:
+  push:
+    branches:
+      - extensão
+    paths:
+      - 'extension-projectnox/**'
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Create a release?'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  build:
+    name: 🔨 Build Extension APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: 🔧 Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 📦 Build debug APK
+        working-directory: extension-projectnox
+        run: |
+          chmod +x gradlew 2>/dev/null || true
+          # If no gradlew, use system gradle
+          if [ -f gradlew ]; then
+            ./gradlew assembleDebug --no-daemon
+          else
+            gradle assembleDebug --no-daemon
+          fi
+
+      - name: 📤 Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: projectnox-extension-debug
+          path: extension-projectnox/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: 📦 Build release APK
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.release == 'true')
+        working-directory: extension-projectnox
+        run: |
+          if [ -f gradlew ]; then
+            ./gradlew assembleRelease --no-daemon
+          else
+            gradle assembleRelease --no-daemon
+          fi
+
+      - name: 📤 Upload release APK
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.release == 'true')
+        uses: actions/upload-artifact@v4
+        with:
+          name: projectnox-extension-release
+          path: extension-projectnox/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+          retention-days: 30
+
+  release:
+    name: 🚀 Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.release == 'true')
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📥 Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: projectnox-extension-release
+          path: release-apk/
+
+      - name: 🏷️ Get version
+        id: version
+        run: |
+          VERSION=$(grep -oP 'versionName\s*=\s*"\K[^"]+' extension-projectnox/build.gradle.kts | head -1)
+          VERSION_CODE=$(grep -oP 'versionCode\s*=\s*\K\d+' extension-projectnox/build.gradle.kts | head -1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
+
+      - name: 📝 Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "ext-v${{ steps.version.outputs.version }}"
+          name: "🌙 Project Nox Extension v${{ steps.version.outputs.version }}"
+          body: |
+            ## Project Nox - Extensão para Mihon/Yomotsu v${{ steps.version.outputs.version }}
+
+            **Versão:** ${{ steps.version.outputs.version }}
+            **Código de versão:** ${{ steps.version.outputs.version_code }}
+
+            ### ✨ Funcionalidades
+            - 📖 Catálogo completo de mangás, manhwas e webtoons
+            - 🔍 Busca por título
+            - 🏷️ Filtros por formato (Manhwa/Manga/Manhua)
+            - 📊 Filtro por status de publicação
+            - 🎯 26 gêneros e tags disponíveis
+            - 📑 Múltiplas opções de ordenação
+            - 🔗 Suporte a deep links
+
+            ### 📱 Como instalar
+            1. Baixe o arquivo `.apk` abaixo
+            2. Instale no seu dispositivo Android
+            3. A extensão será reconhecida automaticamente pelo Mihon/Yomotsu
+
+            ### ⚠️ Requisitos
+            - Android 5.0+ (API 21)
+            - Mihon, Tachiyomi, Yomotsu ou fork compatível instalado
+
+          files: release-apk/*.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
