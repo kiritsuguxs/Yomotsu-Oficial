@@ -59,3 +59,4 @@ extension-projectnox/
 ## 📄 Licença
 
 Este projeto segue a mesma licença do repositório principal.
+

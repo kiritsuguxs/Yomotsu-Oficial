@@ -6,6 +6,7 @@ on:
       - extensão
     paths:
       - 'extension-projectnox/**'
+      - '.github/workflows/build-projectnox-extension.yml'
   workflow_dispatch:
     inputs:
       release:
