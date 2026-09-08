@@ -36,16 +36,14 @@ jobs:
       - name: 🔧 Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: 🐘 Setup Gradle 8.5
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
+
       - name: 📦 Build debug APK
         working-directory: extension-projectnox
-        run: |
-          chmod +x gradlew 2>/dev/null || true
-          # If no gradlew, use system gradle
-          if [ -f gradlew ]; then
-            ./gradlew assembleDebug --no-daemon
-          else
-            gradle assembleDebug --no-daemon
-          fi
+        run: gradle assembleDebug --no-daemon
 
       - name: 📤 Upload debug APK
         uses: actions/upload-artifact@v4
@@ -58,12 +56,7 @@ jobs:
       - name: 📦 Build release APK
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.release == 'true')
         working-directory: extension-projectnox
-        run: |
-          if [ -f gradlew ]; then
-            ./gradlew assembleRelease --no-daemon
-          else
-            gradle assembleRelease --no-daemon
-          fi
+        run: gradle assembleRelease --no-daemon
 
       - name: 📤 Upload release APK
         if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.release == 'true')
