@@ -27,7 +27,6 @@ import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -46,7 +45,7 @@ class ProjectNox : HttpSource() {
     override val lang = "pt-BR"
     override val supportsLatest = true
 
-    private val json: Json by injectLazy()
+    private val json = Json { ignoreUnknownKeys = true }
 
     override val client: OkHttpClient = network.cloudflareClient
 

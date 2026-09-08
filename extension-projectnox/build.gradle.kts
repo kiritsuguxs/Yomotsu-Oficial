@@ -1,7 +1,7 @@
 plugins {
-    id("com.android.application")
-    kotlin("android")
-    kotlin("plugin.serialization")
+    id("com.android.application") version "8.2.2"
+    kotlin("android") version "1.9.22"
+    kotlin("plugin.serialization") version "1.9.22"
 }
 
 android {
