@@ -22,6 +22,7 @@ android {
         manifestPlaceholders["nsfw"] = "0"
         manifestPlaceholders["sourceUrl"] = ""
         manifestPlaceholders["isNsfw"] = "false"
+        manifestPlaceholders["libVersion"] = "1.4"
     }
 
     buildTypes {
@@ -43,7 +44,7 @@ android {
 
 dependencies {
     // Mihon/Tachiyomi extension API
-    compileOnly("com.github.tachiyomiorg:extensions-lib:1.5.0")
+    compileOnly("com.github.tachiyomiorg:extensions-lib:1.4.4")
 
     // OkHttp
     compileOnly("com.squareup.okhttp3:okhttp:4.12.0")
