@@ -12,8 +12,8 @@ android {
         applicationId = "eu.kanade.tachiyomi.extension.pt.projectnox"
         minSdk = 21
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.4.3"
+        versionCode = 4
+        versionName = "1.4.4"
 
         manifestPlaceholders["appName"] = "Tachiyomi: Project Nox"
         manifestPlaceholders["extClass"] = ".ProjectNox"
