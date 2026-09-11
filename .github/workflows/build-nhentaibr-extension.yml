@@ -21,13 +21,11 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '8.5'
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build APK
         working-directory: ./extension-nhentaibr
-        run: gradle assembleRelease
+        run: ./gradlew assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

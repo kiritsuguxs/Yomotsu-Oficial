@@ -1,5 +1,5 @@
 plugins {
-    id("com.android.application") version "8.2.2"
+    id("com.android.application") version "9.4.0"
     kotlin("android") version "2.4.10"
     kotlin("plugin.serialization") version "2.4.10"
 }
@@ -13,12 +13,12 @@ val calculatedVersionCode = libVersion.split(".")
 
 android {
     namespace = "eu.kanade.tachiyomi.extension.pt.nhentaibr"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "eu.kanade.tachiyomi.extension.pt.nhentaibr"
         minSdk = 21
-        targetSdk = 34
+        targetSdk = 35
         versionCode = calculatedVersionCode
         versionName = "$libVersion.$extVersionCode"
 
@@ -44,18 +44,18 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
 }
 
 dependencies {
     compileOnly("com.github.keiyoushi:extensions-lib:42255ee5fa")
-    compileOnly("com.squareup.okhttp3:okhttp:4.12.0")
-    compileOnly("org.jsoup:jsoup:1.17.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    compileOnly("com.squareup.okhttp3:okhttp:5.4.0")
+    compileOnly("org.jsoup:jsoup:1.22.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 }
