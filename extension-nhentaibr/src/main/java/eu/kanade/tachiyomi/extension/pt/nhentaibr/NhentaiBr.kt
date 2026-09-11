@@ -1,20 +1,19 @@
 package eu.kanade.tachiyomi.extension.pt.nhentaibr
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
-import java.util.Calendar
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class NhentaiBr : ParsedHttpSource() {
 
@@ -27,34 +26,45 @@ class NhentaiBr : ParsedHttpSource() {
     override val supportsLatest = true
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
+        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         .add("Referer", "$baseUrl/")
-        .add("Accept-Language", "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7")
 
     // Popular
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/comics?page=$page&sort=views", headers)
+        return if (page == 1) {
+            GET("$baseUrl/popular/", headers)
+        } else {
+            GET("$baseUrl/popular/page/$page/", headers)
+        }
     }
 
-    override fun popularMangaSelector() = "div.comics-grid > div.comic-item"
+    override fun popularMangaSelector() = "div.lista ul li div.thumb-conteudo:not(:has(span.seloPersonalizado)):has(a[href*=\"nhentai.net.br\"])"
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        val titleElement = element.selectFirst("h3.comic-title a")!!
-        val imgElement = element.selectFirst("img.comic-cover")!!
+        val titleLink = element.selectFirst("a[title]:has(span.thumb-titulo)")
+            ?: element.selectFirst("a[href*=\"nhentai.net.br\"]:not(.thumbParodiaNome)")
+            ?: element.selectFirst("a")!!
 
-        manga.setUrlWithoutDomain(titleElement.attr("href"))
-        manga.title = titleElement.text().trim()
-        manga.thumbnail_url = imgElement.attr("abs:src")
+        manga.setUrlWithoutDomain(titleLink.attr("href"))
+        val titleText = element.selectFirst("span.thumb-titulo")?.text()?.trim()
+            ?: titleLink.attr("title").ifEmpty { titleLink.text().trim() }
+        manga.title = titleText
+        val img = element.selectFirst("img")
+        manga.thumbnail_url = img?.attr("abs:src")?.ifEmpty { img.attr("src") }
 
         return manga
     }
 
-    override fun popularMangaNextPageSelector() = "ul.pagination li.page-item:not(.disabled) a[rel=next]"
+    override fun popularMangaNextPageSelector() = "ul.paginacao li.active + li a"
 
     // Latest
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/comics?page=$page&sort=newest", headers)
+        return if (page == 1) {
+            GET("$baseUrl/ultimos/", headers)
+        } else {
+            GET("$baseUrl/ultimos/page/$page/", headers)
+        }
     }
 
     override fun latestUpdatesSelector() = popularMangaSelector()
@@ -65,11 +75,11 @@ class NhentaiBr : ParsedHttpSource() {
 
     // Search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        if (query.startsWith(PREFIX_ID_SEARCH)) {
-            val id = query.removePrefix(PREFIX_ID_SEARCH)
-            return GET("$baseUrl/comics/$id", headers)
+        return if (page == 1) {
+            GET("$baseUrl/?s=$query", headers)
+        } else {
+            GET("$baseUrl/page/$page/?s=$query", headers)
         }
-        return GET("$baseUrl/search?q=${query}&page=$page", headers)
     }
 
     override fun searchMangaSelector() = popularMangaSelector()
@@ -78,82 +88,100 @@ class NhentaiBr : ParsedHttpSource() {
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        if (query.startsWith(PREFIX_ID_SEARCH)) {
-            return client.newCall(searchMangaRequest(page, query, filters))
-                .asObservableSuccess()
-                .map { response ->
-                    val manga = mangaDetailsParse(response)
-                    manga.url = "/comics/${query.removePrefix(PREFIX_ID_SEARCH)}"
-                    MangasPage(listOf(manga), false)
-                }
-        }
-        return super.fetchSearchManga(page, query, filters)
-    }
-
     // Details
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
-        val infoElement = document.selectFirst("div.comic-info") ?: return manga
+        val titleElem = document.selectFirst("h1.post-titulo")
+        val fullTitle = titleElem?.text()?.trim() ?: document.title()
+        manga.title = fullTitle
 
-        manga.title = infoElement.selectFirst("h1.title")?.text()?.trim() ?: ""
-        manga.thumbnail_url = document.selectFirst("div.comic-cover img")?.attr("abs:src")
-        manga.author = infoElement.select("div.meta-item:contains(Autor) a").joinToString { it.text() }
-        manga.artist = infoElement.select("div.meta-item:contains(Artista) a").joinToString { it.text() }
-        manga.genre = infoElement.select("div.tags a.tag").joinToString { it.text() }
-        manga.description = infoElement.selectFirst("div.description")?.text()?.trim()
-        manga.status = parseStatus(infoElement.selectFirst("div.meta-item:contains(Status) span.value")?.text())
+        val img = document.selectFirst("div.post-capa img")
+            ?: document.selectFirst("ul.post-fotos li img")
+        manga.thumbnail_url = img?.attr("abs:src")?.ifEmpty { img.attr("src") }
+
+        val items = document.select("ul.post-itens li")
+        val genres = mutableListOf<String>()
+        var author: String? = null
+
+        for (li in items) {
+            val strong = li.selectFirst("strong")?.text()?.trim() ?: ""
+            when {
+                strong.contains("Categorias", ignoreCase = true) || strong.contains("Tags", ignoreCase = true) -> {
+                    genres.addAll(li.select("a").map { it.text().trim() }.filter { it.isNotEmpty() })
+                }
+                strong.contains("Paródia", ignoreCase = true) -> {
+                    val parody = li.select("a").joinToString { it.text().trim() }
+                    if (parody.isNotEmpty()) {
+                        genres.add("Paródia: $parody")
+                    }
+                }
+                strong.contains("Artista", ignoreCase = true) || strong.contains("Autor", ignoreCase = true) -> {
+                    val names = li.select("a").map { it.text().trim() }.filter { !it.contains("Login", true) && !it.contains("Registre", true) }
+                    if (names.isNotEmpty()) {
+                        author = names.joinToString()
+                    }
+                }
+            }
+        }
+
+        manga.genre = genres.distinct().joinToString()
+        manga.author = author
+        manga.artist = author
+        manga.status = SManga.COMPLETED
+
+        val descElem = document.selectFirst("div.post-conteudo")
+        manga.description = descElem?.text()?.trim()
 
         return manga
     }
 
-    private fun parseStatus(status: String?): Int {
-        return when (status?.lowercase()) {
-            "completo" -> SManga.COMPLETED
-            "em andamento", "ativo" -> SManga.ONGOING
-            else -> SManga.UNKNOWN
-        }
-    }
-
     // Chapters
-    override fun chapterListSelector() = "ul.chapter-list li.chapter-item"
+    override fun chapterListSelector() = "html"
 
-    override fun chapterFromElement(element: Element): SChapter {
-        val chapter = SChapter.create()
-        val linkElement = element.selectFirst("a.chapter-link")!!
-        
-        chapter.setUrlWithoutDomain(linkElement.attr("href"))
-        chapter.name = linkElement.selectFirst("span.chapter-title")?.text()?.trim() ?: linkElement.text().trim()
-        chapter.date_upload = parseDate(element.selectFirst("span.chapter-date")?.text())
-        
-        return chapter
-    }
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val document = response.asJsoup()
+        val datePublished = document.selectFirst("meta[property=\"article:published_time\"]")?.attr("content")
+            ?: document.selectFirst("meta[name=\"pubdate\"]")?.attr("content")
 
-    private fun parseDate(dateStr: String?): Long {
-        return try {
-            // Implement date parsing logic if available on site. Otherwise return 0L
-            0L 
-        } catch (e: Exception) {
-            0L
+        val dateUpload = datePublished?.let {
+            try {
+                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ROOT).parse(it.substring(0, 19))?.time
+            } catch (e: Exception) {
+                null
+            }
+        } ?: 0L
+
+        val chapter = SChapter.create().apply {
+            name = "Capítulo Completo"
+            setUrlWithoutDomain(response.request.url.encodedPath)
+            date_upload = dateUpload
         }
+
+        return listOf(chapter)
     }
+
+    override fun chapterFromElement(element: Element): SChapter = throw UnsupportedOperationException("Not used")
 
     // Pages
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
-        val imgElements = document.select("div.reader-images img.reader-img")
-        
+        val imgElements = document.select("ul.post-fotos li img")
+
         for ((i, img) in imgElements.withIndex()) {
-            val url = img.attr("data-src").ifEmpty { img.attr("src") }
-            pages.add(Page(i, "", url))
+            val url = img.attr("data-src").ifEmpty {
+                img.attr("data-lazy-src").ifEmpty {
+                    img.attr("abs:src").ifEmpty {
+                        img.attr("src")
+                    }
+                }
+            }
+            if (url.isNotEmpty()) {
+                pages.add(Page(i, "", url))
+            }
         }
-        
+
         return pages
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
-
-    companion object {
-        const val PREFIX_ID_SEARCH = "id:"
-    }
 }

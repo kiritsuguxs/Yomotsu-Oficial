@@ -9,17 +9,17 @@ import kotlin.system.exitProcess
 class DeepLinkActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val pathSegments = intent?.data?.pathSegments
-        if (pathSegments != null && pathSegments.size > 1) {
+        val path = intent?.data?.path
+        if (!path.isNullOrEmpty() && path != "/") {
             val intent = Intent().apply {
                 action = "eu.kanade.tachiyomi.SEARCH"
-                putExtra("query", "${NhentaiBr.PREFIX_ID_SEARCH}${pathSegments[1]}")
+                putExtra("query", path)
                 putExtra("filter", packageName)
             }
             try {
                 startActivity(intent)
             } catch (e: ActivityNotFoundException) {
-                // Falha silenciosa se o app não estiver instalado
+                // Ignore
             }
         }
         finish()
