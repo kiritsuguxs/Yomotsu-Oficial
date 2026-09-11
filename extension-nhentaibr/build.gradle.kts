@@ -4,6 +4,13 @@ plugins {
     kotlin("plugin.serialization") version "1.9.22"
 }
 
+val extVersionCode = 3
+val libVersion = "1.6"
+
+val calculatedVersionCode = libVersion.split(".")
+    .joinToString("") { it.padStart(2, '0') }
+    .toInt() * 1000 + extVersionCode
+
 android {
     namespace = "eu.kanade.tachiyomi.extension.pt.nhentaibr"
     compileSdk = 34
@@ -12,17 +19,17 @@ android {
         applicationId = "eu.kanade.tachiyomi.extension.pt.nhentaibr"
         minSdk = 21
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.4.8"
+        versionCode = calculatedVersionCode
+        versionName = "$libVersion.$extVersionCode"
 
         manifestPlaceholders["appName"] = "Tachiyomi: Nhentai BR"
         manifestPlaceholders["extClass"] = ".NhentaiBr"
-        manifestPlaceholders["extVersionCode"] = versionCode.toString()
+        manifestPlaceholders["extVersionCode"] = extVersionCode.toString()
         manifestPlaceholders["extFactory"] = ""
         manifestPlaceholders["nsfw"] = "1"
         manifestPlaceholders["sourceUrl"] = ""
         manifestPlaceholders["isNsfw"] = "true"
-        manifestPlaceholders["libVersion"] = "1.4"
+        manifestPlaceholders["libVersion"] = libVersion
     }
 
     buildTypes {

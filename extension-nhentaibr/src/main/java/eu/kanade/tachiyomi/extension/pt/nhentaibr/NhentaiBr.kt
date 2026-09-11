@@ -2,20 +2,19 @@ package eu.kanade.tachiyomi.extension.pt.nhentaibr
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class NhentaiBr : ParsedHttpSource() {
+class NhentaiBr : HttpSource() {
 
     override val name = "Nhentai BR"
 
@@ -29,7 +28,8 @@ class NhentaiBr : ParsedHttpSource() {
         .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         .add("Referer", "$baseUrl/")
 
-    // Popular
+    // ============================== Popular ===============================
+
     override fun popularMangaRequest(page: Int): Request {
         return if (page == 1) {
             GET("$baseUrl/popular/", headers)
@@ -38,27 +38,32 @@ class NhentaiBr : ParsedHttpSource() {
         }
     }
 
-    override fun popularMangaSelector() = "div.lista ul li div.thumb-conteudo:not(:has(span.seloPersonalizado)):has(a[href*=\"nhentai.net.br\"])"
+    override fun popularMangaParse(response: Response): MangasPage {
+        val document = response.asJsoup()
+        val elements = document.select("div.lista ul li div.thumb-conteudo:not(:has(span.seloPersonalizado)):has(a[href*=\"nhentai.net.br\"])")
 
-    override fun popularMangaFromElement(element: Element): SManga {
-        val manga = SManga.create()
-        val titleLink = element.selectFirst("a[title]:has(span.thumb-titulo)")
-            ?: element.selectFirst("a[href*=\"nhentai.net.br\"]:not(.thumbParodiaNome)")
-            ?: element.selectFirst("a")!!
+        val mangas = elements.map { element ->
+            val manga = SManga.create()
+            val titleLink = element.selectFirst("a[title]:has(span.thumb-titulo)")
+                ?: element.selectFirst("a[href*=\"nhentai.net.br\"]:not(.thumbParodiaNome)")
+                ?: element.selectFirst("a")!!
 
-        manga.setUrlWithoutDomain(titleLink.attr("href"))
-        val titleText = element.selectFirst("span.thumb-titulo")?.text()?.trim()
-            ?: titleLink.attr("title").ifEmpty { titleLink.text().trim() }
-        manga.title = titleText
-        val img = element.selectFirst("img")
-        manga.thumbnail_url = img?.attr("abs:src")?.ifEmpty { img.attr("src") }
+            manga.setUrlWithoutDomain(titleLink.attr("href"))
+            val titleText = element.selectFirst("span.thumb-titulo")?.text()?.trim()
+                ?: titleLink.attr("title").ifEmpty { titleLink.text().trim() }
+            manga.title = titleText
 
-        return manga
+            val img = element.selectFirst("img")
+            manga.thumbnail_url = img?.attr("abs:src")?.ifEmpty { img.attr("src") }
+            manga
+        }
+
+        val hasNextPage = document.selectFirst("ul.paginacao li.active + li a") != null
+        return MangasPage(mangas, hasNextPage)
     }
 
-    override fun popularMangaNextPageSelector() = "ul.paginacao li.active + li a"
+    // =============================== Latest ===============================
 
-    // Latest
     override fun latestUpdatesRequest(page: Int): Request {
         return if (page == 1) {
             GET("$baseUrl/ultimos/", headers)
@@ -67,13 +72,10 @@ class NhentaiBr : ParsedHttpSource() {
         }
     }
 
-    override fun latestUpdatesSelector() = popularMangaSelector()
+    override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)
 
-    override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
+    // =============================== Search ===============================
 
-    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
-
-    // Search
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         return if (page == 1) {
             GET("$baseUrl/?s=$query", headers)
@@ -82,14 +84,12 @@ class NhentaiBr : ParsedHttpSource() {
         }
     }
 
-    override fun searchMangaSelector() = popularMangaSelector()
+    override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
 
-    override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
+    // ============================ Manga Details ============================
 
-    override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
-
-    // Details
-    override fun mangaDetailsParse(document: Document): SManga {
+    override fun mangaDetailsParse(response: Response): SManga {
+        val document = response.asJsoup()
         val manga = SManga.create()
         val titleElem = document.selectFirst("h1.post-titulo")
         val fullTitle = titleElem?.text()?.trim() ?: document.title()
@@ -135,8 +135,7 @@ class NhentaiBr : ParsedHttpSource() {
         return manga
     }
 
-    // Chapters
-    override fun chapterListSelector() = "html"
+    // ============================== Chapters ==============================
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val document = response.asJsoup()
@@ -160,10 +159,10 @@ class NhentaiBr : ParsedHttpSource() {
         return listOf(chapter)
     }
 
-    override fun chapterFromElement(element: Element): SChapter = throw UnsupportedOperationException("Not used")
+    // =============================== Pages ================================
 
-    // Pages
-    override fun pageListParse(document: Document): List<Page> {
+    override fun pageListParse(response: Response): List<Page> {
+        val document = response.asJsoup()
         val pages = mutableListOf<Page>()
         val imgElements = document.select("ul.post-fotos li img")
 
@@ -183,5 +182,5 @@ class NhentaiBr : ParsedHttpSource() {
         return pages
     }
 
-    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
+    override fun imageUrlParse(response: Response): String = throw UnsupportedOperationException("Not used")
 }
