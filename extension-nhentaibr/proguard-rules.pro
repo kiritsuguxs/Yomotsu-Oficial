@@ -1,0 +1,3 @@
+-keep class eu.kanade.tachiyomi.extension.** { *; }
+-dontwarn okhttp3.**
+-dontwarn org.jsoup.**

@@ -47,3 +47,4 @@ include(":source-local")
 include(":telemetry")
 
 include(":dbnet-native")
+include(":extension-nhentaibr")
