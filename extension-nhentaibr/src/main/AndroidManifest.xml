@@ -14,11 +14,14 @@
             android:name="tachiyomi.extension.factory"
             android:value="${extFactory}" />
         <meta-data
-            android:name="tachiyomi.extension.nsfw"
-            android:value="${nsfw}" />
-        <meta-data
             android:name="tachiyomix.extensionLib"
             android:value="${libVersion}" />
+        <meta-data
+            android:name="tachiyomix.name"
+            android:value="Nhentai BR" />
+        <meta-data
+            android:name="tachiyomix.contentWarning"
+            android:value="2" />
 
         <activity
             android:name="eu.kanade.tachiyomi.extension.pt.nhentaibr.DeepLinkActivity"
