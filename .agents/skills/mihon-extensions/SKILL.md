@@ -131,10 +131,50 @@ dependencies {
 
 Regras do `proguard-rules.pro`:
 ```proguard
+# Manter classe da extensão e pontos de entrada
 -keep class eu.kanade.tachiyomi.extension.** { *; }
+
+# Manter interfaces da biblioteca de fontes
+-keep class eu.kanade.tachiyomi.source.** { *; }
+
+# Ignorar avisos de classes providas em runtime pelo app hospedeiro
+-dontwarn rx.**
 -dontwarn okhttp3.**
 -dontwarn org.jsoup.**
+-dontwarn eu.kanade.tachiyomi.**
+-dontwarn android.**
+-dontwarn java.lang.invoke.**
 ```
+
+---
+
+## 2.1. Arquivo `settings.gradle.kts` Independente (OBRIGATÓRIO)
+
+Cada extensão **deve** conter seu próprio `settings.gradle.kts` dentro da sua respectiva pasta (ex: `extension-minhaextensao/settings.gradle.kts`):
+
+```kotlin
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+
+rootProject.name = "extension-<nome>"
+```
+
+> [!CAUTION]
+> **NUNCA** adicione `include(":extension-<nome>")` no `settings.gradle.kts` da raiz do repositório Yomotsu-Oficial! Isso quebra o build do app principal.
 
 ---
 
@@ -170,3 +210,6 @@ O verificador de atualizações interno do Yomotsu (`AppUpdateChecker`) lê a AP
 | **Pede para "Confiar" ao instalar** | APK assinado com chave própria (não oficial). | **Comportamento normal esperado**. Tocar no item e clicar em "Confiar". |
 | **Erro de compilação Kotlin em `response.body`** | `response.body` é nulo em algumas versões do OkHttp. | Usar `response.body?.string().orEmpty()`. |
 | **App Yomotsu acusa falso aviso de atualização** | Foi criada uma Release no GitHub para a extensão. | Deletar a Release no GitHub e passar o CI para usar artefatos (`upload-artifact`). |
+| **`AAPT: error: file failed to compile` (ic_launcher.png)** | Arquivo de ícone não é um PNG real (ex: baixou HTML ou .ico com curl). | Baixar imagem PNG legítima e verificar cabeçalho binário (`\x89PNG`). |
+| **`Execution failed for task ':minifyReleaseWithR8'` / Missing class `rx.Observable`** | O R8 não encontra classes runtime providas pelo app host. | Adicionar `-dontwarn rx.**`, `-dontwarn eu.kanade.tachiyomi.**` no `proguard-rules.pro`. |
+| **`plugin version '' is invalid` no build raiz** | A extensão foi incluída no `settings.gradle.kts` do app Yomotsu. | Manter a extensão como projeto Gradle standalone com seu próprio `settings.gradle.kts`. |
