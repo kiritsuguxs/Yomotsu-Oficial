@@ -1,34 +1,28 @@
 plugins {
-    id("com.android.application") version "9.4.0"
-    kotlin("plugin.serialization") version "2.4.10"
+    id("com.android.application") version "8.2.2"
+    kotlin("android") version "1.9.22"
+    kotlin("plugin.serialization") version "1.9.22"
 }
-
-val extVersionCode = 3
-val libVersion = "1.6"
-
-val calculatedVersionCode = libVersion.split(".")
-    .joinToString("") { it.padStart(2, '0') }
-    .toInt() * 1000 + extVersionCode
 
 android {
     namespace = "eu.kanade.tachiyomi.extension.pt.nhentaibr"
-    compileSdk = 35
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "eu.kanade.tachiyomi.extension.pt.nhentaibr"
         minSdk = 21
-        targetSdk = 35
-        versionCode = calculatedVersionCode
-        versionName = "$libVersion.$extVersionCode"
+        targetSdk = 34
+        versionCode = 2
+        versionName = "1.4.8"
 
         manifestPlaceholders["appName"] = "Tachiyomi: Nhentai BR"
         manifestPlaceholders["extClass"] = ".NhentaiBr"
-        manifestPlaceholders["extVersionCode"] = extVersionCode.toString()
+        manifestPlaceholders["extVersionCode"] = versionCode.toString()
         manifestPlaceholders["extFactory"] = ""
         manifestPlaceholders["nsfw"] = "1"
         manifestPlaceholders["sourceUrl"] = ""
         manifestPlaceholders["isNsfw"] = "true"
-        manifestPlaceholders["libVersion"] = libVersion
+        manifestPlaceholders["libVersion"] = "1.4"
     }
 
     buildTypes {
@@ -43,20 +37,18 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
-}
 
-kotlin {
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 }
 
 dependencies {
-    compileOnly("com.github.keiyoushi:extensions-lib:42255ee5fa")
-    compileOnly("com.squareup.okhttp3:okhttp:5.4.0")
-    compileOnly("org.jsoup:jsoup:1.22.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+    compileOnly("com.github.tachiyomiorg:extensions-lib:1.4.4")
+    compileOnly("com.squareup.okhttp3:okhttp:4.12.0")
+    compileOnly("org.jsoup:jsoup:1.17.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }
