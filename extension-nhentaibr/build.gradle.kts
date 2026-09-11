@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application") version "8.2.2"
-    kotlin("android") version "2.0.0"
-    kotlin("plugin.serialization") version "2.0.0"
+    kotlin("android") version "2.4.10"
+    kotlin("plugin.serialization") version "2.4.10"
 }
 
 val extVersionCode = 3
