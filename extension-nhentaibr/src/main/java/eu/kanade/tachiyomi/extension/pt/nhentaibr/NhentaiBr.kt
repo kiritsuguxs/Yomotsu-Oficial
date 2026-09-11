@@ -182,6 +182,4 @@ class NhentaiBr : ParsedHttpSource() {
 
         return pages
     }
-
-    override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
 }
