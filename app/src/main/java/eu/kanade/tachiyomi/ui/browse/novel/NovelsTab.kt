@@ -58,19 +58,11 @@ fun novelsTab(
                         )
                     }
                     else -> {
-                        // TODO: Implement NovelsScreen with FastScrollLazyColumn and BaseBrowseItem 
-                        // matching the ExtensionScreen. For now we show empty state or a list.
-                        // I will add the full UI in the next step.
-                        EmptyScreen(
-                            stringRes = MR.strings.label_novels,
-                            modifier = Modifier.padding(contentPadding),
-                            actions = listOf(
-                                EmptyScreenAction(
-                                    stringRes = MR.strings.extensionStores,
-                                    icon = Icons.Outlined.Settings,
-                                    onClick = { navigator.push(ExtensionStoresScreen()) },
-                                ),
-                            ),
+                        NovelsScreen(
+                            state = state,
+                            contentPadding = contentPadding,
+                            onInstallExtension = viewModel::installExtension,
+                            onUninstallExtension = viewModel::uninstallExtension,
                         )
                     }
                 }
