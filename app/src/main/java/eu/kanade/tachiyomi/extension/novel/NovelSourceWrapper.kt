@@ -1,16 +1,16 @@
 package eu.kanade.tachiyomi.extension.novel
 
-import android.app.Application
 import eu.kanade.tachiyomi.extension.novel.model.NovelPlugin
 import eu.kanade.tachiyomi.extension.novel.runtime.NovelJsRuntime
+import eu.kanade.tachiyomi.extension.novel.runtime.NovelNativeApi
 import eu.kanade.tachiyomi.source.INovelSource
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.source.model.SMangaUpdate
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -62,8 +62,7 @@ class NovelSourceWrapper(
     }
 
     private fun <T> runInJs(block: (NovelJsRuntime) -> T): T {
-        val app: Application = Injekt.get()
-        val runtime = NovelJsRuntime(app)
+        val runtime = NovelJsRuntime(plugin.id, NovelNativeApi())
         try {
             val jsCode = File(localPath).readText()
             runtime.evaluate("var module = { exports: {} };\nvar exports = module.exports;\n" + jsCode, localPath)
@@ -88,41 +87,54 @@ class NovelSourceWrapper(
         parseNovelsJson(jsonStr)
     }
 
-    override suspend fun getMangaDetails(manga: SManga): SManga = runInJs { runtime ->
-        val jsonStr = evaluateAsyncMethod(runtime, "module.exports.default.parseNovel('${manga.url}')")
-        val json = Injekt.get<Json>().parseToJsonElement(jsonStr).jsonObject
-        manga.apply {
-            title = json["name"]?.jsonPrimitive?.content ?: title
-            thumbnail_url = json["cover"]?.jsonPrimitive?.content ?: thumbnail_url
-            author = json["author"]?.jsonPrimitive?.content ?: author
-            artist = json["artist"]?.jsonPrimitive?.content ?: artist
-            description = json["summary"]?.jsonPrimitive?.content ?: description
-            genre = json["genres"]?.jsonPrimitive?.content
-            status = when(json["status"]?.jsonPrimitive?.content) {
-                "Ongoing", "مستمرة" -> SManga.ONGOING
-                "Completed", "منتهية" -> SManga.COMPLETED
-                else -> SManga.UNKNOWN
-            }
-        }
-    }
+    override suspend fun getMangaUpdate(
+        manga: SManga,
+        chapters: List<SChapter>,
+        fetchDetails: Boolean,
+        fetchChapters: Boolean,
+    ): SMangaUpdate {
+        var updatedManga = manga
+        var updatedChapters = chapters
 
-    override suspend fun getChapterList(manga: SManga): List<SChapter> = runInJs { runtime ->
-        val jsonStr = evaluateAsyncMethod(runtime, "module.exports.default.parseNovel('${manga.url}')")
-        val json = Injekt.get<Json>().parseToJsonElement(jsonStr).jsonObject
-        val chapters = json["chapters"]?.jsonArray ?: JsonArray(emptyList())
-        chapters.map { chapterObj ->
-            val obj = chapterObj.jsonObject
-            SChapter.create().apply {
-                name = obj["name"]?.jsonPrimitive?.content ?: "Chapter"
-                url = obj["path"]?.jsonPrimitive?.content ?: ""
-                date_upload = obj["releaseTime"]?.jsonPrimitive?.longOrNull ?: 0L
+        if (fetchDetails || fetchChapters) {
+            runInJs { runtime ->
+                val jsonStr = evaluateAsyncMethod(runtime, "module.exports.default.parseNovel('${manga.url}')")
+                val json = Injekt.get<Json>().parseToJsonElement(jsonStr).jsonObject
+
+                if (fetchDetails) {
+                    updatedManga = manga.apply {
+                        title = json["name"]?.jsonPrimitive?.content ?: title
+                        thumbnail_url = json["cover"]?.jsonPrimitive?.content ?: thumbnail_url
+                        author = json["author"]?.jsonPrimitive?.content ?: author
+                        artist = json["artist"]?.jsonPrimitive?.content ?: artist
+                        description = json["summary"]?.jsonPrimitive?.content ?: description
+                        genre = json["genres"]?.jsonPrimitive?.content
+                        status = when (json["status"]?.jsonPrimitive?.content) {
+                            "Ongoing", "مستمرة" -> SManga.ONGOING
+                            "Completed", "منتهية" -> SManga.COMPLETED
+                            else -> SManga.UNKNOWN
+                        }
+                    }
+                }
+
+                if (fetchChapters) {
+                    val chapList = json["chapters"]?.jsonArray ?: JsonArray(emptyList())
+                    updatedChapters = chapList.map { chapterObj ->
+                        val obj = chapterObj.jsonObject
+                        SChapter.create().apply {
+                            name = obj["name"]?.jsonPrimitive?.content ?: "Chapter"
+                            url = obj["path"]?.jsonPrimitive?.content ?: ""
+                            date_upload = obj["releaseTime"]?.jsonPrimitive?.longOrNull ?: 0L
+                        }
+                    }
+                }
             }
         }
+
+        return SMangaUpdate(updatedManga, updatedChapters)
     }
 
     override suspend fun getPageList(chapter: SChapter): List<Page> {
-        // Novels don't have pages of images. The NovelReaderActivity will directly call getChapterText().
-        // For compatibility, we return an empty list or a dummy page.
         return emptyList()
     }
 
@@ -147,7 +159,7 @@ class NovelSourceWrapper(
     }
 
     private fun generateId(pluginId: String, lang: String): Long {
-        val key = "novel:\$pluginId:\$lang"
+        val key = "novel:$pluginId:$lang"
         val bytes = MessageDigest.getInstance("MD5").digest(key.toByteArray())
         return (0..7).map { bytes[it].toLong() and 0xffL shl 8 * (7 - it) }.reduce(Long::or) and Long.MAX_VALUE
     }
