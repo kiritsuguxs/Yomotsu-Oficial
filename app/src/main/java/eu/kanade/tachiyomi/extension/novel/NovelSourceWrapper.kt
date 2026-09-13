@@ -15,6 +15,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
+import eu.kanade.tachiyomi.source.online.HttpSource
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.File
@@ -23,12 +24,33 @@ import java.security.MessageDigest
 class NovelSourceWrapper(
     val plugin: NovelPlugin,
     val localPath: String,
-) : INovelSource {
+) : HttpSource(), INovelSource {
 
     override val id: Long = generateId(plugin.id, plugin.lang)
     override val name: String = plugin.name
     override val lang: String = plugin.lang
     override val supportsLatest: Boolean = true
+    override val baseUrl: String get() = plugin.site.ifBlank { "https://google.com" }
+
+    override fun getHomeUrl(): String = plugin.site.ifBlank { baseUrl }
+
+    override fun getMangaUrl(manga: SManga): String {
+        if (manga.url.startsWith("http://") || manga.url.startsWith("https://")) {
+            return manga.url
+        }
+        val cleanBase = baseUrl.trimEnd('/')
+        val cleanPath = manga.url.trimStart('/')
+        return "$cleanBase/$cleanPath"
+    }
+
+    override fun getChapterUrl(chapter: SChapter): String {
+        if (chapter.url.startsWith("http://") || chapter.url.startsWith("https://")) {
+            return chapter.url
+        }
+        val cleanBase = baseUrl.trimEnd('/')
+        val cleanPath = chapter.url.trimStart('/')
+        return "$cleanBase/$cleanPath"
+    }
 
     private fun evaluateAsyncMethod(runtime: NovelJsRuntime, methodCall: String): String {
         val script = """

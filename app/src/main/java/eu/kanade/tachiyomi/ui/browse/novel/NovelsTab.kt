@@ -34,11 +34,6 @@ fun novelsTab(
         titleRes = MR.strings.label_novels,
         searchEnabled = true,
         actions = listOf(
-            AppBar.Action(
-                title = stringResource(MR.strings.action_global_search),
-                icon = Icons.Outlined.TravelExplore,
-                onClick = { navigator.push(GlobalNovelSearchScreen(searchQuery.orEmpty())) },
-            ),
             AppBar.OverflowAction(
                 title = stringResource(MR.strings.action_filter),
                 onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.extension.ExtensionFilterScreen()) },
@@ -75,6 +70,9 @@ fun novelsTab(
                             contentPadding = contentPadding,
                             onInstallExtension = viewModel::installExtension,
                             onUninstallExtension = viewModel::uninstallExtension,
+                            onOpenSource = { sourceId ->
+                                navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen(sourceId))
+                            },
                         )
                     }
                 }

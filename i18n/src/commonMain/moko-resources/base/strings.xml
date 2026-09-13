@@ -35,9 +35,9 @@
     <string name="label_migration">Migrate</string>
     <string name="label_extensions">Extensions</string>
     <string name="label_extension_info">Extension info</string>
-    <string name="label_novels">Novels</string>
+    <string name="label_novels">LN Extensions</string>
     <string name="label_novel_repos">Novel repositories</string>
-    <string name="label_novel_sources">Novel sources</string>
+    <string name="label_novel_sources">LN Sources</string>
     <string name="trust_novel_source_title">Trust this novel source?</string>
     <string name="trust_novel_source_warning">This source can execute JavaScript on your device. Only install from sources you trust.</string>
     <string name="label_help">Help</string>

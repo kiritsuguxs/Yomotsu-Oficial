@@ -6,6 +6,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
 import tachiyomi.core.common.util.system.logcat
+import eu.kanade.tachiyomi.network.NetworkHelper
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.net.URLEncoder
@@ -13,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 object NovelTranslator {
 
-    private val client: OkHttpClient by lazy { Injekt.get() }
+    private val client: OkHttpClient by lazy { Injekt.get<NetworkHelper>().client }
     private val translationCache = ConcurrentHashMap<Long, String>()
 
     fun getCached(chapterId: Long): String? = translationCache[chapterId]
