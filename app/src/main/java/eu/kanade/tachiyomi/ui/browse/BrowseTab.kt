@@ -57,13 +57,15 @@ data object BrowseTab : Tab {
     override fun Content() {
         val context = LocalContext.current
 
-        // Hoisted for extensions tab's search bar
         val extensionsViewModel = viewModel<ExtensionsViewModel>()
         val extensionsState by extensionsViewModel.state.collectAsState()
+
+        val novelsViewModel = viewModel<eu.kanade.tachiyomi.ui.browse.novel.NovelsViewModel>()
 
         val tabs = listOf(
             sourcesTab(),
             extensionsTab(extensionsViewModel),
+            eu.kanade.tachiyomi.ui.browse.novel.novelsTab(novelsViewModel),
             migrateSourceTab(),
         )
 
