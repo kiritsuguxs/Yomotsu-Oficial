@@ -14,11 +14,12 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import eu.kanade.tachiyomi.network.NetworkHelper
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
 class NovelNativeApi(
-    private val client: OkHttpClient = Injekt.get(),
+    private val client: OkHttpClient = Injekt.get<NetworkHelper>().client,
 ) : NovelJsRuntime.NativeApi {
 
     private var nextHandle = 1

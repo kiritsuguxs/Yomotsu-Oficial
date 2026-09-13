@@ -65,18 +65,29 @@ data object BrowseTab : Tab {
         val tabs = listOf(
             sourcesTab(),
             extensionsTab(extensionsViewModel),
+            eu.kanade.tachiyomi.ui.browse.novel.novelSourcesTab(),
             eu.kanade.tachiyomi.ui.browse.novel.novelsTab(novelsViewModel),
             migrateSourceTab(),
         )
 
         val state = rememberPagerState { tabs.size }
+        val novelSearchQuery by novelsViewModel.searchQuery.collectAsState()
 
         TabbedScreen(
             titleRes = MR.strings.browse,
             tabs = tabs,
             state = state,
-            searchQuery = extensionsState.searchQuery,
-            onChangeSearchQuery = extensionsViewModel::search,
+            searchQuery = when (state.currentPage) {
+                1 -> extensionsState.searchQuery
+                3 -> novelSearchQuery
+                else -> null
+            },
+            onChangeSearchQuery = { query ->
+                when (state.currentPage) {
+                    1 -> extensionsViewModel.search(query)
+                    3 -> novelsViewModel.search(query)
+                }
+            },
         )
         LaunchedEffect(Unit) {
             switchToExtensionTabChannel.receiveAsFlow()

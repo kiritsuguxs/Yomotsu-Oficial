@@ -44,6 +44,7 @@ fun NovelsScreen(
     contentPadding: PaddingValues,
     onInstallExtension: (NovelPlugin) -> Unit,
     onUninstallExtension: (String) -> Unit,
+    onOpenSource: ((Long) -> Unit)? = null,
 ) {
     FastScrollLazyColumn(
         contentPadding = contentPadding,
@@ -61,7 +62,10 @@ fun NovelsScreen(
                 NovelExtensionItem(
                     extension = extension,
                     onClickInstall = { onInstallExtension(extension.plugin) },
-                    onClickUninstall = { onUninstallExtension(extension.plugin.id) }
+                    onClickUninstall = { onUninstallExtension(extension.plugin.id) },
+                    onClickItem = {
+                        extension.sources.firstOrNull()?.let { onOpenSource?.invoke(it.id) }
+                    },
                 )
             }
         }
@@ -92,12 +96,13 @@ private fun NovelExtensionItem(
     onClickInstall: () -> Unit,
     onClickUninstall: () -> Unit,
     modifier: Modifier = Modifier,
+    onClickItem: () -> Unit = {
+        if (extension is NovelExtension.Available) onClickInstall()
+    },
 ) {
     BaseBrowseItem(
         modifier = modifier,
-        onClickItem = {
-            if (extension is NovelExtension.Available) onClickInstall()
-        },
+        onClickItem = onClickItem,
         icon = {
             if (!extension.plugin.iconUrl.isNullOrEmpty()) {
                 coil3.compose.AsyncImage(

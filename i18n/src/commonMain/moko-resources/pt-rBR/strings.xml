@@ -339,9 +339,9 @@
     <string name="pref_category_reading">Leitura</string>
     <string name="pref_skip_filtered_chapters">Pular os capítulos filtrados</string>
     <string name="label_sources">Fontes</string>
-    <string name="label_novels">Novels</string>
+    <string name="label_novels">Extensões LN</string>
     <string name="label_novel_repos">Repositórios de novels</string>
-    <string name="label_novel_sources">Fontes de novels</string>
+    <string name="label_novel_sources">Fontes LN</string>
     <string name="trust_novel_source_title">Confiar nesta fonte de novel?</string>
     <string name="trust_novel_source_warning">Esta fonte pode executar JavaScript no seu dispositivo. Instale apenas de repositórios confiáveis.</string>
     <string name="action_select_inverse">Inverter a seleção</string>
