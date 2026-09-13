@@ -122,7 +122,7 @@ class MangaScreen(
             chapterSwipeStartAction = viewModel.chapterSwipeStartAction,
             chapterSwipeEndAction = viewModel.chapterSwipeEndAction,
             navigateUp = navigator::pop,
-            onChapterClicked = { openChapter(context, it) },
+            onChapterClicked = { openChapter(context, it, successState.source) },
             onDownloadChapter = viewModel::runChapterDownloadActions.takeIf { !successState.source.isLocalOrStub() },
             onTranslationChapter = viewModel::runChapterTranslationActions,
             onAddToLibraryClicked = {
@@ -153,7 +153,7 @@ class MangaScreen(
             onTagSearch = { scope.launch { performGenreSearch(navigator, it, viewModel.source!!) } },
             onFilterButtonClicked = viewModel::showSettingsDialog,
             onRefresh = viewModel::fetchAllFromSource,
-            onContinueReading = { continueReading(context, viewModel.getNextUnreadChapter()) },
+            onContinueReading = { continueReading(context, viewModel.getNextUnreadChapter(), successState.source) },
             onSearch = { query, global -> scope.launch { performSearch(navigator, query, global) } },
             onCoverClicked = viewModel::showCoverDialog,
             onShareClicked = { shareManga(context, viewModel.manga, viewModel.source) }.takeIf { isHttpSource },
@@ -299,12 +299,16 @@ class MangaScreen(
         }
     }
 
-    private fun continueReading(context: Context, unreadChapter: Chapter?) {
-        if (unreadChapter != null) openChapter(context, unreadChapter)
+    private fun continueReading(context: Context, unreadChapter: Chapter?, source: tachiyomi.domain.source.model.Source) {
+        if (unreadChapter != null) openChapter(context, unreadChapter, source)
     }
 
-    private fun openChapter(context: Context, chapter: Chapter) {
-        context.startActivity(ReaderActivity.newIntent(context, chapter.mangaId, chapter.id))
+    private fun openChapter(context: Context, chapter: Chapter, source: tachiyomi.domain.source.model.Source) {
+        if (source.isNovel) {
+            context.startActivity(eu.kanade.tachiyomi.ui.reader.NovelReaderActivity.newIntent(context, chapter.mangaId, chapter.id))
+        } else {
+            context.startActivity(ReaderActivity.newIntent(context, chapter.mangaId, chapter.id))
+        }
     }
 
     private fun getMangaUrl(manga_: Manga?, source_: Source?): String? {
