@@ -70,7 +70,21 @@ jobs:
           name: test-report-${{ github.sha }}
           path: app/build/reports/tests/testDebugUnitTest
 
+      - name: Prepare Yomotsu branding
+        run: |
+          base64 --decode branding/yomotsu-icon.png.b64 > "$RUNNER_TEMP/yomotsu-icon.png"
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            mkdir -p "app/src/main/res/mipmap-$density"
+            cp "$RUNNER_TEMP/yomotsu-icon.png" "app/src/main/res/mipmap-$density/ic_launcher.png"
+          done
+
       - name: Build app
+        env:
+          MIHON_GITHUB_RELEASE: ${{ secrets.storeFileBase64 != '' && 'true' || 'false' }}
+          storeFileBase64: ${{ secrets.storeFileBase64 }}
+          storePassword: ${{ secrets.storePassword }}
+          keyAlias: ${{ secrets.keyAlias }}
+          keyPassword: ${{ secrets.keyPassword }}
         run: |
           ./gradlew assembleRelease -Penable-updater
           cp app/build/outputs/apk/release/app-arm64-v8a-release.apk app/build/outputs/apk/release/Yomotsu-${{ steps.get_version.outputs.version }}-arm64.apk
