@@ -93,5 +93,6 @@ class SourceRepositoryImpl(
         name = source.name,
         supportsLatest = false,
         isStub = false,
+        isNovel = source is eu.kanade.tachiyomi.source.INovelSource,
     )
 }

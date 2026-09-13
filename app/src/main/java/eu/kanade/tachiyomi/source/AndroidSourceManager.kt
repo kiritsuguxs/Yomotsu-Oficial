@@ -30,6 +30,8 @@ class AndroidSourceManager(
     private val sourceRepository: StubSourceRepository,
 ) : SourceManager {
 
+    private val novelExtensionManager: eu.kanade.tachiyomi.extension.novel.NovelExtensionManager by injectLazy()
+
     private val _isInitialized = MutableStateFlow(false)
     override val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
 
@@ -45,26 +47,36 @@ class AndroidSourceManager(
 
     init {
         scope.launch {
-            extensionManager.installedExtensionsFlow
-                .collectLatest { extensions ->
-                    val mutableMap = ConcurrentHashMap<Long, Source>(
-                        mapOf(
-                            LocalSource.ID to LocalSource(
-                                context,
-                                Injekt.get(),
-                                Injekt.get(),
-                            ),
+            kotlinx.coroutines.flow.combine(
+                extensionManager.installedExtensionsFlow,
+                novelExtensionManager.installedExtensions
+            ) { mangaExtensions, novelExtensions ->
+                val mutableMap = ConcurrentHashMap<Long, Source>(
+                    mapOf(
+                        LocalSource.ID to LocalSource(
+                            context,
+                            Injekt.get(),
+                            Injekt.get(),
                         ),
-                    )
-                    extensions.forEach { extension ->
-                        extension.sources.forEach {
-                            mutableMap[it.id] = it
-                            registerStubSource(StubSource.from(it))
-                        }
+                    ),
+                )
+                mangaExtensions.forEach { extension ->
+                    extension.sources.forEach {
+                        mutableMap[it.id] = it
+                        registerStubSource(StubSource.from(it))
                     }
-                    sourcesMapFlow.value = mutableMap
-                    _isInitialized.value = true
                 }
+                novelExtensions.forEach { extension ->
+                    extension.sources.forEach {
+                        mutableMap[it.id] = it
+                        registerStubSource(StubSource.from(it))
+                    }
+                }
+                mutableMap
+            }.collectLatest { mutableMap ->
+                sourcesMapFlow.value = mutableMap
+                _isInitialized.value = true
+            }
         }
 
         scope.launch {
