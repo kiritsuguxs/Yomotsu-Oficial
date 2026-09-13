@@ -13,6 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -47,6 +50,32 @@ fun SourceIcon(
     val icon = source.icon
 
     when {
+        source.isNovel -> {
+            val novelIconUrl = remember(source.id) {
+                try {
+                    Injekt.get<eu.kanade.tachiyomi.extension.novel.NovelExtensionManager>().getSourceIconUrl(source.id)
+                } catch (e: Throwable) {
+                    null
+                }
+            }
+            if (!novelIconUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = novelIconUrl,
+                    contentDescription = null,
+                    placeholder = ColorPainter(Color(0x1F888888)),
+                    error = rememberResourceBitmapPainter(id = R.mipmap.ic_default_source),
+                    modifier = modifier
+                        .then(defaultModifier)
+                        .clip(MaterialTheme.shapes.extraSmall),
+                )
+            } else {
+                Image(
+                    painter = painterResource(R.mipmap.ic_default_source),
+                    contentDescription = null,
+                    modifier = modifier.then(defaultModifier),
+                )
+            }
+        }
         source.isStub && icon == null -> {
             Image(
                 imageVector = Icons.Filled.Warning,

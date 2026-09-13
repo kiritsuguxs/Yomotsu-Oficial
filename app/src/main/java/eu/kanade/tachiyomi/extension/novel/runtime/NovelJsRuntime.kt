@@ -1028,10 +1028,11 @@ class NovelJsModuleRegistry(
             headers.get = function(name) { return this[name] != null ? this[name] : this[String(name).toLowerCase()] || null; };
             headers.has = function(name) { return this[name] != null || String(name).toLowerCase() in this; };
             var cachedArrayBuffer = null;
+            var resolvedUrl = response.url || response.__requestUrl || "";
             return {
               ok: response.status >= 200 && response.status < 300,
               status: response.status,
-              url: response.url || "",
+              url: resolvedUrl,
               headers: headers,
               text: function() { return Promise.resolve(response.body || ""); },
               json: function() { return Promise.resolve(response.body ? JSON.parse(response.body) : null); },
@@ -1170,7 +1171,17 @@ class NovelJsModuleRegistry(
             var response = __native.fetchProto(String(input.url), configPayload, optionsPayload);
             return Promise.resolve(response ? JSON.parse(response) : null);
           }
-          module.exports = { fetchApi: fetchApi, fetchText: fetchText, fetchProto: fetchProto, fetchFile: fetchFile };
+          fetchApi.fetchApi = fetchApi;
+          fetchApi.fetchText = fetchText;
+          fetchApi.fetchProto = fetchProto;
+          fetchApi.fetchFile = fetchFile;
+          fetchApi.default = fetchApi;
+          module.exports = fetchApi;
+          exports.fetchApi = fetchApi;
+          exports.fetchText = fetchText;
+          exports.fetchProto = fetchProto;
+          exports.fetchFile = fetchFile;
+          exports.default = fetchApi;
         });
     """.trimIndent()
 
@@ -1324,13 +1335,22 @@ class NovelJsModuleRegistry(
         return """
             __defineModule("dayjs", function(module, exports) {
               function dayjs(input) {
-                var value = input == null ? "" : String(input);
-                return {
-                  format: function() { return value; }
+                var d = input ? new Date(input) : new Date();
+                var obj = {
+                  format: function(fmt) {
+                    try { return d.toISOString(); } catch(e) { return String(input || ""); }
+                  },
+                  subtract: function(amount, unit) { return dayjs(d.getTime() - ((Number(amount) || 0) * 1000)); },
+                  add: function(amount, unit) { return dayjs(d.getTime() + ((Number(amount) || 0) * 1000)); },
+                  isValid: function() { return !isNaN(d.getTime()); },
+                  toDate: function() { return d; },
+                  valueOf: function() { return d.getTime(); }
                 };
+                return obj;
               }
               dayjs.default = dayjs;
               module.exports = dayjs;
+              exports.default = dayjs;
             });
         """.trimIndent()
     }
@@ -1868,7 +1888,11 @@ class NovelJsModuleRegistry(
             return $;
           }
 
-          module.exports = { load: load };
+          load.load = load;
+          load.default = load;
+          module.exports = load;
+          exports.load = load;
+          exports.default = load;
         });
     """.trimIndent()
 

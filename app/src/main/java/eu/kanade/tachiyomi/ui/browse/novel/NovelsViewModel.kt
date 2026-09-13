@@ -41,11 +41,14 @@ class NovelsViewModel(
                     (query.isNullOrBlank() || it.plugin.name.contains(query, ignoreCase = true)) &&
                         matchesLanguage(it.plugin.lang, enabledLanguages)
                 }
+                val updates = filteredInstalled.filter { it.hasUpdate }
+                val nonUpdates = filteredInstalled.filter { !it.hasUpdate }
                 State(
                     isLoading = false,
                     isRefreshing = isRefreshing,
                     isEmpty = filteredInstalled.isEmpty() && filteredAvailable.isEmpty(),
-                    installed = filteredInstalled,
+                    updates = updates,
+                    installed = nonUpdates,
                     available = filteredAvailable,
                 )
             }.collect { newState ->
@@ -97,6 +100,12 @@ class NovelsViewModel(
         }
     }
 
+    fun updateExtension(plugin: NovelPlugin) {
+        manager.installPlugin(plugin) {
+            // Callback when update finishes
+        }
+    }
+
     fun uninstallExtension(pluginId: String) {
         manager.uninstallPlugin(pluginId)
     }
@@ -105,6 +114,7 @@ class NovelsViewModel(
         val isLoading: Boolean = true,
         val isRefreshing: Boolean = false,
         val isEmpty: Boolean = true,
+        val updates: List<NovelExtension.Installed> = emptyList(),
         val installed: List<NovelExtension.Installed> = emptyList(),
         val available: List<NovelExtension.Available> = emptyList(),
     )

@@ -73,6 +73,28 @@ class NovelExtensionManager(
         _installedExtensions.value = installed
     }
 
+    fun getSourceIconUrl(sourceId: Long): String? {
+        val installed = _installedExtensions.value.firstOrNull { ext ->
+            ext.sources.any { it.id == sourceId }
+        }
+        val icon = installed?.plugin?.iconUrl
+        if (!icon.isNullOrBlank()) return icon
+        return _availableExtensions.value.firstOrNull { it.plugin.id == installed?.plugin?.id }?.plugin?.iconUrl
+    }
+
+    private fun isNewerVersion(available: String, installed: String): Boolean {
+        val aParts = available.split(".").mapNotNull { it.toIntOrNull() }
+        val iParts = installed.split(".").mapNotNull { it.toIntOrNull() }
+        val maxLen = maxOf(aParts.size, iParts.size)
+        for (i in 0 until maxLen) {
+            val a = aParts.getOrElse(i) { 0 }
+            val b = iParts.getOrElse(i) { 0 }
+            if (a > b) return true
+            if (a < b) return false
+        }
+        return false
+    }
+
     fun refreshAvailablePlugins() {
         scope.launch {
             _isRefreshing.value = true
@@ -94,7 +116,17 @@ class NovelExtensionManager(
                     }
                 }
                 
-                val installedIds = _installedExtensions.value.map { it.plugin.id }.toSet()
+                val availableMap = allPlugins.associateBy { it.id }
+                val updatedInstalled = _installedExtensions.value.map { inst ->
+                    val avail = availableMap[inst.plugin.id]
+                    val hasUpdate = if (avail != null && avail.version.isNotBlank() && inst.plugin.version.isNotBlank()) {
+                        isNewerVersion(avail.version, inst.plugin.version)
+                    } else false
+                    inst.copy(hasUpdate = hasUpdate)
+                }
+                _installedExtensions.value = updatedInstalled
+
+                val installedIds = updatedInstalled.map { it.plugin.id }.toSet()
                 _availableExtensions.value = allPlugins
                     .filterNot { installedIds.contains(it.id) }
                     .map { NovelExtension.Available(it) }

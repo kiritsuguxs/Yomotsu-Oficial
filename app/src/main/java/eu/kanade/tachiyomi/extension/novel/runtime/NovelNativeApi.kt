@@ -61,11 +61,18 @@ class NovelNativeApi(
 
         val response = client.newCall(requestBuilder.build()).execute()
         val responseBody = response.body?.string() ?: ""
+        val finalUrl = response.request.url.toString()
 
         val jsonResult = buildJsonObject {
             put("status", response.code)
             put("statusText", response.message)
+            put("url", finalUrl)
             put("body", responseBody)
+            put("headers", buildJsonObject {
+                response.headers.names().forEach { name ->
+                    put(name, response.headers[name] ?: "")
+                }
+            })
         }
         return jsonResult.toString()
     }
