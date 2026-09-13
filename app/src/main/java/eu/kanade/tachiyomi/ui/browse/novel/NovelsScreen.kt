@@ -99,15 +99,24 @@ private fun NovelExtensionItem(
             if (extension is NovelExtension.Available) onClickInstall()
         },
         icon = {
-            // Placeholder icon for now, later we can use coil to load plugin.iconUrl
-            Icon(
-                imageVector = Icons.Outlined.Settings,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(40.dp)
-                    .padding(8.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            if (!extension.plugin.iconUrl.isNullOrEmpty()) {
+                coil3.compose.AsyncImage(
+                    model = extension.plugin.iconUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .padding(4.dp),
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Outlined.Settings,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .padding(8.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
         },
         action = {
             when (extension) {

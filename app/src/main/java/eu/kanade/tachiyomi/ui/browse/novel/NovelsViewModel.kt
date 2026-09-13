@@ -14,7 +14,8 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
 class NovelsViewModel(
-    private val manager: NovelExtensionManager = Injekt.get()
+    private val manager: NovelExtensionManager = Injekt.get(),
+    private val preferences: eu.kanade.domain.source.service.SourcePreferences = Injekt.get()
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow<String?>(null)
@@ -29,13 +30,15 @@ class NovelsViewModel(
                 _searchQuery,
                 manager.installedExtensions,
                 manager.availableExtensions,
+                preferences.enabledLanguages.changes(),
                 manager.isRefreshing
-            ) { query, installed, available, isRefreshing ->
+            ) { query, installed, available, enabledLanguages, isRefreshing ->
                 val filteredInstalled = installed.filter {
-                    query.isNullOrBlank() || it.plugin.name.contains(query, ignoreCase = true)
+                    (query.isNullOrBlank() || it.plugin.name.contains(query, ignoreCase = true))
                 }
                 val filteredAvailable = available.filter {
-                    query.isNullOrBlank() || it.plugin.name.contains(query, ignoreCase = true)
+                    (query.isNullOrBlank() || it.plugin.name.contains(query, ignoreCase = true)) &&
+                    (it.plugin.lang in enabledLanguages)
                 }
                 State(
                     isLoading = false,
