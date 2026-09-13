@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.ui.browse.novel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.tachiyomi.extension.novel.NovelExtensionManager
 import eu.kanade.tachiyomi.extension.novel.model.NovelExtension
 import eu.kanade.tachiyomi.extension.novel.model.NovelPlugin
@@ -15,7 +16,7 @@ import uy.kohesive.injekt.api.get
 
 class NovelsViewModel(
     private val manager: NovelExtensionManager = Injekt.get(),
-    private val preferences: eu.kanade.domain.source.service.SourcePreferences = Injekt.get()
+    private val preferences: SourcePreferences = Injekt.get(),
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow<String?>(null)
@@ -31,20 +32,21 @@ class NovelsViewModel(
                 manager.installedExtensions,
                 manager.availableExtensions,
                 preferences.enabledLanguages.changes(),
-                manager.isRefreshing
+                manager.isRefreshing,
+            ) { query, installed, available, enabledLanguages, isRefreshing ->
                 val filteredInstalled = installed.filter {
                     query.isNullOrBlank() || it.plugin.name.contains(query, ignoreCase = true)
                 }
                 val filteredAvailable = available.filter {
                     (query.isNullOrBlank() || it.plugin.name.contains(query, ignoreCase = true)) &&
-                    matchesLanguage(it.plugin.lang, enabledLanguages)
+                        matchesLanguage(it.plugin.lang, enabledLanguages)
                 }
                 State(
                     isLoading = false,
                     isRefreshing = isRefreshing,
+                    isEmpty = filteredInstalled.isEmpty() && filteredAvailable.isEmpty(),
                     installed = filteredInstalled,
                     available = filteredAvailable,
-                    isEmpty = filteredInstalled.isEmpty() && filteredAvailable.isEmpty()
                 )
             }.collect { newState ->
                 _state.value = newState
@@ -91,7 +93,7 @@ class NovelsViewModel(
 
     fun installExtension(plugin: NovelPlugin) {
         manager.installPlugin(plugin) {
-            // Toast or snackbar could be handled here or by UI observing state
+            // Callback when install finishes
         }
     }
 
