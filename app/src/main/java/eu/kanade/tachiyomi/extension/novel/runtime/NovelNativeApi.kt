@@ -105,20 +105,35 @@ class NovelNativeApi(
     override fun urlEncode(value: String, charsetName: String?): String = java.net.URLEncoder.encode(value, charsetName ?: "UTF-8")
     override fun urlDecode(value: String, charsetName: String?): String = java.net.URLDecoder.decode(value, charsetName ?: "UTF-8")
 
-    override fun domLoad(html: String): Int = store(Jsoup.parse(html))
-    override fun domSelect(handle: Int, selector: String): String = getElement(handle).select(selector).map { store(it) }.joinToString(",")
+    override fun domSelect(handle: Int, selector: String): String =
+        "[" + getElement(handle).select(selector).joinToString(",") { store(it).toString() } + "]"
+
     override fun domParent(handle: Int): Int = getElement(handle).parent()?.let { store(it) } ?: -1
-    override fun domChildren(handle: Int, selector: String?): String = (if (selector != null) getElement(handle).children().select(selector) else getElement(handle).children()).map { store(it) }.joinToString(",")
+
+    override fun domChildren(handle: Int, selector: String?): String =
+        "[" + (if (selector != null) getElement(handle).children().select(selector) else getElement(handle).children()).joinToString(",") { store(it).toString() } + "]"
+
     override fun domNext(handle: Int, selector: String?): Int = getElement(handle).nextElementSibling()?.let { store(it) } ?: -1
+
     override fun domPrev(handle: Int, selector: String?): Int = getElement(handle).previousElementSibling()?.let { store(it) } ?: -1
-    override fun domNextAll(handle: Int, selector: String?): String = getElement(handle).nextElementSiblings().map { store(it) }.joinToString(",")
-    override fun domPrevAll(handle: Int, selector: String?): String = getElement(handle).previousElementSiblings().map { store(it) }.joinToString(",")
-    override fun domSiblings(handle: Int, selector: String?): String = getElement(handle).siblingElements().map { store(it) }.joinToString(",")
+
+    override fun domNextAll(handle: Int, selector: String?): String =
+        "[" + getElement(handle).nextElementSiblings().joinToString(",") { store(it).toString() } + "]"
+
+    override fun domPrevAll(handle: Int, selector: String?): String =
+        "[" + getElement(handle).previousElementSiblings().joinToString(",") { store(it).toString() } + "]"
+
+    override fun domSiblings(handle: Int, selector: String?): String =
+        "[" + getElement(handle).siblingElements().joinToString(",") { store(it).toString() } + "]"
+
     override fun domClosest(handle: Int, selector: String): Int = getElement(handle).parents().firstOrNull { it.`is`(selector) }?.let { store(it) } ?: -1
-    override fun domContents(handle: Int): String = getElement(handle).childNodes().mapNotNull { if (it is Element) store(it).toString() else null }.joinToString(",")
+
+    override fun domContents(handle: Int): String =
+        "[" + getElement(handle).childNodes().mapNotNull { if (it is Element) store(it).toString() else null }.joinToString(",") + "]"
+
     override fun domIs(handle: Int, selector: String): Boolean = getElement(handle).`is`(selector)
     override fun domHas(handle: Int, selector: String): Boolean = getElement(handle).selectFirst(selector) != null
-    override fun domNot(handle: Int, selector: String): String = ""
+    override fun domNot(handle: Int, selector: String): String = "[]"
     override fun domHtml(handle: Int): String = getElement(handle).html()
     override fun domOuterHtml(handle: Int): String = getElement(handle).outerHtml()
     override fun domXml(handle: Int): String = getElement(handle).html()
@@ -126,7 +141,9 @@ class NovelNativeApi(
     override fun domAttr(handle: Int, name: String): String? = getElement(handle).attr(name).takeIf { it.isNotEmpty() }
     override fun domSetAttr(handle: Int, name: String, value: String) { getElement(handle).attr(name, value) }
     override fun domRemoveAttr(handle: Int, name: String) { getElement(handle).removeAttr(name) }
-    override fun domAttrs(handle: Int): String = "{}"
+    override fun domAttrs(handle: Int): String = buildJsonObject {
+        getElement(handle).attributes().forEach { put(it.key, it.value) }
+    }.toString()
     override fun domHasClass(handle: Int, className: String): Boolean = getElement(handle).hasClass(className)
     override fun domData(handle: Int, key: String): String? = getElement(handle).dataset()[key]
     override fun domVal(handle: Int): String? = getElement(handle).`val`()
