@@ -11,6 +11,8 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.model.SMangaUpdate
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -64,7 +66,9 @@ class NovelSourceWrapper(
                         __result = res;
                         __done = true;
                     }).catch(function(err) {
-                        __error = err && err.message ? err.message : String(err);
+                        var stack = (err && err.stack) ? String(err.stack) : "";
+                        var msg = (err && err.message) ? String(err.message) : String(err);
+                        __error = stack ? (msg + "\n" + stack) : msg;
                         __done = true;
                     });
                     // Spin event loop manually
@@ -75,19 +79,45 @@ class NovelSourceWrapper(
                     __result = promise;
                 }
             } catch (e) {
-                __error = e && e.message ? e.message : String(e);
+                var stack = (e && e.stack) ? String(e.stack) : "";
+                var msg = (e && e.message) ? String(e.message) : String(e);
+                __error = stack ? (msg + "\n" + stack) : msg;
             }
-            if (__error) throw new Error(__error);
-            JSON.stringify(__result);
-        """
-        return runtime.evaluate(script, "novel-evaluate.js") as? String ?: "null"
+            JSON.stringify({ result: __result, error: __error });
+        """.trimIndent()
+        val rawJson = runtime.evaluate(script, "novel-evaluate.js") as? String ?: "null"
+        if (rawJson == "null" || rawJson.isBlank()) return "null"
+        val jsonObj = Injekt.get<Json>().parseToJsonElement(rawJson).jsonObject
+        val errorMsg = jsonObj["error"]?.jsonPrimitive?.contentOrNull
+        if (!errorMsg.isNullOrBlank()) {
+            android.util.Log.e("NovelSourceWrapper", "Novel JS execution error:\n$errorMsg")
+            throw Exception(errorMsg)
+        }
+        val resultElem = jsonObj["result"]
+        return if (resultElem == null || resultElem is JsonNull) "null" else resultElem.toString()
     }
 
     private fun <T> runInJs(block: (NovelJsRuntime) -> T): T {
         val runtime = NovelJsRuntime(plugin.id, NovelNativeApi())
         try {
             val jsCode = File(localPath).readText()
-            runtime.evaluate("var module = { exports: {} };\nvar exports = module.exports;\n" + jsCode, localPath)
+            val setupScript = """
+                var module = { exports: {} };
+                var exports = module.exports;
+                function __safeFilters(p) {
+                    var base = (p && p.filters) ? p.filters : {};
+                    var res = {};
+                    for (var k in base) {
+                        if (Object.prototype.hasOwnProperty.call(base, k)) res[k] = base[k];
+                    }
+                    var common = ["genres", "genre", "genre[]", "categories", "category", "category[]", "type", "sort", "order", "status", "tags", "tag", "tag[]"];
+                    for (var i = 0; i < common.length; i++) {
+                        if (!res[common[i]]) res[common[i]] = { value: "", options: [] };
+                    }
+                    return res;
+                }
+            """.trimIndent()
+            runtime.evaluate(setupScript + "\n" + jsCode, localPath)
             return block(runtime)
         } finally {
             runtime.close()
@@ -98,14 +128,8 @@ class NovelSourceWrapper(
         val script = """
             (function() {
                 var p = module.exports.default || module.exports;
-                var baseFilters = (p && p.filters) ? p.filters : {};
-                var safeFilters = typeof Proxy !== 'undefined' ? new Proxy(baseFilters, {
-                    get: function(target, prop) {
-                        if (prop in target) return target[prop];
-                        return { value: "", options: [] };
-                    }
-                }) : baseFilters;
-                return p.popularNovels($page, { showLatestNovels: false, filters: safeFilters });
+                var filters = typeof __safeFilters === 'function' ? __safeFilters(p) : ((p && p.filters) ? p.filters : {});
+                return p.popularNovels($page, { showLatestNovels: false, filters: filters });
             })()
         """.trimIndent()
         val jsonStr = evaluateAsyncMethod(runtime, script)
@@ -116,14 +140,8 @@ class NovelSourceWrapper(
         val script = """
             (function() {
                 var p = module.exports.default || module.exports;
-                var baseFilters = (p && p.filters) ? p.filters : {};
-                var safeFilters = typeof Proxy !== 'undefined' ? new Proxy(baseFilters, {
-                    get: function(target, prop) {
-                        if (prop in target) return target[prop];
-                        return { value: "", options: [] };
-                    }
-                }) : baseFilters;
-                return p.popularNovels($page, { showLatestNovels: true, filters: safeFilters });
+                var filters = typeof __safeFilters === 'function' ? __safeFilters(p) : ((p && p.filters) ? p.filters : {});
+                return p.popularNovels($page, { showLatestNovels: true, filters: filters });
             })()
         """.trimIndent()
         val jsonStr = evaluateAsyncMethod(runtime, script)
@@ -135,13 +153,7 @@ class NovelSourceWrapper(
         val script = """
             (function() {
                 var p = module.exports.default || module.exports;
-                var baseFilters = (p && p.filters) ? p.filters : {};
-                var safeFilters = typeof Proxy !== 'undefined' ? new Proxy(baseFilters, {
-                    get: function(target, prop) {
-                        if (prop in target) return target[prop];
-                        return { value: "", options: [] };
-                    }
-                }) : baseFilters;
+                var safeFilters = typeof __safeFilters === 'function' ? __safeFilters(p) : ((p && p.filters) ? p.filters : {});
                 return p.searchNovels('$escapedQuery', $page, { filters: safeFilters });
             })()
         """.trimIndent()
