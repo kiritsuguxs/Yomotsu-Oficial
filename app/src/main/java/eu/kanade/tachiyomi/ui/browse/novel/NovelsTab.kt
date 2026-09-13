@@ -19,8 +19,7 @@ import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.EmptyScreenAction
 import tachiyomi.presentation.core.screens.LoadingScreen
 
-import androidx.compose.material.icons.outlined.TravelExplore
-import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalNovelSearchScreen
+import eu.kanade.tachiyomi.ui.webview.WebViewScreen
 
 @Composable
 fun novelsTab(
@@ -32,6 +31,7 @@ fun novelsTab(
 
     return TabContent(
         titleRes = MR.strings.label_novels,
+        badgeNumber = state.updates.size.takeIf { it > 0 },
         searchEnabled = true,
         actions = listOf(
             AppBar.OverflowAction(
@@ -70,8 +70,16 @@ fun novelsTab(
                             contentPadding = contentPadding,
                             onInstallExtension = viewModel::installExtension,
                             onUninstallExtension = viewModel::uninstallExtension,
-                            onOpenSource = { sourceId ->
-                                navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen(sourceId, null))
+                            onUpdateExtension = viewModel::updateExtension,
+                            onOpenWebView = { plugin ->
+                                if (plugin.site.isNotBlank()) {
+                                    navigator.push(
+                                        WebViewScreen(
+                                            url = plugin.site,
+                                            initialTitle = plugin.name,
+                                        ),
+                                    )
+                                }
                             },
                         )
                     }
