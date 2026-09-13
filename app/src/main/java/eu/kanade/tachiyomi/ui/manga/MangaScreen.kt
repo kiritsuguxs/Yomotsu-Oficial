@@ -123,7 +123,29 @@ class MangaScreen(
             chapterSwipeEndAction = viewModel.chapterSwipeEndAction,
             navigateUp = navigator::pop,
             onChapterClicked = { openChapter(context, it, successState.source) },
-            onDownloadChapter = viewModel::runChapterDownloadActions.takeIf { !successState.source.isLocalOrStub() },
+            onDownloadChapter = if (successState.source is eu.kanade.tachiyomi.source.INovelSource) {
+                { items, action ->
+                    when (action) {
+                        ChapterDownloadAction.START, ChapterDownloadAction.START_NOW -> {
+                            eu.kanade.tachiyomi.extension.novel.download.NovelDownloadManager.downloadChapters(
+                                successState.manga,
+                                items.map { it.chapter },
+                            )
+                        }
+                        ChapterDownloadAction.DELETE -> {
+                            items.forEach {
+                                eu.kanade.tachiyomi.extension.novel.download.NovelDownloadManager.deleteChapter(
+                                    successState.manga.id,
+                                    it.chapter.id,
+                                )
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+            } else {
+                viewModel::runChapterDownloadActions.takeIf { !successState.source.isLocalOrStub() }
+            },
             onTranslationChapter = viewModel::runChapterTranslationActions,
             onAddToLibraryClicked = {
                 viewModel.toggleFavorite()
