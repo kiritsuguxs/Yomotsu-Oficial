@@ -157,6 +157,7 @@
         </activity>
 
         <activity
+        <activity android:name=".ui.reader.NovelReaderActivity" android:exported="false" android:launchMode="singleTask" />
             android:name=".ui.reader.ReaderActivity"
             android:exported="false"
             android:launchMode="singleTask">

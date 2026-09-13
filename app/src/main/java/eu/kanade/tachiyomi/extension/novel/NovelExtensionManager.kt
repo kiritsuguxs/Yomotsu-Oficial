@@ -58,7 +58,7 @@ class NovelExtensionManager(
                 NovelExtension.Installed(
                     plugin = plugin,
                     localPath = file.absolutePath,
-                    sources = listOf(NovelSourceWrapper(plugin))
+                    sources = listOf(NovelSourceWrapper(plugin, file.absolutePath))
                 )
             )
         }
