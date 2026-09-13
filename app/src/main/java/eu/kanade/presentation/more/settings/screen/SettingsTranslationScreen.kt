@@ -64,6 +64,16 @@ object SettingsTranslationScreen : SearchableSettings {
             ),
             getTranslationLangGroup(translationPreferences),
             getTranslatioEngineGroup(translationPreferences),
+            Preference.PreferenceGroup(
+                title = "Novels",
+                preferenceItems = persistentListOf(
+                    Preference.PreferenceItem.SwitchPreference(
+                        preference = translationPreferences.autoTranslateNovels(),
+                        title = "Traduzir Novels automaticamente",
+                        subtitle = "Traduz os capítulos de novels para português ao abrir no leitor",
+                    ),
+                ),
+            ),
             getOcrEngineGroup(translationPreferences),
             getTranslatioAdvancedGroup(translationPreferences),
         )

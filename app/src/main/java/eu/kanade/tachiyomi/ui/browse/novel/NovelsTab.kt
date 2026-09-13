@@ -19,6 +19,9 @@ import tachiyomi.presentation.core.screens.EmptyScreen
 import tachiyomi.presentation.core.screens.EmptyScreenAction
 import tachiyomi.presentation.core.screens.LoadingScreen
 
+import androidx.compose.material.icons.outlined.TravelExplore
+import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalNovelSearchScreen
+
 @Composable
 fun novelsTab(
     viewModel: NovelsViewModel,
@@ -31,6 +34,11 @@ fun novelsTab(
         titleRes = MR.strings.label_novels,
         searchEnabled = true,
         actions = listOf(
+            AppBar.Action(
+                title = stringResource(MR.strings.action_global_search),
+                icon = Icons.Outlined.TravelExplore,
+                onClick = { navigator.push(GlobalNovelSearchScreen(searchQuery.orEmpty())) },
+            ),
             AppBar.OverflowAction(
                 title = stringResource(MR.strings.action_filter),
                 onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.extension.ExtensionFilterScreen()) },
