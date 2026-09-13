@@ -19,6 +19,7 @@ sealed class NovelExtension {
     data class Installed(
         override val plugin: NovelPlugin,
         val localPath: String,
+        val sources: List<eu.kanade.tachiyomi.extension.novel.NovelSourceWrapper>,
         val hasUpdate: Boolean = false,
     ) : NovelExtension()
 

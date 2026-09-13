@@ -53,10 +53,12 @@ class NovelExtensionManager(
         // For now, if the JS file exists, we just list it minimally.
         pluginsDir.listFiles { file -> file.extension == "js" }?.forEach { file ->
             val id = file.nameWithoutExtension
+            val plugin = NovelPlugin(id, name = id, url = "", lang = "")
             installed.add(
                 NovelExtension.Installed(
-                    plugin = NovelPlugin(id, name = id, url = "", lang = ""),
-                    localPath = file.absolutePath
+                    plugin = plugin,
+                    localPath = file.absolutePath,
+                    sources = listOf(NovelSourceWrapper(plugin))
                 )
             )
         }
