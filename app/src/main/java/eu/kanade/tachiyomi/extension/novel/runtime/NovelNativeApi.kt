@@ -105,6 +105,8 @@ class NovelNativeApi(
     override fun urlEncode(value: String, charsetName: String?): String = java.net.URLEncoder.encode(value, charsetName ?: "UTF-8")
     override fun urlDecode(value: String, charsetName: String?): String = java.net.URLDecoder.decode(value, charsetName ?: "UTF-8")
 
+    override fun domLoad(html: String): Int = store(Jsoup.parse(html))
+
     override fun domSelect(handle: Int, selector: String): String =
         "[" + getElement(handle).select(selector).joinToString(",") { store(it).toString() } + "]"
 
