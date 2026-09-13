@@ -32,6 +32,10 @@ fun novelsTab(
         searchEnabled = true,
         actions = listOf(
             AppBar.OverflowAction(
+                title = stringResource(MR.strings.action_filter),
+                onClick = { navigator.push(eu.kanade.tachiyomi.ui.browse.extension.ExtensionFilterScreen()) },
+            ),
+            AppBar.OverflowAction(
                 title = stringResource(MR.strings.extensionStores),
                 onClick = { navigator.push(ExtensionStoresScreen()) },
             ),
