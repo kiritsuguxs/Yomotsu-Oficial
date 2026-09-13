@@ -4,9 +4,13 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import eu.kanade.tachiyomi.source.Source
+import tachiyomi.domain.source.service.SourceManager
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 class GlobalNovelSearchViewModel(
     initialQuery: String,
+    private val sourceManager: SourceManager = Injekt.get(),
 ) : SearchViewModel(State(searchQuery = initialQuery)) {
 
     companion object {
