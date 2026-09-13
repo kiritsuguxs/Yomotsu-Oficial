@@ -87,6 +87,13 @@ private fun ExtensionStoresListItem(
                 modifier = Modifier.padding(start = MaterialTheme.padding.medium),
                 style = MaterialTheme.typography.titleMedium,
             )
+            if (store.signingKey == "NOVEL_REPO" || store.badgeLabel.equals("Novel", ignoreCase = true)) {
+                Text(
+                    text = " [Novel]",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
 
         Row(

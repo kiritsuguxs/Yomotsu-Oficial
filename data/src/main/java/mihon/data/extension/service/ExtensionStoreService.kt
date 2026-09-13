@@ -26,6 +26,25 @@ class ExtensionStoreService(
     private val protoBuf: ProtoBuf,
 ) {
     suspend fun fetch(indexUrl: String): Result<ExtensionStore> {
+        val candidates = buildList {
+            add(indexUrl)
+            val trimmed = indexUrl.trim().trimEnd('/')
+            if (!indexUrl.endsWith(".json", ignoreCase = true) && !indexUrl.endsWith(".pb", ignoreCase = true)) {
+                add("$trimmed/plugins.min.json")
+                add("$trimmed/index.min.json")
+                add("$trimmed/repo.json")
+            }
+        }
+        for ((i, candidate) in candidates.withIndex()) {
+            val result = fetchSingle(candidate)
+            if (result.isSuccess || i == candidates.lastIndex) {
+                return result
+            }
+        }
+        return Result.failure(Exception("Not found"))
+    }
+
+    private suspend fun fetchSingle(indexUrl: String): Result<ExtensionStore> {
         var updatedIndexUrl: String = indexUrl
         return try {
             val response = network.client.newCall(GET(updatedIndexUrl)).awaitSuccess()
@@ -33,6 +52,18 @@ class ExtensionStoreService(
                 val networkStore = when (source.peek().readByte()) {
                     // "[..."
                     0x5B.toByte() -> run {
+                        val peekedSource = source.peek()
+                        val sample = peekedSource.readUtf8(minOf(peekedSource.buffer.size, 1024L))
+                        if (updatedIndexUrl.contains("plugins", ignoreCase = true) || sample.contains("\"site\"") || sample.contains(".js\"")) {
+                            return@run NetworkExtensionStore(
+                                name = "LNReader Plugins",
+                                badgeLabel = "Novel",
+                                signingKey = "NOVEL_REPO",
+                                website = "https://github.com/lnreader/lnreader-plugins",
+                                discord = null,
+                                extensionListUrl = updatedIndexUrl,
+                            )
+                        }
                         if (!indexUrl.endsWith("/index.min.json")) {
                             throw IllegalArgumentException("Provided legacy store url is not valid")
                         }
@@ -51,7 +82,7 @@ class ExtensionStoreService(
                 }
 
                 if (networkStore is NetworkLegacyExtensionRepo && networkStore.indexV2 != null) {
-                    return fetch(networkStore.indexV2)
+                    return fetchSingle(networkStore.indexV2)
                 }
 
                 networkStore.toExtensionStore(updatedIndexUrl)
@@ -68,6 +99,9 @@ class ExtensionStoreService(
     }
 
     suspend fun getExtensions(store: ExtensionStore): Result<List<Extension.Available>> {
+        if (store.signingKey == "NOVEL_REPO" || store.badgeLabel.equals("Novel", ignoreCase = true) || store.indexUrl.contains("plugins", ignoreCase = true)) {
+            return Result.success(emptyList())
+        }
         return try {
             val extensions = if (store.extensionListUrl != null) {
                 val response = network.client.newCall(GET(store.extensionListUrl!!)).awaitSuccess()
