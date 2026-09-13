@@ -122,8 +122,9 @@ internal fun buildNativeBridgeShim(): String {
             "{ return bridge[\"${method.name}\"]($coerced); };"
     }
     return buildString {
-        appendLine("(function(global) {")
-        appendLine("  var bridge = global.$NATIVE_BRIDGE_NAME;")
+        appendLine("(function() {")
+        appendLine("  var g = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this));")
+        appendLine("  var bridge = g.$NATIVE_BRIDGE_NAME || (typeof $NATIVE_BRIDGE_NAME !== 'undefined' ? $NATIVE_BRIDGE_NAME : null);")
         appendLine("  function __s(v) { return v === null || v === undefined ? \"\" : String(v); }")
         appendLine("  function __sn(v) { return v === null || v === undefined ? null : String(v); }")
         appendLine(
@@ -132,8 +133,9 @@ internal fun buildNativeBridgeShim(): String {
         )
         appendLine("  var native = {};")
         appendLine(bindings)
-        appendLine("  global.$NATIVE_OBJECT_NAME = native;")
-        append("})(this);")
+        appendLine("  g.$NATIVE_OBJECT_NAME = native;")
+        appendLine("  if (typeof globalThis !== 'undefined') globalThis.$NATIVE_OBJECT_NAME = native;")
+        append("})();")
     }
 }
 
@@ -141,7 +143,7 @@ internal fun buildNativeBridgeShim(): String {
  * Engine-agnostic logging decorator that reproduces the per-operation compatibility
  * logging the previous J2V8 binder performed inline.
  */
-internal class LoggingNativeApi(
+class LoggingNativeApi(
     private val delegate: NovelJsRuntime.NativeApi,
     private val logger: CompatibilityLogger,
 ) : NovelJsRuntime.NativeApi by delegate {
