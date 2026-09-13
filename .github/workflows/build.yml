@@ -49,9 +49,12 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
-      - name: Check code format
-        continue-on-error: true
-        run: ./gradlew spotlessCheck
+      - name: Get app version
+        id: get_version
+        run: |
+          VERSION="$(sed -n 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' app/build.gradle.kts | head -n 1)"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Extracted app version: ${VERSION}"
 
       - name: Run unit tests
         id: unit_tests
@@ -68,16 +71,18 @@ jobs:
           path: app/build/reports/tests/testDebugUnitTest
 
       - name: Build app
-        run: ./gradlew assembleRelease -Penable-updater
+        run: |
+          ./gradlew assembleRelease -Penable-updater
+          cp app/build/outputs/apk/release/app-arm64-v8a-release.apk app/build/outputs/apk/release/Yomotsu-${{ steps.get_version.outputs.version }}-arm64.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: arm64-v8a-${{ github.sha }}
-          path: app/build/outputs/apk/release/app-arm64-v8a-release.apk
+          name: Yomotsu-${{ steps.get_version.outputs.version }}-arm64
+          path: app/build/outputs/apk/release/Yomotsu-${{ steps.get_version.outputs.version }}-arm64.apk
 
       - name: Upload mapping
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: mapping-${{ github.sha }}
+          name: mapping-Yomotsu-${{ steps.get_version.outputs.version }}
           path: app/build/outputs/mapping/release
