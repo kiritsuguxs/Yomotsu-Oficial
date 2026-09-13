@@ -84,7 +84,7 @@ class NovelReaderActivity : ComponentActivity() {
                         )
                     } else if (errorContent != null) {
                         Text(
-                            text = "Error: \$errorContent",
+                            text = "Error: $errorContent",
                             color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.align(Alignment.Center)
                         )
