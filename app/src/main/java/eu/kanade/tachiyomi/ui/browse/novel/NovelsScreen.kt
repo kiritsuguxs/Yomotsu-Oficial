@@ -57,7 +57,7 @@ fun NovelsScreen(
                     style = MaterialTheme.typography.header,
                 )
             }
-            items(state.installed, key = { it.plugin.id }) { extension ->
+            items(state.installed, key = { "installed_${it.plugin.id}" }) { extension ->
                 NovelExtensionItem(
                     extension = extension,
                     onClickInstall = { onInstallExtension(extension.plugin) },
@@ -75,7 +75,7 @@ fun NovelsScreen(
                     style = MaterialTheme.typography.header,
                 )
             }
-            items(state.available, key = { it.plugin.id }) { extension ->
+            items(state.available, key = { "available_${it.plugin.id}_${it.plugin.lang}" }) { extension ->
                 NovelExtensionItem(
                     extension = extension,
                     onClickInstall = { onInstallExtension(extension.plugin) },
