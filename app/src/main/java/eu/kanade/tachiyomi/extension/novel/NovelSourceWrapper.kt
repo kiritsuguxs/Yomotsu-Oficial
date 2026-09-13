@@ -95,17 +95,57 @@ class NovelSourceWrapper(
     }
 
     override suspend fun getPopularManga(page: Int): MangasPage = runInJs { runtime ->
-        val jsonStr = evaluateAsyncMethod(runtime, "module.exports.default.popularNovels($page, { showLatestNovels: false })")
+        val script = """
+            (function() {
+                var p = module.exports.default || module.exports;
+                var baseFilters = (p && p.filters) ? p.filters : {};
+                var safeFilters = typeof Proxy !== 'undefined' ? new Proxy(baseFilters, {
+                    get: function(target, prop) {
+                        if (prop in target) return target[prop];
+                        return { value: "", options: [] };
+                    }
+                }) : baseFilters;
+                return p.popularNovels($page, { showLatestNovels: false, filters: safeFilters });
+            })()
+        """.trimIndent()
+        val jsonStr = evaluateAsyncMethod(runtime, script)
         parseNovelsJson(jsonStr)
     }
 
     override suspend fun getLatestUpdates(page: Int): MangasPage = runInJs { runtime ->
-        val jsonStr = evaluateAsyncMethod(runtime, "module.exports.default.popularNovels($page, { showLatestNovels: true })")
+        val script = """
+            (function() {
+                var p = module.exports.default || module.exports;
+                var baseFilters = (p && p.filters) ? p.filters : {};
+                var safeFilters = typeof Proxy !== 'undefined' ? new Proxy(baseFilters, {
+                    get: function(target, prop) {
+                        if (prop in target) return target[prop];
+                        return { value: "", options: [] };
+                    }
+                }) : baseFilters;
+                return p.popularNovels($page, { showLatestNovels: true, filters: safeFilters });
+            })()
+        """.trimIndent()
+        val jsonStr = evaluateAsyncMethod(runtime, script)
         parseNovelsJson(jsonStr)
     }
 
     override suspend fun getSearchManga(page: Int, query: String, filters: eu.kanade.tachiyomi.source.model.FilterList): MangasPage = runInJs { runtime ->
-        val jsonStr = evaluateAsyncMethod(runtime, "module.exports.default.searchNovels('$query', $page)")
+        val escapedQuery = query.replace("\\", "\\\\").replace("'", "\\'")
+        val script = """
+            (function() {
+                var p = module.exports.default || module.exports;
+                var baseFilters = (p && p.filters) ? p.filters : {};
+                var safeFilters = typeof Proxy !== 'undefined' ? new Proxy(baseFilters, {
+                    get: function(target, prop) {
+                        if (prop in target) return target[prop];
+                        return { value: "", options: [] };
+                    }
+                }) : baseFilters;
+                return p.searchNovels('$escapedQuery', $page, { filters: safeFilters });
+            })()
+        """.trimIndent()
+        val jsonStr = evaluateAsyncMethod(runtime, script)
         parseNovelsJson(jsonStr)
     }
 
@@ -120,7 +160,14 @@ class NovelSourceWrapper(
 
         if (fetchDetails || fetchChapters) {
             runInJs { runtime ->
-                val jsonStr = evaluateAsyncMethod(runtime, "module.exports.default.parseNovel('${manga.url}')")
+                val escapedUrl = manga.url.replace("\\", "\\\\").replace("'", "\\'")
+                val script = """
+                    (function() {
+                        var p = module.exports.default || module.exports;
+                        return p.parseNovel('$escapedUrl');
+                    })()
+                """.trimIndent()
+                val jsonStr = evaluateAsyncMethod(runtime, script)
                 val json = Injekt.get<Json>().parseToJsonElement(jsonStr).jsonObject
 
                 if (fetchDetails) {
@@ -161,7 +208,15 @@ class NovelSourceWrapper(
     }
 
     suspend fun getChapterText(mangaUrl: String, chapterUrl: String): String = runInJs { runtime ->
-        val jsonStr = evaluateAsyncMethod(runtime, "module.exports.default.parseChapter('$mangaUrl', '$chapterUrl')")
+        val escapedChapter = chapterUrl.replace("\\", "\\\\").replace("'", "\\'")
+        val escapedManga = mangaUrl.replace("\\", "\\\\").replace("'", "\\'")
+        val script = """
+            (function() {
+                var p = module.exports.default || module.exports;
+                return p.parseChapter('$escapedChapter', '$escapedManga');
+            })()
+        """.trimIndent()
+        val jsonStr = evaluateAsyncMethod(runtime, script)
         val json = Injekt.get<Json>().parseToJsonElement(jsonStr)
         json.jsonPrimitive.content
     }
