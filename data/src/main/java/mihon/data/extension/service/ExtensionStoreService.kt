@@ -59,8 +59,8 @@ class ExtensionStoreService(
                                 name = "LNReader Plugins",
                                 badgeLabel = "Novel",
                                 signingKey = "NOVEL_REPO",
-                                website = "https://github.com/lnreader/lnreader-plugins",
-                                discord = null,
+                                contact = NetworkExtensionStore.Contact(website = "https://github.com/lnreader/lnreader-plugins", discord = null),
+                                extensionList = null,
                                 extensionListUrl = updatedIndexUrl,
                             )
                         }
