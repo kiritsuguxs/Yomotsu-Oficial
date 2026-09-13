@@ -71,7 +71,7 @@ fun novelsTab(
                             onInstallExtension = viewModel::installExtension,
                             onUninstallExtension = viewModel::uninstallExtension,
                             onOpenSource = { sourceId ->
-                                navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen(sourceId))
+                                navigator.push(eu.kanade.tachiyomi.ui.browse.source.browse.BrowseSourceScreen(sourceId, null))
                             },
                         )
                     }

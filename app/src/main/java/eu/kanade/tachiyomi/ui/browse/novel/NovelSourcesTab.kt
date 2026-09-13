@@ -19,7 +19,7 @@ import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 
 @Composable
-fun Screen.novelSourcesTab(): TabContent {
+fun novelSourcesTab(): TabContent {
     val navigator = LocalNavigator.currentOrThrow
     val viewModel = viewModel<NovelSourcesViewModel>()
     val state by viewModel.state.collectAsState()
