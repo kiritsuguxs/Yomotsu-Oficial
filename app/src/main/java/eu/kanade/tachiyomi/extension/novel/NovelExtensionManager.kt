@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import logcat.LogPriority
 import mihon.domain.extension.repository.ExtensionStoreRepository
@@ -49,17 +50,24 @@ class NovelExtensionManager(
 
     fun loadInstalledExtensions() {
         val installed = mutableListOf<NovelExtension.Installed>()
-        // TODO: read metadata from a local JSON or SharedPreferences to populate the plugin fully.
-        // For now, if the JS file exists, we just list it minimally.
         pluginsDir.listFiles { file -> file.extension == "js" }?.forEach { file ->
             val id = file.nameWithoutExtension
-            val plugin = NovelPlugin(id, name = id, url = "", lang = "")
+            val metaFile = File(pluginsDir, "$id.json")
+            val plugin = if (metaFile.exists()) {
+                try {
+                    json.decodeFromString<NovelPlugin>(metaFile.readText())
+                } catch (e: Exception) {
+                    NovelPlugin(id, name = id, url = "", lang = "")
+                }
+            } else {
+                NovelPlugin(id, name = id, url = "", lang = "")
+            }
             installed.add(
                 NovelExtension.Installed(
                     plugin = plugin,
                     localPath = file.absolutePath,
-                    sources = listOf(NovelSourceWrapper(plugin, file.absolutePath))
-                )
+                    sources = listOf(NovelSourceWrapper(plugin, file.absolutePath)),
+                ),
             )
         }
         _installedExtensions.value = installed
@@ -104,7 +112,8 @@ class NovelExtensionManager(
                 targetFile.sink().buffer().use { sink ->
                     sink.writeAll(response.body.source())
                 }
-                // TODO: Save full metadata
+                val metaFile = File(pluginsDir, "${plugin.id}.json")
+                metaFile.writeText(json.encodeToString(plugin))
                 loadInstalledExtensions()
                 refreshAvailablePlugins()
                 onComplete(true)
@@ -120,7 +129,10 @@ class NovelExtensionManager(
         if (targetFile.exists()) {
             targetFile.delete()
         }
-        // TODO: Remove full metadata
+        val metaFile = File(pluginsDir, "$pluginId.json")
+        if (metaFile.exists()) {
+            metaFile.delete()
+        }
         loadInstalledExtensions()
         refreshAvailablePlugins()
     }
