@@ -190,6 +190,7 @@
     <string name="ext_downloading">A transferir</string>
     <string name="ext_installing">A instalar</string>
     <string name="ext_installed">Instalado</string>
+    <string name="ext_available">Disponíveis</string>
     <string name="ext_uninstall">Desinstalar</string>
     <string name="untrusted_extension">Extensão não confiável</string>
     <string name="untrusted_extension_message">Esta extensão maliciosa pode ler qualquer credenciais de sessão guardadas ou executar código arbitrário. \n \nAo confiar neste extensão, você aceita estes riscos.</string>

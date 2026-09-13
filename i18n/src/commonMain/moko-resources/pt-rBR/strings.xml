@@ -243,6 +243,7 @@
     <string name="ext_downloading">Fazendo download</string>
     <string name="ext_installing">Instalando</string>
     <string name="ext_installed">Instalada</string>
+    <string name="ext_available">Disponíveis</string>
     <string name="ext_trust">Confiar</string>
     <string name="ext_untrusted">Não confiável</string>
     <string name="ext_uninstall">Desinstalar</string>
