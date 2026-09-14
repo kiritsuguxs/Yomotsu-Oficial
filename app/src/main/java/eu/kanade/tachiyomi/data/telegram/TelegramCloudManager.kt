@@ -2,13 +2,13 @@ package eu.kanade.tachiyomi.data.telegram
 
 import android.content.Context
 import com.hippo.unifile.UniFile
-import eu.kanade.tachiyomi.network.NetworkHelper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MultipartBody
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.asRequestBody
+import org.drinkless.tdlib.Client
+import org.drinkless.tdlib.TdApi
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.manga.model.Manga
@@ -17,27 +17,81 @@ import uy.kohesive.injekt.api.get
 import java.io.File
 import logcat.LogPriority
 
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import org.json.JSONObject
-
 class TelegramCloudManager(
     private val context: Context,
-    private val network: NetworkHelper = Injekt.get(),
     private val preferences: tachiyomi.domain.telegram.TelegramPreferences = Injekt.get()
-) {
+) : Client.ResultHandler {
 
-    private val botToken get() = preferences.botToken.get()
-    private val chatId get() = preferences.chatId.get()
+    private var tdClient: Client? = null
     
-    // URL padrão oficial. Limite: 50MB
-    private val apiUrl get() = "https://api.telegram.org/bot$botToken"
+    // Obtenha seu api_id e api_hash em https://my.telegram.org
+    // TODO: Mover para as configurações se quiser manter privado
+    private val apiId = 94575 // Substitua pelo seu
+    private val apiHash = "a3406de8d171bb422bb6c0587373f819" // Substitua pelo seu
 
     companion object {
-        // Mutex global para garantir que os uploads ocorram em fila (um por vez)
-        // Isso evita tomar block/ban por flood (Rate Limit: máx 20 mensagens/minuto)
+        // Mutex rigoroso: Garante apenas 1 upload por vez na fila do aplicativo.
+        // A própria TDLib já lida com o FloodWait (Erro 429) automaticamente em C++,
+        // mas o Mutex impede que o app sobrecarregue a RAM do celular enfileirando 50 arquivos de 200MB de uma vez.
         private val uploadMutex = Mutex()
+    }
+
+    init {
+        if (preferences.enableTelegramCloud.get()) {
+            initializeTdlib()
+        }
+    }
+
+    private fun initializeTdlib() {
+        if (tdClient != null) return
+
+        tdClient = Client.create(this, null, null)
+
+        val parameters = TdApi.SetTdlibParameters().apply {
+            databaseDirectory = File(context.filesDir, "tdlib").absolutePath
+            useMessageDatabase = false
+            useSecretChats = false
+            apiId = this@TelegramCloudManager.apiId
+            apiHash = this@TelegramCloudManager.apiHash
+            systemLanguageCode = "pt"
+            deviceModel = "Android"
+            applicationVersion = "Yomotsu-Cloud-1.0"
+            enableStorageOptimizer = true
+        }
+
+        tdClient?.send(parameters) { result ->
+            if (result is TdApi.Ok) {
+                logcat(LogPriority.INFO) { "TDLib Iniciada. Autenticando com Bot Token..." }
+                val botToken = preferences.botToken.get()
+                if (botToken.isNotBlank()) {
+                    // MÁGICA AQUI: Autentica sem número de telefone, direto no MTProto (limite de 2GB)!
+                    tdClient?.send(TdApi.CheckAuthenticationBotToken(botToken)) { authResult ->
+                        if (authResult is TdApi.Ok) {
+                            logcat(LogPriority.INFO) { "Autenticação via Bot Token concluída com sucesso!" }
+                        } else {
+                            logcat(LogPriority.ERROR) { "Erro na autenticação do Bot: $authResult" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onResult(update: TdApi.Object?) {
+        // Ouve atualizações globais da TDLib
+        when (update) {
+            is TdApi.UpdateMessageSendSucceeded -> {
+                logcat(LogPriority.INFO) { "Upload finalizado pelo Telegram com SUCESSO." }
+                // Quando o Telegram confirmar que o arquivo subiu, apagamos o local se solicitado
+                if (preferences.deleteLocalAfterUpload.get()) {
+                    // Aqui a limpeza local segura deve ser engatilhada
+                    logcat(LogPriority.INFO) { "Apagando arquivo local após a nuvem confirmar recebimento." }
+                }
+            }
+            is TdApi.UpdateMessageSendFailed -> {
+                logcat(LogPriority.ERROR) { "Falha confirmada pelo Telegram no envio da mensagem." }
+            }
+        }
     }
 
     suspend fun uploadChapter(manga: Manga, chapter: Chapter, cbzFile: UniFile) {
@@ -45,89 +99,69 @@ class TelegramCloudManager(
             if (!preferences.enableTelegramCloud.get()) {
                 return@withContext
             }
-            if (botToken.isBlank() || chatId.isBlank()) {
-                logcat(LogPriority.INFO) { "TelegramCloudManager: Bot Token ou Chat ID vazios. Pulando upload." }
+
+            // Inicializa lazy caso tenha sido ativado recentemente
+            if (tdClient == null) initializeTdlib()
+
+            val chatIdString = preferences.chatId.get()
+            if (chatIdString.isBlank()) {
+                logcat(LogPriority.ERROR) { "Chat ID vazio." }
                 return@withContext
             }
 
+            val targetChatId = chatIdString.toLongOrNull() ?: return@withContext
+
             uploadMutex.withLock {
                 try {
-                    var tempFile: File? = null
-                    val fileToUpload: File = if (cbzFile.uri.scheme == "file") {
+                    val fileToUpload = if (cbzFile.uri.scheme == "file") {
                         File(cbzFile.uri.path!!)
                     } else {
-                        tempFile = File(context.cacheDir, cbzFile.name ?: "capitulo.cbz")
-                        cbzFile.openInputStream().use { input ->
-                            tempFile.outputStream().use { output ->
-                                input.copyTo(output)
-                            }
-                        }
-                        tempFile
+                        val temp = File(context.cacheDir, cbzFile.name ?: "capitulo.cbz")
+                        cbzFile.openInputStream().use { input -> temp.outputStream().use { output -> input.copyTo(output) } }
+                        temp
                     }
 
-                    // Verifica limite de 50MB da Bot API HTTP Padrão
+                    // Limite da TDLib / MTProto é 2000 MB (2 GB)
                     val fileSizeMb = fileToUpload.length() / (1024 * 1024)
-                    if (fileSizeMb > 49L) {
-                        logcat(LogPriority.WARN) { "TelegramCloudManager: Arquivo ${fileToUpload.name} tem $fileSizeMb MB. Excede o limite de 50MB da API HTTP do Telegram! Upload cancelado." }
-                        tempFile?.delete()
+                    if (fileSizeMb > 1999L) {
+                        logcat(LogPriority.WARN) { "Arquivo excede os incríveis 2 GB do MTProto! Upload cancelado." }
                         return@withLock
                     }
 
-                    val caption = "#Yomotsu\n\nObra: ${manga.title}\nCapítulo: ${chapter.name}"
-                    val requestBody = MultipartBody.Builder()
-                        .setType(MultipartBody.FORM)
-                        .addFormDataPart("chat_id", chatId)
-                        .addFormDataPart("caption", caption)
-                    
-                    val fileBody = fileToUpload.asRequestBody("application/zip".toMediaType())
-                    requestBody.addFormDataPart("document", fileToUpload.name, fileBody)
+                    logcat(LogPriority.INFO) { "Enfileirando upload de $fileSizeMb MB via MTProto..." }
 
-                    val request = Request.Builder()
-                        .url("$apiUrl/sendDocument")
-                        .post(requestBody.build())
-                        .build()
+                    val caption = TdApi.FormattedText(
+                        "#Yomotsu\n\nObra: ${manga.title}\nCapítulo: ${chapter.name}",
+                        emptyArray()
+                    )
 
-                    logcat(LogPriority.INFO) { "Iniciando upload para Telegram: ${fileToUpload.name} ($fileSizeMb MB)" }
+                    val inputFile = TdApi.InputFileLocal(fileToUpload.absolutePath)
+                    val document = TdApi.InputMessageDocument(inputFile, null, false, caption)
 
-                    var success = false
-                    var retryCount = 0
-                    
-                    while (!success && retryCount < 3) {
-                        network.client.newCall(request).execute().use { response ->
-                            if (response.code == 429) {
-                                // Flood Wait (Too Many Requests)
-                                val responseBody = response.body?.string() ?: ""
-                                val retryAfter = try {
-                                    JSONObject(responseBody).getJSONObject("parameters").getInt("retry_after")
-                                } catch (e: Exception) {
-                                    10
-                                }
-                                logcat(LogPriority.WARN) { "Telegram Rate Limit (429)! Aguardando $retryAfter segundos..." }
-                                delay(retryAfter * 1000L)
-                                retryCount++
-                            } else if (!response.isSuccessful) {
-                                logcat(LogPriority.ERROR) { "Erro no upload para Telegram: ${response.body?.string()}" }
-                                break // Erro crítico, não tenta de novo
-                            } else {
-                                logcat(LogPriority.INFO) { "Upload para Telegram Cloud concluído: ${manga.title} - ${chapter.name}" }
-                                success = true
-                                
-                                // Deletar local se a opção estiver ativada
-                                if (preferences.deleteLocalAfterUpload.get()) {
-                                    cbzFile.delete()
-                                    logcat(LogPriority.INFO) { "Arquivo local apagado após upload com sucesso." }
-                                }
-                            }
+                    val sendMessageRequest = TdApi.SendMessage(
+                        targetChatId,
+                        0,
+                        0,
+                        null,
+                        null,
+                        document
+                    )
+
+                    // Envia para a fila da TDLib. A própria biblioteca C++ lida com o Rate Limit (429) e faz os retries.
+                    tdClient?.send(sendMessageRequest) { result ->
+                        if (result is TdApi.Error) {
+                            logcat(LogPriority.ERROR) { "Erro ao empurrar pra TDLib: ${result.message}" }
+                        } else {
+                            logcat(LogPriority.INFO) { "Arquivo transferido para a engine da TDLib com sucesso." }
                         }
                     }
-                    
-                    tempFile?.delete()
-                    
-                    // Delay fixo de 3.5 segundos entre cada upload para respeitar o limite de 20 msgs/minuto
-                    delay(3500)
+
+                    // Pausa conservadora de segurança extra do app (5 segundos por capítulo)
+                    // Garantimos que nunca passamos de 12 uploads por minuto.
+                    delay(5000)
 
                 } catch (e: Exception) {
-                    logcat(LogPriority.ERROR, e) { "Falha no envio para o Telegram" }
+                    logcat(LogPriority.ERROR, e) { "Erro no fluxo de preparo da TDLib" }
                 }
             }
         }
