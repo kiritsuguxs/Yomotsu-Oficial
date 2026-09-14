@@ -18,7 +18,7 @@ import org.drinkless.tdlib.Client
 import org.drinkless.tdlib.TdApi
 import org.json.JSONArray
 import org.json.JSONObject
-import tachiyomi.core.common.storage.DiskUtil
+import eu.kanade.tachiyomi.util.storage.DiskUtil
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.model.Chapter
 import tachiyomi.domain.manga.model.Manga
@@ -637,8 +637,8 @@ class TelegramCloudManager(
                     val caption = content.caption.text
                     if (caption.contains("#Yomotsu")) {
                         // Extrai titulo e capitulo da legenda
-                        val obraRegex = "📖 Obra:\s*(.+)".toRegex()
-                        val capRegex = "📄 Capítulo:\s*(.+)".toRegex()
+                        val obraRegex = """📖 Obra:\s*(.+)""".toRegex()
+                        val capRegex = """📄 Capítulo:\s*(.+)""".toRegex()
 
                         val titleMatch = obraRegex.find(caption)?.groupValues?.get(1)?.trim()
                         val capMatch = capRegex.find(caption)?.groupValues?.get(1)?.trim()
