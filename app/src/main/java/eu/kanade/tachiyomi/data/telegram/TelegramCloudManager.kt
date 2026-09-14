@@ -19,19 +19,21 @@ import logcat.LogPriority
 
 class TelegramCloudManager(
     private val context: Context,
-    private val network: NetworkHelper = Injekt.get()
+    private val network: NetworkHelper = Injekt.get(),
+    private val preferences: tachiyomi.domain.telegram.TelegramPreferences = Injekt.get()
 ) {
 
-    // TODO: Adicionar nas configurações (Settings/DataStore)
-    private val botToken = ""
-    private val chatId = ""
+    private val botToken get() = preferences.botToken.get()
+    private val chatId get() = preferences.chatId.get()
     
     // URL padrão oficial. Limite: 50MB
-    // Para usar limite de 2GB: Use uma URL de um servidor local da Bot API do Telegram (ex: http://192.168.x.x:8081)
-    private val apiUrl = "https://api.telegram.org/bot$botToken"
+    private val apiUrl get() = "https://api.telegram.org/bot$botToken"
 
     suspend fun uploadChapter(manga: Manga, chapter: Chapter, cbzFile: UniFile) {
         withContext(Dispatchers.IO) {
+            if (!preferences.enableTelegramCloud.get()) {
+                return@withContext
+            }
             if (botToken.isBlank() || chatId.isBlank()) {
                 logcat(LogPriority.INFO) { "TelegramCloudManager: Bot Token ou Chat ID vazios. Pulando upload." }
                 return@withContext
