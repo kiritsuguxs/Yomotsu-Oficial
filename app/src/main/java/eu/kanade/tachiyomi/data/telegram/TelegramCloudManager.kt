@@ -9,6 +9,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import org.drinkless.tdlib.Client
 import org.drinkless.tdlib.TdApi
 import tachiyomi.core.common.util.system.logcat
@@ -25,6 +28,7 @@ class TelegramCloudManager(
 ) : Client.ResultHandler {
 
     private var tdClient: Client? = null
+    private val isAuthReady = MutableStateFlow(false)
     
     // Obtenha seu api_id e api_hash em https://my.telegram.org
     // TODO: Mover para as configurações se quiser manter privado
@@ -111,6 +115,7 @@ class TelegramCloudManager(
                     }
                     is TdApi.AuthorizationStateReady -> {
                         logcat(LogPriority.INFO) { "TDLib Ready! Autenticado com sucesso." }
+                        isAuthReady.value = true
                     }
                 }
             }
@@ -142,6 +147,17 @@ class TelegramCloudManager(
             }
 
             if (tdClient == null) initializeTdlib()
+
+            val ready = withTimeoutOrNull(10000) {
+                isAuthReady.first { it }
+                true
+            } ?: false
+
+            if (!ready) {
+                logcat(LogPriority.ERROR) { "TDLib não inicializou a tempo para o upload." }
+                showNotification("Nuvem Telegram", "Erro: Cliente não inicializado", ongoing = false)
+                return@withContext
+            }
 
             val chatIdString = preferences.chatId.get()
             if (chatIdString.isBlank()) {
@@ -221,6 +237,18 @@ class TelegramCloudManager(
         if (!preferences.enableTelegramCloud.get()) return false
         
         return withContext(Dispatchers.IO) {
+            if (tdClient == null) initializeTdlib()
+
+            val ready = withTimeoutOrNull(10000) {
+                isAuthReady.first { it }
+                true
+            } ?: false
+
+            if (!ready) {
+                logcat(LogPriority.ERROR) { "TDLib não inicializou a tempo para o restore." }
+                return@withContext false
+            }
+
             val chatIdString = preferences.chatId.get()
             val targetChatId = chatIdString.toLongOrNull() ?: return@withContext false
 
@@ -289,6 +317,17 @@ class TelegramCloudManager(
             if (!preferences.enableTelegramCloud.get() || txtFile.length() == 0L) return@withContext
             if (tdClient == null) initializeTdlib()
             
+            val ready = withTimeoutOrNull(10000) {
+                isAuthReady.first { it }
+                true
+            } ?: false
+
+            if (!ready) {
+                logcat(LogPriority.ERROR) { "TDLib não inicializou a tempo para o upload da Novel." }
+                showNotification("Nuvem Telegram", "Erro: Cliente não inicializado", ongoing = false)
+                return@withContext
+            }
+
             val chatIdString = preferences.chatId.get()
             val targetChatId = chatIdString.toLongOrNull() ?: return@withContext
 
@@ -339,6 +378,18 @@ class TelegramCloudManager(
         if (!preferences.enableTelegramCloud.get()) return false
         
         return withContext(Dispatchers.IO) {
+            if (tdClient == null) initializeTdlib()
+
+            val ready = withTimeoutOrNull(10000) {
+                isAuthReady.first { it }
+                true
+            } ?: false
+
+            if (!ready) {
+                logcat(LogPriority.ERROR) { "TDLib não inicializou a tempo para o restore da Novel." }
+                return@withContext false
+            }
+
             val chatIdString = preferences.chatId.get()
             val targetChatId = chatIdString.toLongOrNull() ?: return@withContext false
             val query = "Obra: $mangaTitle\nCapítulo: $chapterName"
