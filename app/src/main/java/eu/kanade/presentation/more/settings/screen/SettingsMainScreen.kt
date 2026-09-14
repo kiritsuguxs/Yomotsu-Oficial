@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ChromeReaderMode
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.CollectionsBookmark
+import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.GetApp
 import androidx.compose.material.icons.outlined.Info
@@ -196,6 +197,12 @@ object SettingsMainScreen : Screen() {
             subtitleRes = MR.strings.pref_downloads_summary,
             icon = Icons.Outlined.GetApp,
             screen = SettingsDownloadScreen,
+        ),
+        Item(
+            titleRes = MR.strings.pref_telegram_cloud,
+            subtitleRes = MR.strings.pref_telegram_cloud, // Can reuse the same string for subtitle for now
+            icon = Icons.Outlined.CloudUpload,
+            screen = SettingsTelegramCloudScreen,
         ),
         Item(
             titleRes = ATMR.strings.pref_category_translations,

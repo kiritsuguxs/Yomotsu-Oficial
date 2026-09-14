@@ -69,6 +69,9 @@ class PreferenceModule(val app: Application) : InjektModule {
             TranslationPreferences(get())
         }
         addSingletonFactory {
+            tachiyomi.domain.telegram.TelegramPreferences(get())
+        }
+        addSingletonFactory {
             BackupPreferences(get())
         }
         addSingletonFactory {
