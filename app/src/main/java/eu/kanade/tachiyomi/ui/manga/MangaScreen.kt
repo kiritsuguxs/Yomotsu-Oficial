@@ -115,6 +115,8 @@ class MangaScreen(
             }
         }
 
+        val isNovel = successState.source is eu.kanade.tachiyomi.source.INovelSource
+
         MangaScreen(
             state = successState,
             snackbarHostState = viewModel.snackbarHostState,
@@ -125,7 +127,7 @@ class MangaScreen(
             navigateUp = navigator::pop,
             onChapterClicked = { openChapter(context, it, successState.source) },
             onDownloadChapter = viewModel::runChapterDownloadActions.takeIf { !successState.source.isLocalOrStub() },
-            onTranslationChapter = viewModel::runChapterTranslationActions,
+            onTranslationChapter = viewModel::runChapterTranslationActions.takeIf { !isNovel },
             onAddToLibraryClicked = {
                 viewModel.toggleFavorite()
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -160,7 +162,7 @@ class MangaScreen(
             onShareClicked = { shareManga(context, viewModel.manga, viewModel.source) }.takeIf { isHttpSource },
             onDownloadActionClicked = viewModel::runDownloadAction.takeIf { !successState.source.isLocalOrStub() },
             onTranslateDownloadedClicked = viewModel::translateDownloadedChapters
-                .takeIf { successState.hasDownloadedChaptersToTranslate },
+                .takeIf { !isNovel && successState.hasDownloadedChaptersToTranslate },
             onEditCategoryClicked = viewModel::showChangeCategoryDialog.takeIf { successState.manga.favorite },
             onEditFetchIntervalClicked = viewModel::showSetFetchIntervalDialog.takeIf {
                 successState.manga.favorite
@@ -169,7 +171,7 @@ class MangaScreen(
                 navigator.push(MigrationConfigScreen(successState.manga.id))
             }.takeIf { successState.manga.favorite },
             onEditNotesClicked = { navigator.push(MangaNotesScreen(manga = successState.manga)) },
-            onToggleAutomaticTranslation = viewModel::toggleAutomaticTranslation,
+            onToggleAutomaticTranslation = viewModel::toggleAutomaticTranslation.takeIf { !isNovel },
             onMultiBookmarkClicked = viewModel::bookmarkChapters,
             onMultiMarkAsReadClicked = viewModel::markChaptersRead,
             onMarkPreviousAsReadClicked = viewModel::markPreviousChapterRead,

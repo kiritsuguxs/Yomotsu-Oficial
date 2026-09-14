@@ -79,14 +79,8 @@ object NovelDownloadManager {
             val raw = source.getChapterText(manga.url, chapter.url)
             if (raw.isBlank()) return@withContext false
 
-            val finalText = if (translationPreferences.autoTranslateNovels().get()) {
-                NovelTranslator.translate(chapter.id, raw)
-            } else {
-                raw
-            }
-
             val file = getChapterFile(manga.id, chapter.id)
-            file.writeText(finalText)
+            file.writeText(raw)
 
             val current = _downloadedChapters.value.toMutableSet()
             current.add(chapter.id)

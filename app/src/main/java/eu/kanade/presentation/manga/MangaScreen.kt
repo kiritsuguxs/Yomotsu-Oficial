@@ -116,7 +116,7 @@ fun MangaScreen(
     onEditFetchIntervalClicked: (() -> Unit)?,
     onMigrateClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
-    onToggleAutomaticTranslation: () -> Unit,
+    onToggleAutomaticTranslation: (() -> Unit)? = null,
 
     // For bottom action menu
     onMultiBookmarkClicked: (List<Chapter>, bookmarked: Boolean) -> Unit,
@@ -257,7 +257,7 @@ private fun MangaScreenSmallImpl(
     onEditIntervalClicked: (() -> Unit)?,
     onMigrateClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
-    onToggleAutomaticTranslation: () -> Unit,
+    onToggleAutomaticTranslation: (() -> Unit)? = null,
 
     // For bottom action menu
     onMultiBookmarkClicked: (List<Chapter>, bookmarked: Boolean) -> Unit,
@@ -508,7 +508,7 @@ fun MangaScreenLargeImpl(
     onEditIntervalClicked: (() -> Unit)?,
     onMigrateClicked: (() -> Unit)?,
     onEditNotesClicked: () -> Unit,
-    onToggleAutomaticTranslation: () -> Unit,
+    onToggleAutomaticTranslation: (() -> Unit)? = null,
 
     // For bottom action menu
     onMultiBookmarkClicked: (List<Chapter>, bookmarked: Boolean) -> Unit,
