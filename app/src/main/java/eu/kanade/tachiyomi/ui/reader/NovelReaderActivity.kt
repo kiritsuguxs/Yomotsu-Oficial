@@ -5,19 +5,29 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -27,6 +37,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.FormatSize
+import androidx.compose.material.icons.outlined.SkipNext
+import androidx.compose.material.icons.outlined.SkipPrevious
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -36,7 +48,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -64,6 +75,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.text.HtmlCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import eu.kanade.tachiyomi.extension.novel.NovelSourceWrapper
 import eu.kanade.tachiyomi.extension.novel.download.NovelDownloadManager
 import eu.kanade.tachiyomi.extension.novel.translation.NovelTranslator
@@ -95,25 +110,69 @@ class NovelReaderActivity : ComponentActivity() {
         }
     }
 
-    data class ChapterItemState(
+    class ChapterItemState(
         val chapter: Chapter,
-        var originalText: String? = null,
-        var translatedText: String? = null,
-        var isLoading: Boolean = true,
-        var isTranslating: Boolean = false,
-        var error: String? = null,
-    )
+        originalText: String? = null,
+        translatedText: String? = null,
+        isLoading: Boolean = true,
+        isTranslating: Boolean = false,
+        error: String? = null,
+    ) {
+        var originalText by mutableStateOf(originalText)
+        var translatedText by mutableStateOf(translatedText)
+        var isLoading by mutableStateOf(isLoading)
+        var isTranslating by mutableStateOf(isTranslating)
+        var error by mutableStateOf(error)
+    }
 
     enum class ReaderTheme(val title: String, val bg: Color, val text: Color) {
         DEFAULT("Sistema", Color.Unspecified, Color.Unspecified),
         LIGHT("Claro", Color(0xFFFFFFFF), Color(0xFF1C1B1F)),
         SEPIA("Sépia", Color(0xFFFBF0D9), Color(0xFF4A3525)),
-        DARK("Escuro", Color(0xFF121212), Color(0xFFE0E0E0)),
+        DARK("Escuro", Color(0xFF181818), Color(0xFFE0E0E0)),
+        AMOLED("Preto Puro", Color(0xFF000000), Color(0xFFDCDCDC)),
+    }
+
+    private fun formatNovelText(raw: String): String {
+        if (raw.isBlank()) return ""
+        val withoutBreaks = raw
+            .replace(Regex("(?i)<br\\s*/?>"), "\n")
+            .replace(Regex("(?i)</p>"), "\n\n")
+            .replace(Regex("(?i)</div>"), "\n\n")
+            .replace(Regex("(?i)<p[^>]*>"), "")
+            .replace(Regex("(?i)<div[^>]*>"), "")
+            .replace(Regex("<[^>]+>"), "")
+
+        val unescaped = try {
+            HtmlCompat.fromHtml(
+                withoutBreaks,
+                HtmlCompat.FROM_HTML_MODE_LEGACY,
+            ).toString()
+        } catch (_: Exception) {
+            withoutBreaks
+                .replace("&quot;", "\"")
+                .replace("&#39;", "'")
+                .replace("&apos;", "'")
+                .replace("&nbsp;", " ")
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+        }
+
+        return unescaped
+            .lines()
+            .map { it.trim() }
+            .filterIndexed { index, line -> line.isNotEmpty() || index > 0 }
+            .joinToString("\n\n")
+            .replace(Regex("\\n{3,}"), "\n\n")
+            .trim()
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
         val mangaId = intent.getLongExtra("manga_id", -1L)
         val initialChapterId = intent.getLongExtra("chapter_id", -1L)
 
@@ -133,6 +192,7 @@ class NovelReaderActivity : ComponentActivity() {
             val loadedChapters = remember { mutableStateListOf<ChapterItemState>() }
             var isTranslated by remember { mutableStateOf(translationPreferences.autoTranslateNovels().get()) }
             var showSettingsDialog by remember { mutableStateOf(false) }
+            var menuVisible by remember { mutableStateOf(false) }
 
             var fontSize by remember { mutableFloatStateOf(prefs.getFloat("font_size", 17f)) }
             var currentThemeIndex by remember { mutableIntStateOf(prefs.getInt("theme_index", 0)) }
@@ -140,13 +200,26 @@ class NovelReaderActivity : ComponentActivity() {
 
             val lazyListState = rememberLazyListState()
 
+            // Immersive system bars handling
+            val insetsController = remember(this) {
+                WindowCompat.getInsetsController(window, window.decorView)
+            }
+            LaunchedEffect(menuVisible) {
+                if (menuVisible) {
+                    insetsController.show(WindowInsetsCompat.Type.systemBars())
+                } else {
+                    insetsController.hide(WindowInsetsCompat.Type.systemBars())
+                    insetsController.systemBarsBehavior =
+                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                }
+            }
+
             // Function to load a specific chapter's text
             fun loadChapterContent(state: ChapterItemState) {
                 scope.launch(Dispatchers.IO) {
                     try {
-                        // 1. Check local download
                         val localText = NovelDownloadManager.getDownloadedChapterText(mangaId, state.chapter.id)
-                        val text = if (localText != null) {
+                        val rawText = if (localText != null) {
                             localText
                         } else {
                             val m = manga ?: getManga.await(mangaId) ?: throw Exception("Obra não encontrada")
@@ -155,22 +228,37 @@ class NovelReaderActivity : ComponentActivity() {
                             source.getChapterText(m.url, state.chapter.url)
                         }
 
-                        state.originalText = text
+                        val cleanText = formatNovelText(rawText)
+                        state.originalText = cleanText
                         state.isLoading = false
 
                         // Check cached translation or auto-translate
                         val cached = NovelTranslator.getCached(state.chapter.id)
                         if (cached != null) {
-                            state.translatedText = cached
+                            state.translatedText = formatNovelText(cached)
                         } else if (isTranslated) {
                             state.isTranslating = true
-                            state.translatedText = NovelTranslator.translate(state.chapter.id, text)
+                            val translated = NovelTranslator.translate(state.chapter.id, cleanText)
+                            state.translatedText = formatNovelText(translated)
                             state.isTranslating = false
                         }
                     } catch (e: Exception) {
                         state.error = e.message ?: "Erro ao carregar texto"
                         state.isLoading = false
                     }
+                }
+            }
+
+            fun navigateToChapter(targetChapter: Chapter) {
+                val existingIndex = loadedChapters.indexOfFirst { it.chapter.id == targetChapter.id }
+                if (existingIndex != -1) {
+                    scope.launch { lazyListState.animateScrollToItem(existingIndex) }
+                } else {
+                    loadedChapters.clear()
+                    val newItem = ChapterItemState(chapter = targetChapter)
+                    loadedChapters.add(newItem)
+                    loadChapterContent(newItem)
+                    scope.launch { lazyListState.scrollToItem(0) }
                 }
             }
 
@@ -233,12 +321,153 @@ class NovelReaderActivity : ComponentActivity() {
             }
 
             // Color scheme resolution based on ReaderTheme
-            val resolvedBg = if (readerTheme.bg != Color.Unspecified) readerTheme.bg else MaterialTheme.colorScheme.background
-            val resolvedTextColor = if (readerTheme.text != Color.Unspecified) readerTheme.text else MaterialTheme.colorScheme.onBackground
+            val isDark = isSystemInDarkTheme()
+            val resolvedBg = when (readerTheme) {
+                ReaderTheme.DEFAULT -> if (isDark) Color(0xFF121212) else Color(0xFFFFFFFF)
+                ReaderTheme.LIGHT -> Color(0xFFFFFFFF)
+                ReaderTheme.SEPIA -> Color(0xFFFBF0D9)
+                ReaderTheme.DARK -> Color(0xFF181818)
+                ReaderTheme.AMOLED -> Color(0xFF000000)
+            }
+            val resolvedTextColor = when (readerTheme) {
+                ReaderTheme.DEFAULT -> if (isDark) Color(0xFFE0E0E0) else Color(0xFF1C1B1F)
+                ReaderTheme.LIGHT -> Color(0xFF1C1B1F)
+                ReaderTheme.SEPIA -> Color(0xFF4A3525)
+                ReaderTheme.DARK -> Color(0xFFE0E0E0)
+                ReaderTheme.AMOLED -> Color(0xFFDCDCDC)
+            }
 
-            Scaffold(
-                topBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(resolvedBg),
+            ) {
+                // Reading content (Edge to Edge)
+                if (loadedChapters.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
+                } else {
+                    LazyColumn(
+                        state = lazyListState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) {
+                                menuVisible = !menuVisible
+                            },
+                        contentPadding = PaddingValues(
+                            top = 48.dp,
+                            bottom = 96.dp,
+                        ),
+                    ) {
+                        itemsIndexed(
+                            items = loadedChapters,
+                            key = { _, item -> item.chapter.id },
+                        ) { index, item ->
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                    ) {
+                                        menuVisible = !menuVisible
+                                    }
+                                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                            ) {
+                                // Chapter Header Divider
+                                if (index > 0) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(vertical = 32.dp),
+                                        color = resolvedTextColor.copy(alpha = 0.2f),
+                                    )
+                                }
+
+                                Text(
+                                    text = item.chapter.name,
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                    ),
+                                    color = if (readerTheme == ReaderTheme.DEFAULT) MaterialTheme.colorScheme.primary else resolvedTextColor,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 20.dp),
+                                    textAlign = TextAlign.Center,
+                                )
+
+                                when {
+                                    item.isLoading || item.isTranslating -> {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 40.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                        ) {
+                                            CircularProgressIndicator()
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            Text(
+                                                text = if (item.isTranslating) "Traduzindo para Português..." else "Carregando capítulo...",
+                                                color = resolvedTextColor,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                            )
+                                        }
+                                    }
+                                    item.error != null -> {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 24.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                        ) {
+                                            Text(
+                                                text = "Erro: ${item.error}",
+                                                color = MaterialTheme.colorScheme.error,
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Button(onClick = {
+                                                item.isLoading = true
+                                                item.error = null
+                                                loadChapterContent(item)
+                                            }) {
+                                                Text("Tentar Novamente")
+                                            }
+                                        }
+                                    }
+                                    else -> {
+                                        val displayText = if (isTranslated && item.translatedText != null) {
+                                            item.translatedText!!
+                                        } else {
+                                            item.originalText ?: ""
+                                        }
+
+                                        Text(
+                                            text = displayText,
+                                            style = MaterialTheme.typography.bodyLarge.copy(
+                                                fontSize = fontSize.sp,
+                                                lineHeight = (fontSize * 1.6f).sp,
+                                            ),
+                                            color = resolvedTextColor,
+                                            modifier = Modifier.fillMaxWidth(),
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Manhwa-style Top App Bar (Slides in/out on tap)
+                AnimatedVisibility(
+                    visible = menuVisible,
+                    enter = slideInVertically { -it } + fadeIn(),
+                    exit = slideOutVertically { -it } + fadeOut(),
+                    modifier = Modifier.align(Alignment.TopCenter),
+                ) {
                     TopAppBar(
+                        modifier = Modifier.statusBarsPadding(),
                         title = {
                             Column {
                                 val currentVisibleChapter = loadedChapters.getOrNull(lazyListState.firstVisibleItemIndex)?.chapter
@@ -288,7 +517,7 @@ class NovelReaderActivity : ComponentActivity() {
                                             if (item.translatedText == null && item.originalText != null) {
                                                 scope.launch(Dispatchers.IO) {
                                                     item.isTranslating = true
-                                                    item.translatedText = NovelTranslator.translate(item.chapter.id, item.originalText!!)
+                                                    item.translatedText = formatNovelText(NovelTranslator.translate(item.chapter.id, item.originalText!!))
                                                     item.isTranslating = false
                                                 }
                                             }
@@ -311,111 +540,93 @@ class NovelReaderActivity : ComponentActivity() {
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
+                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
                         ),
                     )
-                },
-            ) { innerPadding ->
-                Surface(
-                    color = resolvedBg,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
+                }
+
+                // Manhwa-style Bottom Bar with Chapter Navigator (Slides in/out on tap)
+                AnimatedVisibility(
+                    visible = menuVisible,
+                    enter = slideInVertically { it } + fadeIn(),
+                    exit = slideOutVertically { it } + fadeOut(),
+                    modifier = Modifier.align(Alignment.BottomCenter),
                 ) {
-                    if (loadedChapters.isEmpty()) {
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                        }
-                    } else {
-                        LazyColumn(
-                            state = lazyListState,
-                            modifier = Modifier.fillMaxSize(),
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                        tonalElevation = 6.dp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding(),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
                         ) {
-                            itemsIndexed(
-                                items = loadedChapters,
-                                key = { _, item -> item.chapter.id },
-                            ) { index, item ->
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                            val currentChapter = loadedChapters.getOrNull(lazyListState.firstVisibleItemIndex)?.chapter
+                            val currentIdx = allChapters.indexOfFirst { it.id == currentChapter?.id }
+
+                            // Previous / Next chapter buttons row
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        if (currentIdx > 0) {
+                                            navigateToChapter(allChapters[currentIdx - 1])
+                                        }
+                                    },
+                                    enabled = currentIdx > 0,
                                 ) {
-                                    // Chapter Header Divider
-                                    if (index > 0) {
-                                        HorizontalDivider(
-                                            modifier = Modifier.padding(vertical = 32.dp),
-                                            color = resolvedTextColor.copy(alpha = 0.2f),
-                                        )
-                                    }
-
-                                    Text(
-                                        text = item.chapter.name,
-                                        style = MaterialTheme.typography.titleLarge.copy(
-                                            fontWeight = FontWeight.Bold,
-                                        ),
-                                        color = if (readerTheme == ReaderTheme.DEFAULT) MaterialTheme.colorScheme.primary else resolvedTextColor,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(bottom = 20.dp),
-                                        textAlign = TextAlign.Center,
+                                    Icon(
+                                        imageVector = Icons.Outlined.SkipPrevious,
+                                        contentDescription = "Capítulo anterior",
                                     )
-
-                                    when {
-                                        item.isLoading || item.isTranslating -> {
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 40.dp),
-                                                horizontalAlignment = Alignment.CenterHorizontally,
-                                            ) {
-                                                CircularProgressIndicator()
-                                                Spacer(modifier = Modifier.height(12.dp))
-                                                Text(
-                                                    text = if (item.isTranslating) "Traduzindo para Português..." else "Carregando capítulo...",
-                                                    color = resolvedTextColor,
-                                                    style = MaterialTheme.typography.bodyMedium,
-                                                )
-                                            }
-                                        }
-                                        item.error != null -> {
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 24.dp),
-                                                horizontalAlignment = Alignment.CenterHorizontally,
-                                            ) {
-                                                Text(
-                                                    text = "Erro: ${item.error}",
-                                                    color = MaterialTheme.colorScheme.error,
-                                                )
-                                                Spacer(modifier = Modifier.height(8.dp))
-                                                Button(onClick = {
-                                                    item.isLoading = true
-                                                    item.error = null
-                                                    loadChapterContent(item)
-                                                }) {
-                                                    Text("Tentar Novamente")
-                                                }
-                                            }
-                                        }
-                                        else -> {
-                                            val displayText = if (isTranslated && item.translatedText != null) {
-                                                item.translatedText!!
-                                            } else {
-                                                item.originalText ?: ""
-                                            }
-
-                                            Text(
-                                                text = displayText,
-                                                style = MaterialTheme.typography.bodyLarge.copy(
-                                                    fontSize = fontSize.sp,
-                                                    lineHeight = (fontSize * 1.6f).sp,
-                                                ),
-                                                color = resolvedTextColor,
-                                            )
-                                        }
-                                    }
                                 }
+
+                                Text(
+                                    text = if (allChapters.isNotEmpty() && currentIdx != -1) {
+                                        "${currentIdx + 1} / ${allChapters.size}"
+                                    } else {
+                                        currentChapter?.name ?: ""
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+
+                                IconButton(
+                                    onClick = {
+                                        if (currentIdx != -1 && currentIdx + 1 < allChapters.size) {
+                                            navigateToChapter(allChapters[currentIdx + 1])
+                                        }
+                                    },
+                                    enabled = currentIdx != -1 && currentIdx + 1 < allChapters.size,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.SkipNext,
+                                        contentDescription = "Próximo capítulo",
+                                    )
+                                }
+                            }
+
+                            // Chapter Scrubbing Slider
+                            if (allChapters.size > 1) {
+                                val safeIdx = currentIdx.coerceAtLeast(0)
+                                var sliderValue by remember(safeIdx) { mutableFloatStateOf(safeIdx.toFloat()) }
+
+                                Slider(
+                                    value = sliderValue,
+                                    onValueChange = { sliderValue = it },
+                                    onValueChangeFinished = {
+                                        val targetIdx = sliderValue.toInt().coerceIn(0, allChapters.size - 1)
+                                        navigateToChapter(allChapters[targetIdx])
+                                    },
+                                    valueRange = 0f..(allChapters.size - 1).toFloat(),
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
                             }
                         }
                     }
@@ -475,7 +686,13 @@ class NovelReaderActivity : ComponentActivity() {
                                                 .size(36.dp)
                                                 .clip(CircleShape)
                                                 .background(
-                                                    if (theme.bg != Color.Unspecified) theme.bg else MaterialTheme.colorScheme.background,
+                                                    when (theme) {
+                                                        ReaderTheme.DEFAULT -> if (isDark) Color(0xFF121212) else Color(0xFFFFFFFF)
+                                                        ReaderTheme.LIGHT -> Color(0xFFFFFFFF)
+                                                        ReaderTheme.SEPIA -> Color(0xFFFBF0D9)
+                                                        ReaderTheme.DARK -> Color(0xFF181818)
+                                                        ReaderTheme.AMOLED -> Color(0xFF000000)
+                                                    },
                                                 ),
                                         )
                                         Spacer(modifier = Modifier.height(4.dp))
