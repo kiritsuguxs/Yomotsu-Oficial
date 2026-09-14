@@ -231,20 +231,20 @@ class TelegramCloudManager(
                             tdClient?.send(TdApi.DownloadFile(fileId, 32, 0, 0, false)) { downloadResult ->
                                 if (downloadResult is TdApi.File) {
                                     CoroutineScope(Dispatchers.IO).launch {
-                                        var currentFile = downloadResult
+                                        var currentFile: TdApi.File = downloadResult
                                         while (!currentFile.local.isDownloadingCompleted) {
                                             delay(500)
-                                            currentFile = kotlin.coroutines.suspendCoroutine { fileCont ->
+                                            currentFile = kotlin.coroutines.suspendCoroutine<TdApi.File> { fileCont ->
                                                 tdClient?.send(TdApi.GetFile(fileId)) { res ->
                                                     if (res is TdApi.File) fileCont.resumeWith(Result.success(res))
                                                     else fileCont.resumeWith(Result.success(currentFile))
                                                 }
-                                            } ?: currentFile
+                                            }
                                         }
 
-                                        val downloadedPath = currentFile.local.path
+                                        val downloadedPath: String = currentFile.local.path
                                         if (downloadedPath.isNotBlank()) {
-                                            val sourceFile = File(downloadedPath)
+                                            val sourceFile = java.io.File(downloadedPath)
                                             if (sourceFile.exists()) {
                                                 val targetFile = localSourceMangaDir.createFile("$chapterName.cbz")
                                                 if (targetFile != null) {
