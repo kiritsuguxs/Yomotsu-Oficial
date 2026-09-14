@@ -237,7 +237,7 @@ class TelegramCloudManager(
     }
 
 
-    suspend fun restoreChapterFromTelegram(mangaTitle: String, chapterName: String, localSourceMangaDir: UniFile): Boolean {
+    suspend fun restoreChapterFromTelegram(mangaTitle: String, chapterName: String, chapterDirname: String = "", localSourceMangaDir: UniFile): Boolean {
         if (!preferences.enableTelegramCloud.get()) return false
         
         return withContext(Dispatchers.IO) {
@@ -277,7 +277,9 @@ class TelegramCloudManager(
                     val content = msg.content
                     if (content is TdApi.MessageDocument) {
                         val caption = content.caption.text
-                        caption.contains(mangaTitle, ignoreCase = true) && caption.contains(chapterName, ignoreCase = true)
+                        val fileName = content.document.fileName ?: ""
+                        val combined = "$caption $fileName"
+                        combined.contains(mangaTitle, ignoreCase = true) && combined.contains(chapterName, ignoreCase = true)
                     } else {
                         false
                     }
@@ -320,7 +322,8 @@ class TelegramCloudManager(
                                 if (downloadedPath.isNotBlank()) {
                                     val sourceFile = java.io.File(downloadedPath)
                                     if (sourceFile.exists()) {
-                                        val targetFile = localSourceMangaDir.createFile("$chapterName.cbz")
+                                        val targetFileName = if (chapterDirname.isNotBlank()) "$chapterDirname.cbz" else "$chapterName.cbz"
+                                        val targetFile = localSourceMangaDir.createFile(targetFileName)
                                         if (targetFile != null) {
                                             sourceFile.inputStream().use { input ->
                                                 targetFile.openOutputStream().use { output ->
@@ -447,7 +450,9 @@ class TelegramCloudManager(
                     val content = msg.content
                     if (content is TdApi.MessageDocument) {
                         val caption = content.caption.text
-                        caption.contains(mangaTitle, ignoreCase = true) && caption.contains(chapterName, ignoreCase = true)
+                        val fileName = content.document.fileName ?: ""
+                        val combined = "$caption $fileName"
+                        combined.contains(mangaTitle, ignoreCase = true) && combined.contains(chapterName, ignoreCase = true)
                     } else {
                         false
                     }
