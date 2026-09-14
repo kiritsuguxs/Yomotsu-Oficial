@@ -43,7 +43,7 @@ fun MangaToolbar(
     onClickMigrate: (() -> Unit)?,
     onClickEditNotes: () -> Unit,
     automaticTranslationEnabled: Boolean,
-    onClickToggleAutomaticTranslation: () -> Unit,
+    onClickToggleAutomaticTranslation: (() -> Unit)? = null,
 
     // For action mode
     actionModeCounter: Int,
@@ -157,24 +157,26 @@ fun MangaToolbar(
                             ),
                         )
                     }
-                    add(
-                        AppBar.OverflowAction(
-                            title = "Glossário de tradução",
-                            onClick = { navigator.push(TranslationGlossaryScreen(title)) },
-                        ),
-                    )
-                    add(
-                        AppBar.OverflowAction(
-                            title = stringResource(
-                                if (automaticTranslationEnabled) {
-                                    MR.strings.action_disable_automatic_translation
-                                } else {
-                                    MR.strings.action_enable_automatic_translation
-                                },
+                    if (onClickToggleAutomaticTranslation != null) {
+                        add(
+                            AppBar.OverflowAction(
+                                title = "Glossário de tradução",
+                                onClick = { navigator.push(TranslationGlossaryScreen(title)) },
                             ),
-                            onClick = onClickToggleAutomaticTranslation,
-                        ),
-                    )
+                        )
+                        add(
+                            AppBar.OverflowAction(
+                                title = stringResource(
+                                    if (automaticTranslationEnabled) {
+                                        MR.strings.action_disable_automatic_translation
+                                    } else {
+                                        MR.strings.action_enable_automatic_translation
+                                    },
+                                ),
+                                onClick = onClickToggleAutomaticTranslation,
+                            ),
+                        )
+                    }
                     add(
                         AppBar.OverflowAction(
                             title = stringResource(MR.strings.action_notes),

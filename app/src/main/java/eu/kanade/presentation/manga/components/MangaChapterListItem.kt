@@ -176,12 +176,12 @@ fun MangaChapterListItem(
                 }
             }
             //TachiyomiAT
-            if(downloadStateProvider()==Download.State.DOWNLOADED){
+            if (onTranslationClick != null && downloadStateProvider() == Download.State.DOWNLOADED) {
                 ChapterTranslationIndicator(
                     enabled = true,
                     modifier = Modifier.padding(start = 4.dp),
                     translationStateProvider = translationStateProvider,
-                    onClick = { onTranslationClick?.invoke(it) },
+                    onClick = { onTranslationClick.invoke(it) },
                 )
             }
             ChapterDownloadIndicator(
