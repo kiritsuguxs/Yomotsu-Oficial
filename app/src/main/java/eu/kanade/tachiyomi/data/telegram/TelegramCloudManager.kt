@@ -30,10 +30,9 @@ class TelegramCloudManager(
     private var tdClient: Client? = null
     private val isAuthReady = MutableStateFlow(false)
     
-    // Obtenha seu api_id e api_hash em https://my.telegram.org
-    // TODO: Mover para as configurações se quiser manter privado
-    private val apiId = 94575 // Substitua pelo seu
-    private val apiHash = "a3406de8d171bb422bb6c0587373f819" // Substitua pelo seu
+    // Usando as chaves públicas do Telegram Desktop (Open Source) para evitar API_ID_INVALID
+    private val apiId = 2040 
+    private val apiHash = "b18441a1ff607e10a989891a5462e627"
 
     companion object {
         // Mutex rigoroso: Garante apenas 1 upload por vez na fila do aplicativo.
@@ -85,7 +84,7 @@ class TelegramCloudManager(
                 when (update.authorizationState) {
                     is TdApi.AuthorizationStateWaitTdlibParameters -> {
                         val parameters = TdApi.SetTdlibParameters().apply {
-                            databaseDirectory = File(context.filesDir, "tdlib").absolutePath
+                            databaseDirectory = File(context.filesDir, "tdlib_v2").absolutePath
                             useMessageDatabase = false
                             useSecretChats = false
                             apiId = this@TelegramCloudManager.apiId
