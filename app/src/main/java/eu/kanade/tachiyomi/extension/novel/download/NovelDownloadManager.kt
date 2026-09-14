@@ -76,11 +76,21 @@ object NovelDownloadManager {
             val source = sourceManager.get(manga.source) as? NovelSourceWrapper
                 ?: throw Exception("Fonte não é um plugin de novel")
 
-            val raw = source.getChapterText(manga.url, chapter.url)
-            if (raw.isBlank()) return@withContext false
-
             val file = getChapterFile(manga.id, chapter.id)
-            file.writeText(raw)
+            
+            // Nuvem Telegram: Tenta puxar de volta primeiro
+            val telegramCloudManager = Injekt.get<eu.kanade.tachiyomi.data.telegram.TelegramCloudManager>()
+            val restored = telegramCloudManager.restoreNovelChapter(manga.title, chapter.name, file)
+            
+            if (!restored) {
+                // Se não tá no Telegram, baixa da internet
+                val raw = source.getChapterText(manga.url, chapter.url)
+                if (raw.isBlank()) return@withContext false
+                file.writeText(raw)
+                
+                // Salva na nuvem logo em seguida
+                telegramCloudManager.uploadNovelChapter(manga, chapter, file)
+            }
 
             val current = _downloadedChapters.value.toMutableSet()
             current.add(chapter.id)
