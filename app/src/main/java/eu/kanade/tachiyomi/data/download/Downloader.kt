@@ -332,6 +332,20 @@ class Downloader(
             return
         }
 
+        // Tenta puxar da Nuvem Telegram ANTES de começar a baixar do site
+        val restoredFromCloud = telegramCloudManager.restoreChapterFromTelegram(
+            mangaTitle = download.manga.title,
+            chapterName = download.chapter.name,
+            localSourceMangaDir = mangaDir
+        )
+
+        if (restoredFromCloud) {
+            // Se puxou com sucesso da nuvem, finge que acabou de baixar e encerra o fluxo!
+            cache.addChapter(download.chapter.name, mangaDir, download.manga)
+            download.status = Download.State.DOWNLOADED
+            return
+        }
+
         // Protect the parent before the temporary chapter directory or any
         // page image is created, so gallery scanners never see partial files.
         DiskUtil.createNoMediaFile(mangaDir, context)
