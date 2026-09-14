@@ -23,6 +23,7 @@ class TranslationPreferences(
 
     fun autoTranslateAfterDownload() = preferenceStore.getBoolean("auto_translate_after_download", false)
     fun autoTranslateNovels() = preferenceStore.getBoolean("auto_translate_novels", true)
+    fun novelTranslationEngine() = preferenceStore.getInt("novel_translation_engine", 1)
     fun autoTranslateManga(mangaId: Long) =
         preferenceStore.getBoolean("auto_translate_manga_$mangaId", false)
     fun translateSoundEffects() = preferenceStore.getBoolean("translate_sound_effects", false)
