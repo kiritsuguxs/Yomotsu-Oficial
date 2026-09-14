@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/novels
+      - main
     paths:
       - '**'
       - '!**.md'

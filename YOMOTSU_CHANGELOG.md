@@ -3,6 +3,16 @@
 Este arquivo contém somente as mudanças importantes para quem usa o aplicativo.
 O workflow de lançamento lê automaticamente a seção correspondente à versão publicada.
 
+## 0.20.4-Y23
+- Suporte oficial completo a Light Novels com motor QuickJS e plugins LNReader.
+- Nova aba "Fontes LN" na tela Explorar para navegar, instalar e atualizar extensões de novel.
+- Leitor exclusivo de novels com rolagem infinita contínua (estilo manhwa) e leitura imersiva.
+- Temas de leitura personalizados para novels: Sistema, Claro, Sépia e Preto Puro (AMOLED), além de ajuste de tamanho de fonte e formatação limpa de texto.
+- Tradução de capítulos de novel em tempo real com o motor Google Tradutor, totalmente independente da tradução de mangás e manhwas.
+- Download de capítulos de novel para leitura offline integrado diretamente à tela de detalhes da obra.
+- Retomada inteligente de leitura da novel exatamente no primeiro capítulo não lido e marcação de leitura automática conforme a rolagem.
+- Interface limpa e refinada: as ferramentas de OCR e tradução de balões de imagens foram restritas exclusivamente a mangás e manhwas, deixando a experiência de leitura de novels fluida e natural.
+
 ## 0.20.4-Y19
 - Adicionado o detector experimental DBNet como opção desativada por padrão para aparelhos ARM64 e textos em inglês.
 - O fluxo híbrido usa o DBNet para detectar e agrupar linhas, o ML Kit para reconhecer a página inteira uma vez e a associação geométrica para formar regiões coerentes antes da tradução.
