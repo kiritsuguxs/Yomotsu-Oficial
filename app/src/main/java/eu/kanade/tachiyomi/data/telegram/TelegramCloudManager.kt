@@ -259,7 +259,19 @@ class TelegramCloudManager(
             
             kotlin.coroutines.suspendCoroutine { continuation ->
                 tdClient?.send(TdApi.SearchChatMessages(targetChatId, null, query, null, 0, 0, 10, TdApi.SearchMessagesFilterDocument())) { result ->
-                    if (result is TdApi.FoundChatMessages && result.messages.isNotEmpty()) {
+                    if (result is TdApi.Error) {
+                        showNotification("Nuvem Telegram", "Erro busca: ${result.message}", autoDismiss = true)
+                        continuation.resumeWith(Result.success(false))
+                        return@send
+                    }
+                    
+                    if (result is TdApi.FoundChatMessages) {
+                        if (result.messages.isEmpty()) {
+                            showNotification("Nuvem Telegram", "Não encontrado: $query", autoDismiss = true)
+                            continuation.resumeWith(Result.success(false))
+                            return@send
+                        }
+                        
                         val message = result.messages.firstOrNull { msg ->
                             val content = msg.content
                             if (content is TdApi.MessageDocument) {
@@ -408,7 +420,19 @@ class TelegramCloudManager(
             
             kotlin.coroutines.suspendCoroutine { continuation ->
                 tdClient?.send(TdApi.SearchChatMessages(targetChatId, null, query, null, 0, 0, 10, TdApi.SearchMessagesFilterDocument())) { result ->
-                    if (result is TdApi.FoundChatMessages && result.messages.isNotEmpty()) {
+                    if (result is TdApi.Error) {
+                        showNotification("Nuvem Telegram", "Erro busca: ${result.message}", autoDismiss = true)
+                        continuation.resumeWith(Result.success(false))
+                        return@send
+                    }
+                    
+                    if (result is TdApi.FoundChatMessages) {
+                        if (result.messages.isEmpty()) {
+                            showNotification("Nuvem Telegram", "Não encontrado: $query", autoDismiss = true)
+                            continuation.resumeWith(Result.success(false))
+                            return@send
+                        }
+                        
                         val message = result.messages.firstOrNull { msg ->
                             val content = msg.content
                             if (content is TdApi.MessageDocument) {
