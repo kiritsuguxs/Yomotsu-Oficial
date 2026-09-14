@@ -123,7 +123,7 @@ class TelegramCloudManager(
                 }
             }
             is TdApi.UpdateMessageSendSucceeded -> {
-                val messageId = update.message.id
+                val messageId = update.oldMessageId
                 val file = pendingUploads.remove(messageId)
                 logcat(LogPriority.INFO) { "Upload finalizado pelo Telegram com SUCESSO. Arquivos restantes na fila local: ${pendingUploads.size}" }
                 
@@ -135,7 +135,7 @@ class TelegramCloudManager(
                 }
             }
             is TdApi.UpdateMessageSendFailed -> {
-                val messageId = update.message.id
+                val messageId = update.oldMessageId
                 pendingUploads.remove(messageId)
                 logcat(LogPriority.ERROR) { "Falha confirmada pelo Telegram no envio da mensagem." }
                 showNotification("Nuvem Telegram", "Erro no upload", ongoing = false)
@@ -255,7 +255,7 @@ class TelegramCloudManager(
             val chatIdString = preferences.chatId.get()
             val targetChatId = chatIdString.toLongOrNull() ?: return@withContext false
 
-            val query = "Obra: $mangaTitle\nCapítulo: $chapterName"
+            val query = "\"$mangaTitle\" \"$chapterName\""
             
             kotlin.coroutines.suspendCoroutine { continuation ->
                 tdClient?.send(TdApi.SearchChatMessages(targetChatId, null, query, null, 0, 0, 1, TdApi.SearchMessagesFilterDocument())) { result ->
@@ -395,7 +395,7 @@ class TelegramCloudManager(
 
             val chatIdString = preferences.chatId.get()
             val targetChatId = chatIdString.toLongOrNull() ?: return@withContext false
-            val query = "Obra: $mangaTitle\nCapítulo: $chapterName"
+            val query = "\"$mangaTitle\" \"$chapterName\""
             
             kotlin.coroutines.suspendCoroutine { continuation ->
                 tdClient?.send(TdApi.SearchChatMessages(targetChatId, null, query, null, 0, 0, 1, TdApi.SearchMessagesFilterDocument())) { result ->
