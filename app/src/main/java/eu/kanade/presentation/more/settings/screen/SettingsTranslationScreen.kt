@@ -72,6 +72,13 @@ object SettingsTranslationScreen : SearchableSettings {
                         title = "Traduzir Novels automaticamente",
                         subtitle = "Traduz os capítulos de novels para português ao abrir no leitor",
                     ),
+                    Preference.PreferenceItem.ListPreference(
+                        preference = translationPreferences.novelTranslationEngine(),
+                        title = stringResource(ATMR.strings.pref_translator_engine),
+                        entries = TextTranslators.entries.withIndex()
+                            .associate { it.index to getTranslatorLabel(it.value) }
+                            .toImmutableMap(),
+                    ),
                 ),
             ),
             getOcrEngineGroup(translationPreferences),

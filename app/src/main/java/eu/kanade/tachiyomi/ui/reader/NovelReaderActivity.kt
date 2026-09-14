@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -49,6 +50,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -129,7 +131,6 @@ class NovelReaderActivity : ComponentActivity() {
         DEFAULT("Sistema", Color.Unspecified, Color.Unspecified),
         LIGHT("Claro", Color(0xFFFFFFFF), Color(0xFF1C1B1F)),
         SEPIA("Sépia", Color(0xFFFBF0D9), Color(0xFF4A3525)),
-        DARK("Escuro", Color(0xFF181818), Color(0xFFE0E0E0)),
         AMOLED("Preto Puro", Color(0xFF000000), Color(0xFFDCDCDC)),
     }
 
@@ -195,23 +196,25 @@ class NovelReaderActivity : ComponentActivity() {
             var menuVisible by remember { mutableStateOf(false) }
 
             var fontSize by remember { mutableFloatStateOf(prefs.getFloat("font_size", 17f)) }
-            var currentThemeIndex by remember { mutableIntStateOf(prefs.getInt("theme_index", 0)) }
-            val readerTheme = ReaderTheme.entries[currentThemeIndex.coerceIn(0, ReaderTheme.entries.size - 1)]
+            val savedThemeName = prefs.getString("theme_name", null)
+            var readerTheme by remember {
+                mutableStateOf(
+                    savedThemeName?.let { name ->
+                        if (name == "DARK") ReaderTheme.AMOLED
+                        else runCatching { ReaderTheme.valueOf(name) }.getOrNull()
+                    } ?: run {
+                        val oldIdx = prefs.getInt("theme_index", 0)
+                        if (oldIdx >= 3) ReaderTheme.AMOLED
+                        else ReaderTheme.entries.getOrElse(oldIdx) { ReaderTheme.DEFAULT }
+                    },
+                )
+            }
 
             val lazyListState = rememberLazyListState()
 
             // Immersive system bars handling
             val insetsController = remember(this) {
                 WindowCompat.getInsetsController(window, window.decorView)
-            }
-            LaunchedEffect(menuVisible) {
-                if (menuVisible) {
-                    insetsController.show(WindowInsetsCompat.Type.systemBars())
-                } else {
-                    insetsController.hide(WindowInsetsCompat.Type.systemBars())
-                    insetsController.systemBarsBehavior =
-                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                }
             }
 
             // Function to load a specific chapter's text
@@ -322,19 +325,67 @@ class NovelReaderActivity : ComponentActivity() {
 
             // Color scheme resolution based on ReaderTheme
             val isDark = isSystemInDarkTheme()
+            val isUiDark = when (readerTheme) {
+                ReaderTheme.DEFAULT -> isDark
+                ReaderTheme.LIGHT -> false
+                ReaderTheme.SEPIA -> false
+                ReaderTheme.AMOLED -> true
+            }
+
             val resolvedBg = when (readerTheme) {
                 ReaderTheme.DEFAULT -> if (isDark) Color(0xFF121212) else Color(0xFFFFFFFF)
                 ReaderTheme.LIGHT -> Color(0xFFFFFFFF)
                 ReaderTheme.SEPIA -> Color(0xFFFBF0D9)
-                ReaderTheme.DARK -> Color(0xFF181818)
                 ReaderTheme.AMOLED -> Color(0xFF000000)
             }
             val resolvedTextColor = when (readerTheme) {
                 ReaderTheme.DEFAULT -> if (isDark) Color(0xFFE0E0E0) else Color(0xFF1C1B1F)
                 ReaderTheme.LIGHT -> Color(0xFF1C1B1F)
                 ReaderTheme.SEPIA -> Color(0xFF4A3525)
-                ReaderTheme.DARK -> Color(0xFFE0E0E0)
                 ReaderTheme.AMOLED -> Color(0xFFDCDCDC)
+            }
+
+            val uiBgColor = when (readerTheme) {
+                ReaderTheme.DEFAULT -> if (isDark) Color(0xF5181818) else Color(0xF8FFFFFF)
+                ReaderTheme.LIGHT -> Color(0xF8FFFFFF)
+                ReaderTheme.SEPIA -> Color(0xF8FBF0D9)
+                ReaderTheme.AMOLED -> Color(0xF8000000)
+            }
+            val uiSurfaceColor = when (readerTheme) {
+                ReaderTheme.DEFAULT -> if (isDark) Color(0xFF222222) else Color(0xFFFFFFFF)
+                ReaderTheme.LIGHT -> Color(0xFFFFFFFF)
+                ReaderTheme.SEPIA -> Color(0xFFF7EEDB)
+                ReaderTheme.AMOLED -> Color(0xFF161616)
+            }
+            val uiTextColor = when (readerTheme) {
+                ReaderTheme.DEFAULT -> if (isDark) Color(0xFFEDEDED) else Color(0xFF1C1B1F)
+                ReaderTheme.LIGHT -> Color(0xFF1C1B1F)
+                ReaderTheme.SEPIA -> Color(0xFF4A3525)
+                ReaderTheme.AMOLED -> Color(0xFFEDEDED)
+            }
+            val uiSubtextColor = when (readerTheme) {
+                ReaderTheme.DEFAULT -> if (isDark) Color(0xFFA0A0A0) else Color(0xFF666666)
+                ReaderTheme.LIGHT -> Color(0xFF666666)
+                ReaderTheme.SEPIA -> Color(0xFF7A604D)
+                ReaderTheme.AMOLED -> Color(0xFFA0A0A0)
+            }
+            val uiIconTint = when (readerTheme) {
+                ReaderTheme.DEFAULT -> if (isDark) Color.White else Color(0xFF1C1B1F)
+                ReaderTheme.LIGHT -> Color(0xFF1C1B1F)
+                ReaderTheme.SEPIA -> Color(0xFF4A3525)
+                ReaderTheme.AMOLED -> Color.White
+            }
+
+            LaunchedEffect(menuVisible, isUiDark) {
+                if (menuVisible) {
+                    insetsController.show(WindowInsetsCompat.Type.systemBars())
+                    insetsController.isAppearanceLightStatusBars = !isUiDark
+                    insetsController.isAppearanceLightNavigationBars = !isUiDark
+                } else {
+                    insetsController.hide(WindowInsetsCompat.Type.systemBars())
+                    insetsController.systemBarsBehavior =
+                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                }
             }
 
             Box(
@@ -476,6 +527,7 @@ class NovelReaderActivity : ComponentActivity() {
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     style = MaterialTheme.typography.titleMedium,
+                                    color = uiTextColor,
                                 )
                                 manga?.title?.let {
                                     Text(
@@ -483,7 +535,7 @@ class NovelReaderActivity : ComponentActivity() {
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = uiSubtextColor,
                                     )
                                 }
                             }
@@ -493,6 +545,7 @@ class NovelReaderActivity : ComponentActivity() {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                                     contentDescription = "Voltar",
+                                    tint = uiIconTint,
                                 )
                             }
                         },
@@ -502,6 +555,7 @@ class NovelReaderActivity : ComponentActivity() {
                                 Icon(
                                     imageVector = Icons.Outlined.FormatSize,
                                     contentDescription = "Personalizar leitura",
+                                    tint = uiIconTint,
                                 )
                             }
 
@@ -527,20 +581,23 @@ class NovelReaderActivity : ComponentActivity() {
                                     Icon(
                                         imageVector = Icons.Outlined.Translate,
                                         contentDescription = "Traduzir",
-                                        tint = if (isTranslated) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        tint = if (isTranslated) MaterialTheme.colorScheme.primary else uiSubtextColor,
                                     )
                                 }
                                 Text(
                                     text = if (isTranslated) "PT" else "ORIG",
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isTranslated) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = if (isTranslated) MaterialTheme.colorScheme.primary else uiSubtextColor,
                                     modifier = Modifier.padding(end = 4.dp),
                                 )
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                            containerColor = uiBgColor,
+                            titleContentColor = uiTextColor,
+                            navigationIconContentColor = uiIconTint,
+                            actionIconContentColor = uiIconTint,
                         ),
                     )
                 }
@@ -553,7 +610,7 @@ class NovelReaderActivity : ComponentActivity() {
                     modifier = Modifier.align(Alignment.BottomCenter),
                 ) {
                     Surface(
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                        color = uiBgColor,
                         tonalElevation = 6.dp,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -584,6 +641,7 @@ class NovelReaderActivity : ComponentActivity() {
                                     Icon(
                                         imageVector = Icons.Outlined.SkipPrevious,
                                         contentDescription = "Capítulo anterior",
+                                        tint = if (currentIdx > 0) uiIconTint else uiSubtextColor.copy(alpha = 0.4f),
                                     )
                                 }
 
@@ -595,6 +653,7 @@ class NovelReaderActivity : ComponentActivity() {
                                     },
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
+                                    color = uiTextColor,
                                 )
 
                                 IconButton(
@@ -608,6 +667,7 @@ class NovelReaderActivity : ComponentActivity() {
                                     Icon(
                                         imageVector = Icons.Outlined.SkipNext,
                                         contentDescription = "Próximo capítulo",
+                                        tint = if (currentIdx != -1 && currentIdx + 1 < allChapters.size) uiIconTint else uiSubtextColor.copy(alpha = 0.4f),
                                     )
                                 }
                             }
@@ -626,6 +686,11 @@ class NovelReaderActivity : ComponentActivity() {
                                     },
                                     valueRange = 0f..(allChapters.size - 1).toFloat(),
                                     modifier = Modifier.fillMaxWidth(),
+                                    colors = SliderDefaults.colors(
+                                        thumbColor = MaterialTheme.colorScheme.primary,
+                                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                                        inactiveTrackColor = uiSubtextColor.copy(alpha = 0.3f),
+                                    ),
                                 )
                             }
                         }
@@ -637,7 +702,15 @@ class NovelReaderActivity : ComponentActivity() {
             if (showSettingsDialog) {
                 AlertDialog(
                     onDismissRequest = { showSettingsDialog = false },
-                    title = { Text("Configurações do Leitor") },
+                    containerColor = uiSurfaceColor,
+                    titleContentColor = uiTextColor,
+                    textContentColor = uiTextColor,
+                    title = {
+                        Text(
+                            text = "Configurações do Leitor",
+                            color = uiTextColor,
+                        )
+                    },
                     text = {
                         Column {
                             // Font Size Adjustment
@@ -645,6 +718,7 @@ class NovelReaderActivity : ComponentActivity() {
                                 text = "Tamanho da Fonte: ${fontSize.toInt()} sp",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
+                                color = uiTextColor,
                             )
                             Slider(
                                 value = fontSize,
@@ -654,6 +728,11 @@ class NovelReaderActivity : ComponentActivity() {
                                 },
                                 valueRange = 13f..28f,
                                 steps = 15,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = MaterialTheme.colorScheme.primary,
+                                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                                    inactiveTrackColor = uiSubtextColor.copy(alpha = 0.3f),
+                                ),
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
@@ -663,36 +742,43 @@ class NovelReaderActivity : ComponentActivity() {
                                 text = "Cor de Fundo",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
+                                color = uiTextColor,
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
-                                ReaderTheme.entries.forEachIndexed { idx, theme ->
-                                    val isSelected = currentThemeIndex == idx
+                                ReaderTheme.entries.forEach { theme ->
+                                    val isSelected = readerTheme == theme
                                     Column(
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(8.dp))
                                             .clickable {
-                                                currentThemeIndex = idx
-                                                prefs.edit().putInt("theme_index", idx).apply()
+                                                readerTheme = theme
+                                                prefs.edit()
+                                                    .putString("theme_name", theme.name)
+                                                    .putInt("theme_index", theme.ordinal)
+                                                    .apply()
                                             }
                                             .padding(6.dp),
                                     ) {
+                                        val circleBg = when (theme) {
+                                            ReaderTheme.DEFAULT -> if (isDark) Color(0xFF1E1E1E) else Color(0xFFFFFFFF)
+                                            ReaderTheme.LIGHT -> Color(0xFFFFFFFF)
+                                            ReaderTheme.SEPIA -> Color(0xFFFBF0D9)
+                                            ReaderTheme.AMOLED -> Color(0xFF000000)
+                                        }
                                         Box(
                                             modifier = Modifier
-                                                .size(36.dp)
+                                                .size(38.dp)
                                                 .clip(CircleShape)
-                                                .background(
-                                                    when (theme) {
-                                                        ReaderTheme.DEFAULT -> if (isDark) Color(0xFF121212) else Color(0xFFFFFFFF)
-                                                        ReaderTheme.LIGHT -> Color(0xFFFFFFFF)
-                                                        ReaderTheme.SEPIA -> Color(0xFFFBF0D9)
-                                                        ReaderTheme.DARK -> Color(0xFF181818)
-                                                        ReaderTheme.AMOLED -> Color(0xFF000000)
-                                                    },
+                                                .background(circleBg)
+                                                .border(
+                                                    width = if (isSelected) 2.5.dp else 1.dp,
+                                                    color = if (isSelected) MaterialTheme.colorScheme.primary else uiSubtextColor.copy(alpha = 0.4f),
+                                                    shape = CircleShape,
                                                 ),
                                         )
                                         Spacer(modifier = Modifier.height(4.dp))
@@ -700,7 +786,7 @@ class NovelReaderActivity : ComponentActivity() {
                                             text = theme.title,
                                             style = MaterialTheme.typography.labelSmall,
                                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                            color = if (isSelected) MaterialTheme.colorScheme.primary else uiSubtextColor,
                                         )
                                     }
                                 }
@@ -709,7 +795,10 @@ class NovelReaderActivity : ComponentActivity() {
                     },
                     confirmButton = {
                         TextButton(onClick = { showSettingsDialog = false }) {
-                            Text("Fechar")
+                            Text(
+                                text = "Fechar",
+                                color = MaterialTheme.colorScheme.primary,
+                            )
                         }
                     },
                 )
