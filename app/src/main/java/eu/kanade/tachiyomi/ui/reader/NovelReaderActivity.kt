@@ -113,13 +113,14 @@ class NovelReaderActivity : ComponentActivity() {
     }
 
     class ChapterItemState(
-        val chapter: Chapter,
+        chapter: Chapter,
         originalText: String? = null,
         translatedText: String? = null,
         isLoading: Boolean = true,
         isTranslating: Boolean = false,
         error: String? = null,
     ) {
+        var chapter by mutableStateOf(chapter)
         var originalText by mutableStateOf(originalText)
         var translatedText by mutableStateOf(translatedText)
         var isLoading by mutableStateOf(isLoading)
@@ -279,6 +280,10 @@ class NovelReaderActivity : ComponentActivity() {
                         val firstItem = ChapterItemState(chapter = initial)
                         loadedChapters.add(firstItem)
                         loadChapterContent(firstItem)
+                        if (!initial.read) {
+                            updateChapter.await(ChapterUpdate(id = initial.id, read = true))
+                            firstItem.chapter = initial.copy(read = true)
+                        }
                     }
                 }
             }
@@ -309,18 +314,23 @@ class NovelReaderActivity : ComponentActivity() {
 
             // Automatic mark as read when user scrolls through a chapter
             LaunchedEffect(lazyListState) {
-                snapshotFlow { lazyListState.firstVisibleItemIndex }
-                    .distinctUntilChanged()
-                    .collect { index ->
+                snapshotFlow {
+                    lazyListState.layoutInfo.visibleItemsInfo.map { it.index }
+                }
+                .distinctUntilChanged()
+                .collect { visibleIndices ->
+                    visibleIndices.forEach { index ->
                         if (index in loadedChapters.indices) {
                             val item = loadedChapters[index]
                             if (!item.chapter.read) {
                                 withContext(Dispatchers.IO) {
                                     updateChapter.await(ChapterUpdate(id = item.chapter.id, read = true))
                                 }
+                                item.chapter = item.chapter.copy(read = true)
                             }
                         }
                     }
+                }
             }
 
             // Color scheme resolution based on ReaderTheme

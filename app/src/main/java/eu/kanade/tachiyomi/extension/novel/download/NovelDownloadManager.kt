@@ -33,9 +33,14 @@ object NovelDownloadManager {
     private val _downloadedChapters = MutableStateFlow<Set<Long>>(emptySet())
     val downloadedChapters: StateFlow<Set<Long>> = _downloadedChapters.asStateFlow()
 
+    private val _downloadingChapters = MutableStateFlow<Set<Long>>(emptySet())
+    val downloadingChapters: StateFlow<Set<Long>> = _downloadingChapters.asStateFlow()
+
     init {
         refreshDownloadedCache()
     }
+
+    fun isChapterDownloading(chapterId: Long): Boolean = _downloadingChapters.value.contains(chapterId)
 
     private fun getMangaDir(mangaId: Long): File = File(baseDir, mangaId.toString()).apply { mkdirs() }
     private fun getChapterFile(mangaId: Long, chapterId: Long): File = File(getMangaDir(mangaId), "$chapterId.txt")
@@ -66,6 +71,7 @@ object NovelDownloadManager {
     }
 
     suspend fun downloadChapter(manga: Manga, chapter: Chapter): Boolean = withContext(Dispatchers.IO) {
+        _downloadingChapters.value = _downloadingChapters.value + chapter.id
         try {
             val source = sourceManager.get(manga.source) as? NovelSourceWrapper
                 ?: throw Exception("Fonte não é um plugin de novel")
@@ -90,6 +96,8 @@ object NovelDownloadManager {
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e) { "Failed to download novel chapter ${chapter.name}" }
             false
+        } finally {
+            _downloadingChapters.value = _downloadingChapters.value - chapter.id
         }
     }
 
