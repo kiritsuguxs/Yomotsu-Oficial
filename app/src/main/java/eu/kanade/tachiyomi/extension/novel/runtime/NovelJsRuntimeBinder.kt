@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.novel.runtime
 
+import androidx.annotation.Keep
 import app.cash.quickjs.QuickJs
 
 private const val NATIVE_OBJECT_NAME = "__native"
@@ -143,6 +144,7 @@ internal fun buildNativeBridgeShim(): String {
  * Engine-agnostic logging decorator that reproduces the per-operation compatibility
  * logging the previous J2V8 binder performed inline.
  */
+@Keep
 class LoggingNativeApi(
     private val delegate: NovelJsRuntime.NativeApi,
     private val logger: CompatibilityLogger,
