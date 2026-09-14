@@ -17,6 +17,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import eu.kanade.tachiyomi.data.telegram.TelegramCloudManager
+import tachiyomi.domain.telegram.TelegramPreferences
+import kotlinx.coroutines.launch
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import eu.kanade.presentation.components.AppBar
@@ -57,6 +64,10 @@ fun MangaToolbar(
 ) {
     val navigator = LocalNavigator.currentOrThrow
     val isActionMode = actionModeCounter > 0
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val cloudManager = remember { Injekt.get<TelegramCloudManager>() }
+    val telegramPrefs = remember { Injekt.get<TelegramPreferences>() }
     AppBar(
         titleContent = {
             if (isActionMode) {
@@ -183,6 +194,24 @@ fun MangaToolbar(
                             onClick = onClickEditNotes,
                         ),
                     )
+                    if (telegramPrefs.enableTelegramCloud.get()) {
+                        add(
+                            AppBar.OverflowAction(
+                                title = "Puxar da Nuvem (Fonte Local)",
+                                onClick = {
+                                    scope.launch {
+                                        android.widget.Toast.makeText(context, "Verificando nuvem para $title...", android.widget.Toast.LENGTH_SHORT).show()
+                                        val success = cloudManager.downloadMangaToLocalSource(title)
+                                        if (success) {
+                                            android.widget.Toast.makeText(context, "$title baixado para a Fonte Local!", android.widget.Toast.LENGTH_LONG).show()
+                                        } else {
+                                            android.widget.Toast.makeText(context, "Nenhum capítulo encontrado no Telegram para $title", android.widget.Toast.LENGTH_LONG).show()
+                                        }
+                                    }
+                                },
+                            ),
+                        )
+                    }
                 },
             )
         },

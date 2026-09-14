@@ -13,4 +13,6 @@ class TelegramPreferences(
     val chatId: Preference<String> = preferenceStore.getString("pref_telegram_chat_id", "")
     
     val deleteLocalAfterUpload: Preference<Boolean> = preferenceStore.getBoolean("pref_telegram_delete_after_upload", false)
+    
+    val restoreToLocalSource: Preference<Boolean> = preferenceStore.getBoolean("pref_telegram_restore_to_local", true)
 }
