@@ -166,4 +166,55 @@ class TelegramCloudManager(
             }
         }
     }
+
+    /**
+     * Função para puxar o capítulo de volta do Telegram para a pasta local do Yomotsu
+     */
+    suspend fun restoreChapterFromTelegram(mangaTitle: String, chapterName: String, localSourceMangaDir: UniFile) {
+        withContext(Dispatchers.IO) {
+            val chatIdString = preferences.chatId.get()
+            val targetChatId = chatIdString.toLongOrNull() ?: return@withContext
+
+            val query = "Obra: $mangaTitle\nCapítulo: $chapterName"
+            
+            // Busca a mensagem no chat
+            tdClient?.send(TdApi.SearchChatMessages(targetChatId, query, null, 0, 0, 1, null, 0)) { result ->
+                if (result is TdApi.FoundChatMessages && result.messages.isNotEmpty()) {
+                    val message = result.messages.first()
+                    val content = message.content
+                    if (content is TdApi.MessageDocument) {
+                        val fileId = content.document.document.id
+                        logcat(LogPriority.INFO) { "Capítulo encontrado no Telegram! Iniciando download..." }
+
+                        // Inicia o download do Telegram (Priority 32 = máximo)
+                        tdClient?.send(TdApi.DownloadFile(fileId, 32, 0, 0, false)) { downloadResult ->
+                            if (downloadResult is TdApi.File) {
+                                // O arquivo físico baixado pela TDLib fica salvo em downloadResult.local.path
+                                val downloadedPath = downloadResult.local.path
+                                if (downloadedPath.isNotBlank()) {
+                                    val sourceFile = File(downloadedPath)
+                                    if (sourceFile.exists()) {
+                                        // Copia para a pasta "local" do Yomotsu
+                                        val targetFile = localSourceMangaDir.createFile("$chapterName.cbz")
+                                        if (targetFile != null) {
+                                            sourceFile.inputStream().use { input ->
+                                                targetFile.openOutputStream().use { output ->
+                                                    input.copyTo(output)
+                                                }
+                                            }
+                                            logcat(LogPriority.INFO) { "Capítulo $chapterName restaurado com sucesso na Fonte Local!" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        logcat(LogPriority.WARN) { "Mensagem encontrada não é um documento CBZ." }
+                    }
+                } else {
+                    logcat(LogPriority.WARN) { "Capítulo não encontrado no Telegram." }
+                }
+            }
+        }
+    }
 }
