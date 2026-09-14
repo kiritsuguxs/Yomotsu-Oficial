@@ -236,6 +236,7 @@ class TelegramCloudManager(
         }
     }
 
+
     suspend fun restoreChapterFromTelegram(mangaTitle: String, chapterName: String, localSourceMangaDir: UniFile): Boolean {
         if (!preferences.enableTelegramCloud.get()) return false
         
@@ -296,56 +297,52 @@ class TelegramCloudManager(
                 }
                 
                 val content = foundMessage!!.content
-                        if (content is TdApi.MessageDocument) {
-                            val fileId = content.document.document.id
-                            logcat(LogPriority.INFO) { "Capítulo encontrado no Telegram! Iniciando download da Nuvem..." }
-                            showNotification("Nuvem Telegram", "Restaurando: $mangaTitle - $chapterName", ongoing = true)
+                if (content is TdApi.MessageDocument) {
+                    val fileId = content.document.document.id
+                    logcat(LogPriority.INFO) { "Capítulo encontrado no Telegram! Iniciando download da Nuvem..." }
+                    showNotification("Nuvem Telegram", "Restaurando: $mangaTitle - $chapterName", ongoing = true)
 
-                            tdClient?.send(TdApi.DownloadFile(fileId, 32, 0, 0, false)) { downloadResult ->
-                                if (downloadResult is TdApi.File) {
-                                    CoroutineScope(Dispatchers.IO).launch {
-                                        var currentFile: TdApi.File = downloadResult
-                                        while (!currentFile.local.isDownloadingCompleted) {
-                                            delay(500)
-                                            currentFile = kotlin.coroutines.suspendCoroutine<TdApi.File> { fileCont ->
-                                                tdClient?.send(TdApi.GetFile(fileId)) { res ->
-                                                    if (res is TdApi.File) fileCont.resumeWith(Result.success(res))
-                                                    else fileCont.resumeWith(Result.success(currentFile))
-                                                }
-                                            }
+                    tdClient?.send(TdApi.DownloadFile(fileId, 32, 0, 0, false)) { downloadResult ->
+                        if (downloadResult is TdApi.File) {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                var currentFile: TdApi.File = downloadResult
+                                while (!currentFile.local.isDownloadingCompleted) {
+                                    delay(500)
+                                    currentFile = kotlin.coroutines.suspendCoroutine<TdApi.File> { fileCont ->
+                                        tdClient?.send(TdApi.GetFile(fileId)) { res ->
+                                            if (res is TdApi.File) fileCont.resumeWith(Result.success(res))
+                                            else fileCont.resumeWith(Result.success(currentFile))
                                         }
-
-                                        val downloadedPath: String = currentFile.local.path
-                                        if (downloadedPath.isNotBlank()) {
-                                            val sourceFile = java.io.File(downloadedPath)
-                                            if (sourceFile.exists()) {
-                                                val targetFile = localSourceMangaDir.createFile("$chapterName.cbz")
-                                                if (targetFile != null) {
-                                                    sourceFile.inputStream().use { input ->
-                                                        targetFile.openOutputStream().use { output ->
-                                                            input.copyTo(output)
-                                                        }
-                                                    }
-                                                    logcat(LogPriority.INFO) { "Restaurado com sucesso!" }
-                                                    showNotification("Nuvem Telegram", "Capítulo restaurado", autoDismiss = true)
-                                                    continuation.resumeWith(Result.success(true))
-                                                    return@launch
-                                                }
-                                            }
-                                        }
-                                        continuation.resumeWith(Result.success(false))
                                     }
-                                } else {
-                                    continuation.resumeWith(Result.success(false))
                                 }
+
+                                val downloadedPath: String = currentFile.local.path
+                                if (downloadedPath.isNotBlank()) {
+                                    val sourceFile = java.io.File(downloadedPath)
+                                    if (sourceFile.exists()) {
+                                        val targetFile = localSourceMangaDir.createFile("$chapterName.cbz")
+                                        if (targetFile != null) {
+                                            sourceFile.inputStream().use { input ->
+                                                targetFile.openOutputStream().use { output ->
+                                                    input.copyTo(output)
+                                                }
+                                            }
+                                            logcat(LogPriority.INFO) { "Restaurado com sucesso!" }
+                                            showNotification("Nuvem Telegram", "Capítulo restaurado", autoDismiss = true)
+                                            continuation.resumeWith(Result.success(true))
+                                            return@launch
+                                        }
+                                    }
+                                }
+                                continuation.resumeWith(Result.success(false))
                             }
                         } else {
                             continuation.resumeWith(Result.success(false))
                         }
-                    } else {
-                        continuation.resumeWith(Result.success(false))
                     }
-                } ?: continuation.resumeWith(Result.success(false))
+                } else {
+                    continuation.resumeWith(Result.success(false))
+                }
             }
         }
     }
