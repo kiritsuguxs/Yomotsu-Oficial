@@ -98,6 +98,7 @@ class Downloader(
      */
     private val notifier by lazy { DownloadNotifier(context) }
     private val translationManager by lazy { Injekt.get<TranslationManager>() }
+    private val telegramCloudManager: eu.kanade.tachiyomi.data.telegram.TelegramCloudManager by lazy { Injekt.get() }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var downloaderJob: Job? = null
@@ -331,6 +332,20 @@ class Downloader(
             return
         }
 
+        // Tenta puxar da Nuvem Telegram ANTES de começar a baixar do site
+        val restoredFromCloud = telegramCloudManager.restoreChapterFromTelegram(
+            mangaTitle = download.manga.title,
+            chapterName = download.chapter.name,
+            localSourceMangaDir = mangaDir
+        )
+
+        if (restoredFromCloud) {
+            // Se puxou com sucesso da nuvem, finge que acabou de baixar e encerra o fluxo!
+            cache.addChapter(download.chapter.name, mangaDir, download.manga)
+            download.status = Download.State.DOWNLOADED
+            return
+        }
+
         // Protect the parent before the temporary chapter directory or any
         // page image is created, so gallery scanners never see partial files.
         DiskUtil.createNoMediaFile(mangaDir, context)
@@ -422,6 +437,14 @@ class Downloader(
             DiskUtil.createNoMediaFile(tmpDir, context)
 
             download.status = Download.State.DOWNLOADED
+            
+            val chapterFile = mangaDir.findFile("$chapterDirname.cbz") ?: mangaDir.findFile(chapterDirname)
+            if (chapterFile != null) {
+                scope.launch {
+                    telegramCloudManager.uploadChapter(download.manga, download.chapter, chapterFile)
+                }
+            }
+
             runCatching {
                 translationManager.translateChapter(
                     manga = download.manga,
