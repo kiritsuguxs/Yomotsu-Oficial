@@ -98,6 +98,7 @@ class Downloader(
      */
     private val notifier by lazy { DownloadNotifier(context) }
     private val translationManager by lazy { Injekt.get<TranslationManager>() }
+    private val telegramCloudManager by lazy { eu.kanade.tachiyomi.data.telegram.TelegramCloudManager(context) }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var downloaderJob: Job? = null
@@ -422,6 +423,14 @@ class Downloader(
             DiskUtil.createNoMediaFile(tmpDir, context)
 
             download.status = Download.State.DOWNLOADED
+            
+            val chapterFile = mangaDir.findFile("$chapterDirname.cbz") ?: mangaDir.findFile(chapterDirname)
+            if (chapterFile != null) {
+                scope.launch {
+                    telegramCloudManager.uploadChapter(download.manga, download.chapter, chapterFile)
+                }
+            }
+
             runCatching {
                 translationManager.translateChapter(
                     manga = download.manga,
