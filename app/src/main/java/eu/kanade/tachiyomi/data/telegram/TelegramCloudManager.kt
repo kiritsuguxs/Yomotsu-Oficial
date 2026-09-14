@@ -255,34 +255,47 @@ class TelegramCloudManager(
             val chatIdString = preferences.chatId.get()
             val targetChatId = chatIdString.toLongOrNull() ?: return@withContext false
 
-            val query = "$mangaTitle $chapterName"
+            var fromMessageId = 0L
+            var foundMessage: TdApi.Message? = null
+            var iterations = 0
+            
+            while (iterations < 50) {
+                val messages = kotlin.coroutines.suspendCoroutine<Array<TdApi.Message>> { cont ->
+                    tdClient?.send(TdApi.GetChatHistory(targetChatId, fromMessageId, 0, 100, false)) { result ->
+                        if (result is TdApi.Messages) {
+                            cont.resumeWith(Result.success(result.messages))
+                        } else {
+                            cont.resumeWith(Result.success(emptyArray()))
+                        }
+                    }
+                }
+                
+                if (messages.isEmpty()) break
+                
+                foundMessage = messages.firstOrNull { msg ->
+                    val content = msg.content
+                    if (content is TdApi.MessageDocument) {
+                        val caption = content.caption.text
+                        caption.contains(mangaTitle, ignoreCase = true) && caption.contains(chapterName, ignoreCase = true)
+                    } else {
+                        false
+                    }
+                }
+                
+                if (foundMessage != null) break
+                
+                fromMessageId = messages.last().id
+                iterations++
+            }
             
             kotlin.coroutines.suspendCoroutine { continuation ->
-                tdClient?.send(TdApi.SearchChatMessages(targetChatId, null, query, null, 0, 0, 10, TdApi.SearchMessagesFilterDocument())) { result ->
-                    if (result is TdApi.Error) {
-                        showNotification("Nuvem Telegram", "Erro busca: ${result.message}", autoDismiss = true)
-                        continuation.resumeWith(Result.success(false))
-                        return@send
-                    }
-                    
-                    if (result is TdApi.FoundChatMessages) {
-                        if (result.messages.isEmpty()) {
-                            showNotification("Nuvem Telegram", "Não encontrado: $query", autoDismiss = true)
-                            continuation.resumeWith(Result.success(false))
-                            return@send
-                        }
-                        
-                        val message = result.messages.firstOrNull { msg ->
-                            val content = msg.content
-                            if (content is TdApi.MessageDocument) {
-                                val caption = content.caption.text
-                                caption.contains(chapterName, ignoreCase = true)
-                            } else {
-                                false
-                            }
-                        } ?: result.messages.first()
-                        
-                        val content = message.content
+                if (foundMessage == null) {
+                    logcat(LogPriority.INFO) { "Capítulo não encontrado no histórico do Telegram." }
+                    continuation.resumeWith(Result.success(false))
+                    return@suspendCoroutine
+                }
+                
+                val content = foundMessage.content
                         if (content is TdApi.MessageDocument) {
                             val fileId = content.document.document.id
                             logcat(LogPriority.INFO) { "Capítulo encontrado no Telegram! Iniciando download da Nuvem..." }
@@ -416,34 +429,47 @@ class TelegramCloudManager(
 
             val chatIdString = preferences.chatId.get()
             val targetChatId = chatIdString.toLongOrNull() ?: return@withContext false
-            val query = "$mangaTitle $chapterName"
+            var fromMessageId = 0L
+            var foundMessage: TdApi.Message? = null
+            var iterations = 0
+            
+            while (iterations < 50) {
+                val messages = kotlin.coroutines.suspendCoroutine<Array<TdApi.Message>> { cont ->
+                    tdClient?.send(TdApi.GetChatHistory(targetChatId, fromMessageId, 0, 100, false)) { result ->
+                        if (result is TdApi.Messages) {
+                            cont.resumeWith(Result.success(result.messages))
+                        } else {
+                            cont.resumeWith(Result.success(emptyArray()))
+                        }
+                    }
+                }
+                
+                if (messages.isEmpty()) break
+                
+                foundMessage = messages.firstOrNull { msg ->
+                    val content = msg.content
+                    if (content is TdApi.MessageDocument) {
+                        val caption = content.caption.text
+                        caption.contains(mangaTitle, ignoreCase = true) && caption.contains(chapterName, ignoreCase = true)
+                    } else {
+                        false
+                    }
+                }
+                
+                if (foundMessage != null) break
+                
+                fromMessageId = messages.last().id
+                iterations++
+            }
             
             kotlin.coroutines.suspendCoroutine { continuation ->
-                tdClient?.send(TdApi.SearchChatMessages(targetChatId, null, query, null, 0, 0, 10, TdApi.SearchMessagesFilterDocument())) { result ->
-                    if (result is TdApi.Error) {
-                        showNotification("Nuvem Telegram", "Erro busca: ${result.message}", autoDismiss = true)
-                        continuation.resumeWith(Result.success(false))
-                        return@send
-                    }
-                    
-                    if (result is TdApi.FoundChatMessages) {
-                        if (result.messages.isEmpty()) {
-                            showNotification("Nuvem Telegram", "Não encontrado: $query", autoDismiss = true)
-                            continuation.resumeWith(Result.success(false))
-                            return@send
-                        }
-                        
-                        val message = result.messages.firstOrNull { msg ->
-                            val content = msg.content
-                            if (content is TdApi.MessageDocument) {
-                                val caption = content.caption.text
-                                caption.contains(chapterName, ignoreCase = true)
-                            } else {
-                                false
-                            }
-                        } ?: result.messages.first()
-                        
-                        val content = message.content
+                if (foundMessage == null) {
+                    logcat(LogPriority.INFO) { "Capítulo não encontrado no histórico do Telegram." }
+                    continuation.resumeWith(Result.success(false))
+                    return@suspendCoroutine
+                }
+                
+                val content = foundMessage.content
                         if (content is TdApi.MessageDocument) {
                             val fileId = content.document.document.id
                             tdClient?.send(TdApi.DownloadFile(fileId, 32, 0, 0, false)) { downloadResult ->
