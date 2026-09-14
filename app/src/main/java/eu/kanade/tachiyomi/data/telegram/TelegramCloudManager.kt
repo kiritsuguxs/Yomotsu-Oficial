@@ -411,7 +411,7 @@ class TelegramCloudManager(
         }
     }
 
-    suspend fun restoreNovelChapter(mangaTitle: String, chapterName: String, localTargetFile: File): Boolean {
+    suspend fun restoreNovelChapter(mangaTitle: String, chapterName: String, localTargetFile: java.io.File): Boolean {
         if (!preferences.enableTelegramCloud.get()) return false
         
         return withContext(Dispatchers.IO) {
@@ -470,29 +470,25 @@ class TelegramCloudManager(
                 }
                 
                 val content = foundMessage!!.content
-                        if (content is TdApi.MessageDocument) {
-                            val fileId = content.document.document.id
-                            tdClient?.send(TdApi.DownloadFile(fileId, 32, 0, 0, false)) { downloadResult ->
-                                if (downloadResult is TdApi.File) {
-                                    val downloadedPath = downloadResult.local.path
-                                    if (downloadedPath.isNotBlank()) {
-                                        val sourceFile = File(downloadedPath)
-                                        if (sourceFile.exists()) {
-                                            sourceFile.copyTo(localTargetFile, overwrite = true)
-                                            continuation.resumeWith(Result.success(true))
-                                            return@send
-                                        }
-                                    }
+                if (content is TdApi.MessageDocument) {
+                    val fileId = content.document.document.id
+                    tdClient?.send(TdApi.DownloadFile(fileId, 32, 0, 0, false)) { downloadResult ->
+                        if (downloadResult is TdApi.File) {
+                            val downloadedPath = downloadResult.local.path
+                            if (downloadedPath.isNotBlank()) {
+                                val sourceFile = java.io.File(downloadedPath)
+                                if (sourceFile.exists()) {
+                                    sourceFile.copyTo(localTargetFile, overwrite = true)
+                                    continuation.resumeWith(Result.success(true))
+                                    return@send
                                 }
-                                continuation.resumeWith(Result.success(false))
                             }
-                        } else {
-                            continuation.resumeWith(Result.success(false))
                         }
-                    } else {
                         continuation.resumeWith(Result.success(false))
                     }
-                } ?: continuation.resumeWith(Result.success(false))
+                } else {
+                    continuation.resumeWith(Result.success(false))
+                }
             }
         }
     }
