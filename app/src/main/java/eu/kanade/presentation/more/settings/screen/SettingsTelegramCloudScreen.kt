@@ -36,7 +36,7 @@ object SettingsTelegramCloudScreen : SearchableSettings {
                 subtitle = "ID do canal privado (ex: -1001234567890) ou chat para onde enviar",
             ),
             Preference.PreferenceItem.SwitchPreference(
-                pref = preferences.deleteLocalAfterUpload,
+                preference = preferences.deleteLocalAfterUpload,
                 title = "Apagar arquivo local após upload",
                 subtitle = "Libera espaço no dispositivo assim que o capítulo for salvo na nuvem",
             )
