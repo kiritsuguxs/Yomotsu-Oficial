@@ -21,17 +21,17 @@ object SettingsTelegramCloudScreen : SearchableSettings {
 
         return listOf(
             Preference.PreferenceItem.SwitchPreference(
-                pref = preferences.enableTelegramCloud,
+                preference = preferences.enableTelegramCloud,
                 title = "Ativar Nuvem Telegram",
                 subtitle = "Enviar capítulos baixados automaticamente para o Telegram",
             ),
             Preference.PreferenceItem.EditTextPreference(
-                pref = preferences.botToken,
+                preference = preferences.botToken,
                 title = "Bot Token",
                 subtitle = "Token gerado pelo @BotFather",
             ),
             Preference.PreferenceItem.EditTextPreference(
-                pref = preferences.chatId,
+                preference = preferences.chatId,
                 title = "ID do Chat / Canal",
                 subtitle = "ID do canal privado (ex: -1001234567890) ou chat para onde enviar",
             ),
