@@ -22,6 +22,12 @@ import uy.kohesive.injekt.api.get
 import java.io.File
 import logcat.LogPriority
 
+data class PendingUpload(
+    val file: UniFile,
+    val manga: Manga? = null,
+    val chapter: Chapter? = null,
+)
+
 class TelegramCloudManager(
     private val context: Context,
     private val preferences: tachiyomi.domain.telegram.TelegramPreferences = Injekt.get()
@@ -52,7 +58,7 @@ class TelegramCloudManager(
         tdClient = Client.create(this, null, null)
     }
 
-    private val pendingUploads = java.util.concurrent.ConcurrentHashMap<Long, UniFile>()
+    private val pendingUploads = java.util.concurrent.ConcurrentHashMap<Long, PendingUpload>()
 
     private fun showNotification(title: String, text: String, progress: Int = 0, max: Int = 0, ongoing: Boolean = false, autoDismiss: Boolean = false) {
         val notificationManager = androidx.core.app.NotificationManagerCompat.from(context)
@@ -130,8 +136,18 @@ class TelegramCloudManager(
                 showNotification("Nuvem Telegram", "Upload concluído!", autoDismiss = true)
                 
                 if (file != null && preferences.deleteLocalAfterUpload.get()) {
-                    val deleted = file.delete()
+                    val deleted = file.file.delete()
                     logcat(LogPriority.INFO) { "Arquivo local apagado após upload: $deleted" }
+                    if (file.manga != null && file.chapter != null) {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            try {
+                                val downloadCache = Injekt.get<eu.kanade.tachiyomi.data.download.DownloadCache>()
+                                downloadCache.removeChapter(file.chapter, file.manga)
+                            } catch (e: Exception) {
+                                logcat(LogPriority.ERROR, e) { "Erro ao atualizar cache de download" }
+                            }
+                        }
+                    }
                 }
             }
             is TdApi.UpdateMessageSendFailed -> {
@@ -218,7 +234,7 @@ class TelegramCloudManager(
                     tdClient?.send(sendMessageRequest) { result ->
                         if (result is TdApi.Message) {
                             // Salva a referência real do arquivo para deletar no callback global Succeeded!
-                            pendingUploads[result.id] = cbzFile
+                            pendingUploads[result.id] = PendingUpload(cbzFile, manga, chapter)
                             logcat(LogPriority.INFO) { "Mensagem despachada pro TDLib. ID = ${result.id}" }
                         } else if (result is TdApi.Error) {
                             logcat(LogPriority.ERROR) { "Erro ao empurrar pra TDLib: ${result.message}" }
@@ -395,7 +411,7 @@ class TelegramCloudManager(
                         if (result is TdApi.Message) {
                             val uFile = UniFile.fromFile(txtFile)
                             if (uFile != null) {
-                                pendingUploads[result.id] = uFile
+                                pendingUploads[result.id] = PendingUpload(uFile, manga, chapter)
                             }
                         } else if (result is TdApi.Error) {
                             logcat(LogPriority.ERROR) { "Erro ao enviar Novel pra TDLib: ${result.message}" }
