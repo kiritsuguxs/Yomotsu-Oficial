@@ -51,8 +51,8 @@ jobs:
         run: |
           set -euo pipefail
           grep -Fq 'applicationId = "app.mihon.tachiyomiat"' app/build.gradle.kts
-          grep -Fq 'versionCode = 81' app/build.gradle.kts
-          grep -Fq 'versionName = "0.20.4-Y22"' app/build.gradle.kts
+          grep -Fq 'versionCode = 82' app/build.gradle.kts
+          grep -Fq 'versionName = "0.20.4-Y23"' app/build.gradle.kts
           grep -Fq 'class TranslationJob' app/src/main/java/eu/kanade/translation/TranslationJob.kt
           grep -Fq 'fun onPageProgress' app/src/main/java/eu/kanade/translation/TranslationNotifier.kt
           grep -Fq 'enum class OcrEngineType' app/src/main/java/eu/kanade/translation/recognizer/OcrEngineType.kt
@@ -118,7 +118,7 @@ jobs:
           apk_path=""
           while IFS= read -r candidate; do
             badging="$("$AAPT" dump badging "$candidate")"
-            if grep -Fq "package: name='app.mihon.tachiyomiat' versionCode='81' versionName='0.20.4-Y22'" <<< "$badging" &&
+            if grep -Fq "package: name='app.mihon.tachiyomiat' versionCode='82' versionName='0.20.4-Y23'" <<< "$badging" &&
                grep -Eq "^native-code: 'arm64-v8a'[[:space:]]*$" <<< "$badging"; then
               apk_path="$candidate"
               break
@@ -154,7 +154,7 @@ jobs:
           badging="$("$AAPT" dump badging "$apk_path")"
           grep -Eq "^native-code: 'arm64-v8a'[[:space:]]*$" <<< "$badging"
           grep -Fq \
-            "package: name='app.mihon.tachiyomiat' versionCode='81' versionName='0.20.4-Y22'" \
+            "package: name='app.mihon.tachiyomiat' versionCode='82' versionName='0.20.4-Y23'" \
             <<< "$badging"
 
       - name: Verify installable manifest, ZIP integrity and alignment
@@ -195,7 +195,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Yomotsu-0.20.4-Y22-arm64
+          name: Yomotsu-0.20.4-Y23-arm64
           path: dist/*
           if-no-files-found: error
 
@@ -216,7 +216,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: Yomotsu-0.20.4-Y22-arm64
+          name: Yomotsu-0.20.4-Y23-arm64
           path: dist
       - name: Verify downloaded artifact matches the validated signed APK
         run: |
@@ -246,4 +246,4 @@ jobs:
             adb install --abi arm64-v8a dist/*.apk
             adb install -r --abi arm64-v8a dist/*.apk
             adb shell pm path app.mihon.tachiyomiat
-            adb shell dumpsys package app.mihon.tachiyomiat | grep -E 'versionCode=81|versionName=0.20.4-Y22|primaryCpuAbi=arm64-v8a'
+            adb shell dumpsys package app.mihon.tachiyomiat | grep -E 'versionCode=82|versionName=0.20.4-Y23|primaryCpuAbi=arm64-v8a'
