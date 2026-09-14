@@ -54,7 +54,7 @@ class TelegramCloudManager(
 
     private val pendingUploads = java.util.concurrent.ConcurrentHashMap<Long, UniFile>()
 
-    private fun showNotification(title: String, text: String, progress: Int = 0, max: Int = 0, ongoing: Boolean = false) {
+    private fun showNotification(title: String, text: String, progress: Int = 0, max: Int = 0, ongoing: Boolean = false, autoDismiss: Boolean = false) {
         val notificationManager = androidx.core.app.NotificationManagerCompat.from(context)
         // Reutilizando CHANNEL_DOWNLOADER_PROGRESS do Yomotsu para o canal
         val builder = androidx.core.app.NotificationCompat.Builder(context, "downloader_progress_channel")
@@ -69,6 +69,10 @@ class TelegramCloudManager(
             builder.setProgress(max, progress, progress == 0)
         } else {
             builder.setProgress(0, 0, false)
+        }
+
+        if (autoDismiss) {
+            builder.setTimeoutAfter(3000)
         }
 
         try {
@@ -123,7 +127,7 @@ class TelegramCloudManager(
                 val file = pendingUploads.remove(messageId)
                 logcat(LogPriority.INFO) { "Upload finalizado pelo Telegram com SUCESSO. Arquivos restantes na fila local: ${pendingUploads.size}" }
                 
-                showNotification("Nuvem Telegram", "Upload concluído!", progress = 100, max = 100, ongoing = false)
+                showNotification("Nuvem Telegram", "Upload concluído!", autoDismiss = true)
                 
                 if (file != null && preferences.deleteLocalAfterUpload.get()) {
                     val deleted = file.delete()
@@ -289,7 +293,7 @@ class TelegramCloudManager(
                                                         }
                                                     }
                                                     logcat(LogPriority.INFO) { "Restaurado com sucesso!" }
-                                                    showNotification("Nuvem Telegram", "Capítulo restaurado", ongoing = false)
+                                                    showNotification("Nuvem Telegram", "Capítulo restaurado", autoDismiss = true)
                                                     continuation.resumeWith(Result.success(true))
                                                     return@launch
                                                 }
