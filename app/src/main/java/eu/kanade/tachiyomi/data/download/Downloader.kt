@@ -98,7 +98,7 @@ class Downloader(
      */
     private val notifier by lazy { DownloadNotifier(context) }
     private val translationManager by lazy { Injekt.get<TranslationManager>() }
-    private val telegramCloudManager by lazy { eu.kanade.tachiyomi.data.telegram.TelegramCloudManager(context) }
+    private val telegramCloudManager: eu.kanade.tachiyomi.data.telegram.TelegramCloudManager by lazy { Injekt.get() }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var downloaderJob: Job? = null

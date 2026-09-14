@@ -289,14 +289,20 @@ class TelegramCloudManager(
                     val document = TdApi.InputMessageDocument(inputFile, thumbnail, false, caption)
                     val sendMessageRequest = TdApi.SendMessage(targetChatId, 0, 0, null, null, document)
 
+                    showNotification("Nuvem Telegram", "Enviando Novel: ${manga.title}...", progress = 0, max = 100, ongoing = true)
+
                     tdClient?.send(sendMessageRequest) { result ->
-                        if (result is TdApi.Error) {
+                        if (result is TdApi.Message) {
+                            pendingUploads[result.id] = UniFile.fromFile(txtFile)
+                        } else if (result is TdApi.Error) {
                             logcat(LogPriority.ERROR) { "Erro ao enviar Novel pra TDLib: ${result.message}" }
+                            showNotification("Nuvem Telegram", "Erro: ${result.message}", ongoing = false)
                         }
                     }
                     delay(3000)
                 } catch (e: Exception) {
                     logcat(LogPriority.ERROR, e) { "Erro ao enviar novel" }
+                    showNotification("Nuvem Telegram", "Falha interna no upload", ongoing = false)
                 }
             }
         }
