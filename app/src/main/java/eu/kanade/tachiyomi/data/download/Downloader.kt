@@ -332,16 +332,23 @@ class Downloader(
             return
         }
 
+        val chapterDirname = provider.getChapterDirName(
+            download.chapter.name,
+            download.chapter.scanlator,
+            download.chapter.url,
+        )
+
         // Tenta puxar da Nuvem Telegram ANTES de começar a baixar do site
         val restoredFromCloud = telegramCloudManager.restoreChapterFromTelegram(
             mangaTitle = download.manga.title,
             chapterName = download.chapter.name,
+            chapterDirname = chapterDirname,
             localSourceMangaDir = mangaDir
         )
 
         if (restoredFromCloud) {
             // Se puxou com sucesso da nuvem, finge que acabou de baixar e encerra o fluxo!
-            cache.addChapter(download.chapter.name, mangaDir, download.manga)
+            cache.addChapter(chapterDirname, mangaDir, download.manga)
             download.status = Download.State.DOWNLOADED
             return
         }
@@ -361,12 +368,6 @@ class Downloader(
             )
             return
         }
-
-        val chapterDirname = provider.getChapterDirName(
-            download.chapter.name,
-            download.chapter.scanlator,
-            download.chapter.url,
-        )
         val tmpDir = mangaDir.createDirectory(chapterDirname + TMP_DIR_SUFFIX)!!
 
         try {
