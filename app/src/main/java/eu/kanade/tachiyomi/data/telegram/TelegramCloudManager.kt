@@ -295,7 +295,7 @@ class TelegramCloudManager(
                     return@suspendCoroutine
                 }
                 
-                val content = foundMessage.content
+                val content = foundMessage!!.content
                         if (content is TdApi.MessageDocument) {
                             val fileId = content.document.document.id
                             logcat(LogPriority.INFO) { "Capítulo encontrado no Telegram! Iniciando download da Nuvem..." }
@@ -469,7 +469,7 @@ class TelegramCloudManager(
                     return@suspendCoroutine
                 }
                 
-                val content = foundMessage.content
+                val content = foundMessage!!.content
                         if (content is TdApi.MessageDocument) {
                             val fileId = content.document.document.id
                             tdClient?.send(TdApi.DownloadFile(fileId, 32, 0, 0, false)) { downloadResult ->
