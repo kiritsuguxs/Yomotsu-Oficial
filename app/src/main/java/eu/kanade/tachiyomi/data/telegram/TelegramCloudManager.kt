@@ -7,6 +7,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.drinkless.tdlib.Client
 import org.drinkless.tdlib.TdApi
 import tachiyomi.core.common.util.system.logcat
@@ -228,26 +230,41 @@ class TelegramCloudManager(
 
                             tdClient?.send(TdApi.DownloadFile(fileId, 32, 0, 0, false)) { downloadResult ->
                                 if (downloadResult is TdApi.File) {
-                                    val downloadedPath = downloadResult.local.path
-                                    if (downloadedPath.isNotBlank()) {
-                                        val sourceFile = File(downloadedPath)
-                                        if (sourceFile.exists()) {
-                                            val targetFile = localSourceMangaDir.createFile("$chapterName.cbz")
-                                            if (targetFile != null) {
-                                                sourceFile.inputStream().use { input ->
-                                                    targetFile.openOutputStream().use { output ->
-                                                        input.copyTo(output)
-                                                    }
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        var currentFile = downloadResult
+                                        while (!currentFile.local.isDownloadingCompleted) {
+                                            delay(500)
+                                            currentFile = kotlin.coroutines.suspendCoroutine { fileCont ->
+                                                tdClient?.send(TdApi.GetFile(fileId)) { res ->
+                                                    if (res is TdApi.File) fileCont.resumeWith(Result.success(res))
+                                                    else fileCont.resumeWith(Result.success(currentFile))
                                                 }
-                                                logcat(LogPriority.INFO) { "Restaurado com sucesso!" }
-                                                showNotification("Nuvem Telegram", "Capítulo restaurado", ongoing = false)
-                                                continuation.resumeWith(Result.success(true))
-                                                return@send
+                                            } ?: currentFile
+                                        }
+
+                                        val downloadedPath = currentFile.local.path
+                                        if (downloadedPath.isNotBlank()) {
+                                            val sourceFile = File(downloadedPath)
+                                            if (sourceFile.exists()) {
+                                                val targetFile = localSourceMangaDir.createFile("$chapterName.cbz")
+                                                if (targetFile != null) {
+                                                    sourceFile.inputStream().use { input ->
+                                                        targetFile.openOutputStream().use { output ->
+                                                            input.copyTo(output)
+                                                        }
+                                                    }
+                                                    logcat(LogPriority.INFO) { "Restaurado com sucesso!" }
+                                                    showNotification("Nuvem Telegram", "Capítulo restaurado", ongoing = false)
+                                                    continuation.resumeWith(Result.success(true))
+                                                    return@launch
+                                                }
                                             }
                                         }
+                                        continuation.resumeWith(Result.success(false))
                                     }
+                                } else {
+                                    continuation.resumeWith(Result.success(false))
                                 }
-                                continuation.resumeWith(Result.success(false))
                             }
                         } else {
                             continuation.resumeWith(Result.success(false))

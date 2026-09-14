@@ -113,3 +113,6 @@
 
 # Detector JNI symbols are called only from the disposable :dbnet process.
 -keep class eu.kanade.translation.detection.DbnetNativeBackend { *; }
+
+# TDLib JNI callbacks
+-keep class org.drinkless.tdlib.** { *; }
