@@ -124,6 +124,11 @@ class NovelSourceWrapper(
         }
     }
 
+    private fun isEndOfPageError(e: Exception): Boolean {
+        val msg = e.message ?: return false
+        return msg.contains("404") || msg.contains("not reach site", ignoreCase = true)
+    }
+
     override suspend fun getPopularManga(page: Int): MangasPage = runInJs { runtime ->
         val script = """
             (function() {
@@ -132,8 +137,16 @@ class NovelSourceWrapper(
                 return p.popularNovels($page, { showLatestNovels: false, filters: filters });
             })()
         """.trimIndent()
-        val jsonStr = evaluateAsyncMethod(runtime, script)
-        parseNovelsJson(jsonStr)
+        try {
+            val jsonStr = evaluateAsyncMethod(runtime, script)
+            parseNovelsJson(jsonStr)
+        } catch (e: Exception) {
+            if (page > 1 && isEndOfPageError(e)) {
+                MangasPage(emptyList(), hasNextPage = false)
+            } else {
+                throw e
+            }
+        }
     }
 
     override suspend fun getLatestUpdates(page: Int): MangasPage = runInJs { runtime ->
@@ -144,8 +157,16 @@ class NovelSourceWrapper(
                 return p.popularNovels($page, { showLatestNovels: true, filters: filters });
             })()
         """.trimIndent()
-        val jsonStr = evaluateAsyncMethod(runtime, script)
-        parseNovelsJson(jsonStr)
+        try {
+            val jsonStr = evaluateAsyncMethod(runtime, script)
+            parseNovelsJson(jsonStr)
+        } catch (e: Exception) {
+            if (page > 1 && isEndOfPageError(e)) {
+                MangasPage(emptyList(), hasNextPage = false)
+            } else {
+                throw e
+            }
+        }
     }
 
     override suspend fun getSearchManga(page: Int, query: String, filters: eu.kanade.tachiyomi.source.model.FilterList): MangasPage = runInJs { runtime ->
@@ -157,8 +178,16 @@ class NovelSourceWrapper(
                 return p.searchNovels('$escapedQuery', $page, { filters: safeFilters });
             })()
         """.trimIndent()
-        val jsonStr = evaluateAsyncMethod(runtime, script)
-        parseNovelsJson(jsonStr)
+        try {
+            val jsonStr = evaluateAsyncMethod(runtime, script)
+            parseNovelsJson(jsonStr)
+        } catch (e: Exception) {
+            if (page > 1 && isEndOfPageError(e)) {
+                MangasPage(emptyList(), hasNextPage = false)
+            } else {
+                throw e
+            }
+        }
     }
 
     override suspend fun getMangaUpdate(

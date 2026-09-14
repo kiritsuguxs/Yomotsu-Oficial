@@ -1372,17 +1372,39 @@ class NovelJsModuleRegistry(
         // Fallback stub
         return """
             __defineModule("htmlparser2", function(module, exports) {
+              var VOID_ELEMENTS = {
+                area: true, base: true, br: true, col: true, embed: true,
+                hr: true, img: true, input: true, link: true, meta: true,
+                param: true, source: true, track: true, wbr: true
+              };
+              function isVoidElement(name) {
+                return Boolean(name && VOID_ELEMENTS[String(name).toLowerCase()]);
+              }
               function Parser(handler) {
                 this._handler = handler || {};
                 this._buffer = "";
               }
+              Parser.prototype.isVoidElement = isVoidElement;
+              Parser.isVoidElement = isVoidElement;
+              Parser.prototype.reset = function() {
+                this._buffer = "";
+                if (this._handler && this._handler.onreset) this._handler.onreset();
+              };
               Parser.prototype.write = function(chunk) {
                 this._buffer += chunk || "";
               };
-              Parser.prototype.end = function() {
+              Parser.prototype.parseComplete = function(data) {
+                this.reset();
+                this.end(data);
+              };
+              Parser.prototype.end = function(chunk) {
+                if (chunk) this.write(chunk);
                 var html = this._buffer;
                 this._buffer = "";
-                if (!html) return;
+                if (!html) {
+                  if (this._handler && this._handler.onend) this._handler.onend();
+                  return;
+                }
                 var handler = this._handler;
                 var regex = /<!--[\s\S]*?-->|<\/?[a-zA-Z0-9:-]+(?:\s[^>]*?)?>/g;
                 var lastIndex = 0;
@@ -1417,13 +1439,23 @@ class NovelJsModuleRegistry(
                     attrs[attrName] = attrValue;
                   }
                   if (handler.onopentag) handler.onopentag(tagName, attrs);
+                  if (token.endsWith("/>") || isVoidElement(tagName)) {
+                    if (handler.onclosetag) handler.onclosetag(tagName);
+                  }
                   lastIndex = regex.lastIndex;
                 }
                 if (lastIndex < html.length && handler.ontext) {
                   handler.ontext(html.slice(lastIndex));
                 }
+                if (handler.onend) {
+                  handler.onend();
+                }
               };
-              module.exports = { Parser: Parser };
+              module.exports = {
+                Parser: Parser,
+                isVoidElement: isVoidElement,
+                Tokenizer: { isVoidElement: isVoidElement }
+              };
             });
         """.trimIndent()
     }
