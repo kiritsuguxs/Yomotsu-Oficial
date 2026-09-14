@@ -75,9 +75,9 @@ object SettingsTranslationScreen : SearchableSettings {
                     Preference.PreferenceItem.ListPreference(
                         preference = translationPreferences.novelTranslationEngine(),
                         title = stringResource(ATMR.strings.pref_translator_engine),
-                        entries = TextTranslators.entries.withIndex()
-                            .associate { it.index to getTranslatorLabel(it.value) }
-                            .toImmutableMap(),
+                        entries = mapOf(
+                            TextTranslators.GOOGLE.ordinal to getTranslatorLabel(TextTranslators.GOOGLE),
+                        ).toImmutableMap(),
                     ),
                 ),
             ),
