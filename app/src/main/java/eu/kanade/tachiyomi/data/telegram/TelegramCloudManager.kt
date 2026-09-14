@@ -56,7 +56,6 @@ class TelegramCloudManager(
             systemLanguageCode = "pt"
             deviceModel = "Android"
             applicationVersion = "Yomotsu-Cloud-1.0"
-            enableStorageOptimizer = true
         }
 
         tdClient?.send(parameters) { result ->
@@ -180,8 +179,8 @@ class TelegramCloudManager(
 
                     val sendMessageRequest = TdApi.SendMessage(
                         targetChatId,
-                        0,
-                        0,
+                        null,
+                        null,
                         null,
                         null,
                         document
@@ -218,7 +217,7 @@ class TelegramCloudManager(
             val query = "Obra: $mangaTitle\nCapítulo: $chapterName"
             
             kotlin.coroutines.suspendCoroutine { continuation ->
-                tdClient?.send(TdApi.SearchChatMessages(targetChatId, query, null, 0, 0, 1, null, 0)) { result ->
+                tdClient?.send(TdApi.SearchChatMessages(targetChatId, null, query, null, 0, 0, 1, TdApi.SearchMessagesFilterDocument())) { result ->
                     if (result is TdApi.FoundChatMessages && result.messages.isNotEmpty()) {
                         val message = result.messages.first()
                         val content = message.content
@@ -287,13 +286,16 @@ class TelegramCloudManager(
 
                     val inputFile = TdApi.InputFileLocal(txtFile.absolutePath)
                     val document = TdApi.InputMessageDocument(inputFile, thumbnail, false, caption)
-                    val sendMessageRequest = TdApi.SendMessage(targetChatId, 0, 0, null, null, document)
+                    val sendMessageRequest = TdApi.SendMessage(targetChatId, null, null, null, null, document)
 
                     showNotification("Nuvem Telegram", "Enviando Novel: ${manga.title}...", progress = 0, max = 100, ongoing = true)
 
                     tdClient?.send(sendMessageRequest) { result ->
                         if (result is TdApi.Message) {
-                            pendingUploads[result.id] = UniFile.fromFile(txtFile)
+                            val uFile = UniFile.fromFile(txtFile)
+                            if (uFile != null) {
+                                pendingUploads[result.id] = uFile
+                            }
                         } else if (result is TdApi.Error) {
                             logcat(LogPriority.ERROR) { "Erro ao enviar Novel pra TDLib: ${result.message}" }
                             showNotification("Nuvem Telegram", "Erro: ${result.message}", ongoing = false)
@@ -317,7 +319,7 @@ class TelegramCloudManager(
             val query = "Obra: $mangaTitle\nCapítulo: $chapterName"
             
             kotlin.coroutines.suspendCoroutine { continuation ->
-                tdClient?.send(TdApi.SearchChatMessages(targetChatId, query, null, 0, 0, 1, null, 0)) { result ->
+                tdClient?.send(TdApi.SearchChatMessages(targetChatId, null, query, null, 0, 0, 1, TdApi.SearchMessagesFilterDocument())) { result ->
                     if (result is TdApi.FoundChatMessages && result.messages.isNotEmpty()) {
                         val message = result.messages.first()
                         val content = message.content
