@@ -260,4 +260,85 @@ class TelegramCloudManager(
             }
         }
     }
+    suspend fun uploadNovelChapter(manga: Manga, chapter: Chapter, txtFile: File) {
+        withContext(Dispatchers.IO) {
+            if (!preferences.enableTelegramCloud.get() || txtFile.length() == 0L) return@withContext
+            if (tdClient == null) initializeTdlib()
+            
+            val chatIdString = preferences.chatId.get()
+            val targetChatId = chatIdString.toLongOrNull() ?: return@withContext
+
+            uploadMutex.withLock {
+                try {
+                    val description = manga.description?.let {
+                        if (it.length > 500) it.take(497) + "..." else it
+                    } ?: "Sem sinopse disponível."
+
+                    val textCaption = "#YomotsuNovel\n\n📖 Obra: ${manga.title}\n📄 Capítulo: ${chapter.name}\n\n📝 Sinopse: $description"
+                    val caption = TdApi.FormattedText(textCaption, emptyArray())
+
+                    val coverCache = Injekt.get<eu.kanade.tachiyomi.data.cache.CoverCache>()
+                    val coverFile = coverCache.getCoverFile(manga.thumbnailUrl)
+                    val thumbnail = if (coverFile != null && coverFile.exists()) {
+                        TdApi.InputThumbnail(TdApi.InputFileLocal(coverFile.absolutePath), 0, 0)
+                    } else {
+                        null
+                    }
+
+                    val inputFile = TdApi.InputFileLocal(txtFile.absolutePath)
+                    val document = TdApi.InputMessageDocument(inputFile, thumbnail, false, caption)
+                    val sendMessageRequest = TdApi.SendMessage(targetChatId, 0, 0, null, null, document)
+
+                    tdClient?.send(sendMessageRequest) { result ->
+                        if (result is TdApi.Error) {
+                            logcat(LogPriority.ERROR) { "Erro ao enviar Novel pra TDLib: ${result.message}" }
+                        }
+                    }
+                    delay(3000)
+                } catch (e: Exception) {
+                    logcat(LogPriority.ERROR, e) { "Erro ao enviar novel" }
+                }
+            }
+        }
+    }
+
+    suspend fun restoreNovelChapter(mangaTitle: String, chapterName: String, localTargetFile: File): Boolean {
+        if (!preferences.enableTelegramCloud.get()) return false
+        
+        return withContext(Dispatchers.IO) {
+            val chatIdString = preferences.chatId.get()
+            val targetChatId = chatIdString.toLongOrNull() ?: return@withContext false
+            val query = "Obra: $mangaTitle\nCapítulo: $chapterName"
+            
+            kotlin.coroutines.suspendCoroutine { continuation ->
+                tdClient?.send(TdApi.SearchChatMessages(targetChatId, query, null, 0, 0, 1, null, 0)) { result ->
+                    if (result is TdApi.FoundChatMessages && result.messages.isNotEmpty()) {
+                        val message = result.messages.first()
+                        val content = message.content
+                        if (content is TdApi.MessageDocument) {
+                            val fileId = content.document.document.id
+                            tdClient?.send(TdApi.DownloadFile(fileId, 32, 0, 0, false)) { downloadResult ->
+                                if (downloadResult is TdApi.File) {
+                                    val downloadedPath = downloadResult.local.path
+                                    if (downloadedPath.isNotBlank()) {
+                                        val sourceFile = File(downloadedPath)
+                                        if (sourceFile.exists()) {
+                                            sourceFile.copyTo(localTargetFile, overwrite = true)
+                                            continuation.resumeWith(Result.success(true))
+                                            return@send
+                                        }
+                                    }
+                                }
+                                continuation.resumeWith(Result.success(false))
+                            }
+                        } else {
+                            continuation.resumeWith(Result.success(false))
+                        }
+                    } else {
+                        continuation.resumeWith(Result.success(false))
+                    }
+                } ?: continuation.resumeWith(Result.success(false))
+            }
+        }
+    }
 }
