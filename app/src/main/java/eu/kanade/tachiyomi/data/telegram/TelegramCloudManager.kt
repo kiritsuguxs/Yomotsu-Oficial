@@ -255,12 +255,21 @@ class TelegramCloudManager(
             val chatIdString = preferences.chatId.get()
             val targetChatId = chatIdString.toLongOrNull() ?: return@withContext false
 
-            val query = "\"$mangaTitle\" \"$chapterName\""
+            val query = "$mangaTitle $chapterName"
             
             kotlin.coroutines.suspendCoroutine { continuation ->
-                tdClient?.send(TdApi.SearchChatMessages(targetChatId, null, query, null, 0, 0, 1, TdApi.SearchMessagesFilterDocument())) { result ->
+                tdClient?.send(TdApi.SearchChatMessages(targetChatId, null, query, null, 0, 0, 10, TdApi.SearchMessagesFilterDocument())) { result ->
                     if (result is TdApi.FoundChatMessages && result.messages.isNotEmpty()) {
-                        val message = result.messages.first()
+                        val message = result.messages.firstOrNull { msg ->
+                            val content = msg.content
+                            if (content is TdApi.MessageDocument) {
+                                val caption = content.caption.text
+                                caption.contains(chapterName, ignoreCase = true)
+                            } else {
+                                false
+                            }
+                        } ?: result.messages.first()
+                        
                         val content = message.content
                         if (content is TdApi.MessageDocument) {
                             val fileId = content.document.document.id
@@ -395,12 +404,21 @@ class TelegramCloudManager(
 
             val chatIdString = preferences.chatId.get()
             val targetChatId = chatIdString.toLongOrNull() ?: return@withContext false
-            val query = "\"$mangaTitle\" \"$chapterName\""
+            val query = "$mangaTitle $chapterName"
             
             kotlin.coroutines.suspendCoroutine { continuation ->
-                tdClient?.send(TdApi.SearchChatMessages(targetChatId, null, query, null, 0, 0, 1, TdApi.SearchMessagesFilterDocument())) { result ->
+                tdClient?.send(TdApi.SearchChatMessages(targetChatId, null, query, null, 0, 0, 10, TdApi.SearchMessagesFilterDocument())) { result ->
                     if (result is TdApi.FoundChatMessages && result.messages.isNotEmpty()) {
-                        val message = result.messages.first()
+                        val message = result.messages.firstOrNull { msg ->
+                            val content = msg.content
+                            if (content is TdApi.MessageDocument) {
+                                val caption = content.caption.text
+                                caption.contains(chapterName, ignoreCase = true)
+                            } else {
+                                false
+                            }
+                        } ?: result.messages.first()
+                        
                         val content = message.content
                         if (content is TdApi.MessageDocument) {
                             val fileId = content.document.document.id
