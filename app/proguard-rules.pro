@@ -16,8 +16,11 @@
 -keep,allowoptimization class rx.** { public protected *; }
 -keep class app.cash.quickjs.** { *; }
 -keep interface eu.kanade.tachiyomi.extension.novel.runtime.NovelJsRuntime$NativeApi { *; }
+-keepclassmembers interface eu.kanade.tachiyomi.extension.novel.runtime.NovelJsRuntime$NativeApi { *; }
 -keep class * implements eu.kanade.tachiyomi.extension.novel.runtime.NovelJsRuntime$NativeApi { *; }
+-keepclassmembers class * implements eu.kanade.tachiyomi.extension.novel.runtime.NovelJsRuntime$NativeApi { *; }
 -keep class eu.kanade.tachiyomi.extension.novel.runtime.** { *; }
+-keepclassmembers class eu.kanade.tachiyomi.extension.novel.runtime.** { *; }
 -keep,allowoptimization class uy.kohesive.injekt.** { public protected *; }
 -keep,allowoptimization class com.squareup.zstd.** { public protected *; }
 

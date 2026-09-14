@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.novel.runtime
 
 import android.util.Log
+import androidx.annotation.Keep
 import app.cash.quickjs.QuickJs
 import java.io.Closeable
 import java.util.concurrent.ExecutionException
@@ -108,6 +109,7 @@ class NovelJsRuntime(
         runtimeExecutor.shutdown()
     }
 
+    @Keep
     interface NativeApi {
         fun fetch(url: String, optionsJson: String?): String
         fun fetchBinary(url: String, optionsJson: String?): String
