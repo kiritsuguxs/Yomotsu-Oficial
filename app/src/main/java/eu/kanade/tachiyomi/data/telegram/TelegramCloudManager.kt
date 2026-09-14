@@ -130,13 +130,27 @@ class TelegramCloudManager(
 
                     logcat(LogPriority.INFO) { "Enfileirando upload de $fileSizeMb MB via MTProto..." }
 
-                    val caption = TdApi.FormattedText(
-                        "#Yomotsu\n\nObra: ${manga.title}\nCapítulo: ${chapter.name}",
-                        emptyArray()
-                    )
+                    // Tratamento da sinopse (limitado a 500 caracteres para caber na legenda elegantemente)
+                    val description = manga.description?.let {
+                        if (it.length > 500) it.take(497) + "..." else it
+                    } ?: "Sem sinopse disponível."
+
+                    val textCaption = "#Yomotsu\n\n📖 Obra: ${manga.title}\n📄 Capítulo: ${chapter.name}\n\n📝 Sinopse: $description"
+                    val caption = TdApi.FormattedText(textCaption, emptyArray())
+
+                    // Tenta puxar a foto da capa do cache nativo do Yomotsu
+                    val coverCache = Injekt.get<eu.kanade.tachiyomi.data.cache.CoverCache>()
+                    val coverFile = coverCache.getCoverFile(manga.thumbnailUrl)
+                    val thumbnail = if (coverFile != null && coverFile.exists()) {
+                        TdApi.InputThumbnail(TdApi.InputFileLocal(coverFile.absolutePath), 0, 0)
+                    } else {
+                        null
+                    }
 
                     val inputFile = TdApi.InputFileLocal(fileToUpload.absolutePath)
-                    val document = TdApi.InputMessageDocument(inputFile, null, false, caption)
+                    
+                    // Anexa o Documento (.cbz) junto com a Foto da Capa (Thumbnail) e a Legenda (Sinopse)
+                    val document = TdApi.InputMessageDocument(inputFile, thumbnail, false, caption)
 
                     val sendMessageRequest = TdApi.SendMessage(
                         targetChatId,
