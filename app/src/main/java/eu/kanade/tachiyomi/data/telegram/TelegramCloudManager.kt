@@ -46,36 +46,7 @@ class TelegramCloudManager(
 
     private fun initializeTdlib() {
         if (tdClient != null) return
-
         tdClient = Client.create(this, null, null)
-
-        val parameters = TdApi.SetTdlibParameters().apply {
-            databaseDirectory = File(context.filesDir, "tdlib").absolutePath
-            useMessageDatabase = false
-            useSecretChats = false
-            apiId = this@TelegramCloudManager.apiId
-            apiHash = this@TelegramCloudManager.apiHash
-            systemLanguageCode = "pt"
-            deviceModel = "Android"
-            applicationVersion = "Yomotsu-Cloud-1.0"
-        }
-
-        tdClient?.send(parameters) { result ->
-            if (result is TdApi.Ok) {
-                logcat(LogPriority.INFO) { "TDLib Iniciada. Autenticando com Bot Token..." }
-                val botToken = preferences.botToken.get()
-                if (botToken.isNotBlank()) {
-                    // MÁGICA AQUI: Autentica sem número de telefone, direto no MTProto (limite de 2GB)!
-                    tdClient?.send(TdApi.CheckAuthenticationBotToken(botToken)) { authResult ->
-                        if (authResult is TdApi.Ok) {
-                            logcat(LogPriority.INFO) { "Autenticação via Bot Token concluída com sucesso!" }
-                        } else {
-                            logcat(LogPriority.ERROR) { "Erro na autenticação do Bot: $authResult" }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     private val pendingUploads = java.util.concurrent.ConcurrentHashMap<Long, UniFile>()
@@ -106,6 +77,43 @@ class TelegramCloudManager(
 
     override fun onResult(update: TdApi.Object?) {
         when (update) {
+            is TdApi.UpdateAuthorizationState -> {
+                when (update.authorizationState) {
+                    is TdApi.AuthorizationStateWaitTdlibParameters -> {
+                        val parameters = TdApi.SetTdlibParameters().apply {
+                            databaseDirectory = File(context.filesDir, "tdlib").absolutePath
+                            useMessageDatabase = false
+                            useSecretChats = false
+                            apiId = this@TelegramCloudManager.apiId
+                            apiHash = this@TelegramCloudManager.apiHash
+                            systemLanguageCode = "pt"
+                            deviceModel = "Android"
+                            applicationVersion = "Yomotsu-Cloud-1.0"
+                        }
+                        tdClient?.send(parameters) { result ->
+                            if (result is TdApi.Error) {
+                                logcat(LogPriority.ERROR) { "Erro SetTdlibParameters: ${result.message}" }
+                            }
+                        }
+                    }
+                    is TdApi.AuthorizationStateWaitPhoneNumber -> {
+                        val botToken = preferences.botToken.get()
+                        if (botToken.isNotBlank()) {
+                            tdClient?.send(TdApi.CheckAuthenticationBotToken(botToken)) { authResult ->
+                                if (authResult is TdApi.Error) {
+                                    logcat(LogPriority.ERROR) { "Erro na autenticação do Bot: ${authResult.message}" }
+                                    showNotification("Nuvem Telegram", "Erro de Token: ${authResult.message}", ongoing = false)
+                                }
+                            }
+                        } else {
+                            logcat(LogPriority.ERROR) { "Bot Token não configurado!" }
+                        }
+                    }
+                    is TdApi.AuthorizationStateReady -> {
+                        logcat(LogPriority.INFO) { "TDLib Ready! Autenticado com sucesso." }
+                    }
+                }
+            }
             is TdApi.UpdateMessageSendSucceeded -> {
                 val messageId = update.message.id
                 val file = pendingUploads.remove(messageId)
