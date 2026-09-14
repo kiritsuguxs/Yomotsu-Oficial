@@ -77,19 +77,51 @@ class TelegramCloudManager(
         }
     }
 
+    private val pendingUploads = java.util.concurrent.ConcurrentHashMap<Long, UniFile>()
+
+    private fun showNotification(title: String, text: String, progress: Int = 0, max: Int = 0, ongoing: Boolean = false) {
+        val notificationManager = androidx.core.app.NotificationManagerCompat.from(context)
+        // Reutilizando CHANNEL_DOWNLOADER_PROGRESS do Yomotsu para o canal
+        val builder = androidx.core.app.NotificationCompat.Builder(context, "downloader_progress_channel")
+            .setContentTitle(title)
+            .setContentText(text)
+            .setSmallIcon(android.R.drawable.stat_sys_upload)
+            .setPriority(androidx.core.app.NotificationCompat.PRIORITY_LOW)
+            .setOngoing(ongoing)
+            .setOnlyAlertOnce(true)
+
+        if (max > 0) {
+            builder.setProgress(max, progress, progress == 0)
+        } else {
+            builder.setProgress(0, 0, false)
+        }
+
+        try {
+            notificationManager.notify(889911, builder.build())
+        } catch (e: SecurityException) {
+            logcat(LogPriority.ERROR) { "Sem permissão de notificação para a Nuvem Telegram" }
+        }
+    }
+
     override fun onResult(update: TdApi.Object?) {
-        // Ouve atualizações globais da TDLib
         when (update) {
             is TdApi.UpdateMessageSendSucceeded -> {
-                logcat(LogPriority.INFO) { "Upload finalizado pelo Telegram com SUCESSO." }
-                // Quando o Telegram confirmar que o arquivo subiu, apagamos o local se solicitado
-                if (preferences.deleteLocalAfterUpload.get()) {
-                    // Aqui a limpeza local segura deve ser engatilhada
-                    logcat(LogPriority.INFO) { "Apagando arquivo local após a nuvem confirmar recebimento." }
+                val messageId = update.message.id
+                val file = pendingUploads.remove(messageId)
+                logcat(LogPriority.INFO) { "Upload finalizado pelo Telegram com SUCESSO. Arquivos restantes na fila local: ${pendingUploads.size}" }
+                
+                showNotification("Nuvem Telegram", "Upload concluído!", progress = 100, max = 100, ongoing = false)
+                
+                if (file != null && preferences.deleteLocalAfterUpload.get()) {
+                    val deleted = file.delete()
+                    logcat(LogPriority.INFO) { "Arquivo local apagado após upload: $deleted" }
                 }
             }
             is TdApi.UpdateMessageSendFailed -> {
+                val messageId = update.message.id
+                pendingUploads.remove(messageId)
                 logcat(LogPriority.ERROR) { "Falha confirmada pelo Telegram no envio da mensagem." }
+                showNotification("Nuvem Telegram", "Erro no upload", ongoing = false)
             }
         }
     }
@@ -100,7 +132,6 @@ class TelegramCloudManager(
                 return@withContext
             }
 
-            // Inicializa lazy caso tenha sido ativado recentemente
             if (tdClient == null) initializeTdlib()
 
             val chatIdString = preferences.chatId.get()
@@ -121,16 +152,14 @@ class TelegramCloudManager(
                         temp
                     }
 
-                    // Limite da TDLib / MTProto é 2000 MB (2 GB)
                     val fileSizeMb = fileToUpload.length() / (1024 * 1024)
                     if (fileSizeMb > 1999L) {
-                        logcat(LogPriority.WARN) { "Arquivo excede os incríveis 2 GB do MTProto! Upload cancelado." }
+                        logcat(LogPriority.WARN) { "Arquivo excede 2 GB!" }
                         return@withLock
                     }
 
-                    logcat(LogPriority.INFO) { "Enfileirando upload de $fileSizeMb MB via MTProto..." }
+                    showNotification("Nuvem Telegram", "Enviando: ${manga.title} - ${chapter.name}...", progress = 0, max = 100, ongoing = true)
 
-                    // Tratamento da sinopse (limitado a 500 caracteres para caber na legenda elegantemente)
                     val description = manga.description?.let {
                         if (it.length > 500) it.take(497) + "..." else it
                     } ?: "Sem sinopse disponível."
@@ -138,7 +167,6 @@ class TelegramCloudManager(
                     val textCaption = "#Yomotsu\n\n📖 Obra: ${manga.title}\n📄 Capítulo: ${chapter.name}\n\n📝 Sinopse: $description"
                     val caption = TdApi.FormattedText(textCaption, emptyArray())
 
-                    // Tenta puxar a foto da capa do cache nativo do Yomotsu
                     val coverCache = Injekt.get<eu.kanade.tachiyomi.data.cache.CoverCache>()
                     val coverFile = coverCache.getCoverFile(manga.thumbnailUrl)
                     val thumbnail = if (coverFile != null && coverFile.exists()) {
@@ -148,8 +176,6 @@ class TelegramCloudManager(
                     }
 
                     val inputFile = TdApi.InputFileLocal(fileToUpload.absolutePath)
-                    
-                    // Anexa o Documento (.cbz) junto com a Foto da Capa (Thumbnail) e a Legenda (Sinopse)
                     val document = TdApi.InputMessageDocument(inputFile, thumbnail, false, caption)
 
                     val sendMessageRequest = TdApi.SendMessage(
@@ -161,73 +187,76 @@ class TelegramCloudManager(
                         document
                     )
 
-                    // Envia para a fila da TDLib. A própria biblioteca C++ lida com o Rate Limit (429) e faz os retries.
                     tdClient?.send(sendMessageRequest) { result ->
-                        if (result is TdApi.Error) {
+                        if (result is TdApi.Message) {
+                            // Salva a referência real do arquivo para deletar no callback global Succeeded!
+                            pendingUploads[result.id] = cbzFile
+                            logcat(LogPriority.INFO) { "Mensagem despachada pro TDLib. ID = ${result.id}" }
+                        } else if (result is TdApi.Error) {
                             logcat(LogPriority.ERROR) { "Erro ao empurrar pra TDLib: ${result.message}" }
-                        } else {
-                            logcat(LogPriority.INFO) { "Arquivo transferido para a engine da TDLib com sucesso." }
+                            showNotification("Nuvem Telegram", "Erro: ${result.message}", ongoing = false)
                         }
                     }
 
-                    // Pausa conservadora de segurança extra do app (5 segundos por capítulo)
-                    // Garantimos que nunca passamos de 12 uploads por minuto.
                     delay(5000)
 
                 } catch (e: Exception) {
                     logcat(LogPriority.ERROR, e) { "Erro no fluxo de preparo da TDLib" }
+                    showNotification("Nuvem Telegram", "Falha interna no upload", ongoing = false)
                 }
             }
         }
     }
 
-    /**
-     * Função para puxar o capítulo de volta do Telegram para a pasta local do Yomotsu
-     */
-    suspend fun restoreChapterFromTelegram(mangaTitle: String, chapterName: String, localSourceMangaDir: UniFile) {
-        withContext(Dispatchers.IO) {
+    suspend fun restoreChapterFromTelegram(mangaTitle: String, chapterName: String, localSourceMangaDir: UniFile): Boolean {
+        if (!preferences.enableTelegramCloud.get()) return false
+        
+        return withContext(Dispatchers.IO) {
             val chatIdString = preferences.chatId.get()
-            val targetChatId = chatIdString.toLongOrNull() ?: return@withContext
+            val targetChatId = chatIdString.toLongOrNull() ?: return@withContext false
 
             val query = "Obra: $mangaTitle\nCapítulo: $chapterName"
             
-            // Busca a mensagem no chat
-            tdClient?.send(TdApi.SearchChatMessages(targetChatId, query, null, 0, 0, 1, null, 0)) { result ->
-                if (result is TdApi.FoundChatMessages && result.messages.isNotEmpty()) {
-                    val message = result.messages.first()
-                    val content = message.content
-                    if (content is TdApi.MessageDocument) {
-                        val fileId = content.document.document.id
-                        logcat(LogPriority.INFO) { "Capítulo encontrado no Telegram! Iniciando download..." }
+            kotlin.coroutines.suspendCoroutine { continuation ->
+                tdClient?.send(TdApi.SearchChatMessages(targetChatId, query, null, 0, 0, 1, null, 0)) { result ->
+                    if (result is TdApi.FoundChatMessages && result.messages.isNotEmpty()) {
+                        val message = result.messages.first()
+                        val content = message.content
+                        if (content is TdApi.MessageDocument) {
+                            val fileId = content.document.document.id
+                            logcat(LogPriority.INFO) { "Capítulo encontrado no Telegram! Iniciando download da Nuvem..." }
+                            showNotification("Nuvem Telegram", "Restaurando: $mangaTitle - $chapterName", ongoing = true)
 
-                        // Inicia o download do Telegram (Priority 32 = máximo)
-                        tdClient?.send(TdApi.DownloadFile(fileId, 32, 0, 0, false)) { downloadResult ->
-                            if (downloadResult is TdApi.File) {
-                                // O arquivo físico baixado pela TDLib fica salvo em downloadResult.local.path
-                                val downloadedPath = downloadResult.local.path
-                                if (downloadedPath.isNotBlank()) {
-                                    val sourceFile = File(downloadedPath)
-                                    if (sourceFile.exists()) {
-                                        // Copia para a pasta "local" do Yomotsu
-                                        val targetFile = localSourceMangaDir.createFile("$chapterName.cbz")
-                                        if (targetFile != null) {
-                                            sourceFile.inputStream().use { input ->
-                                                targetFile.openOutputStream().use { output ->
-                                                    input.copyTo(output)
+                            tdClient?.send(TdApi.DownloadFile(fileId, 32, 0, 0, false)) { downloadResult ->
+                                if (downloadResult is TdApi.File) {
+                                    val downloadedPath = downloadResult.local.path
+                                    if (downloadedPath.isNotBlank()) {
+                                        val sourceFile = File(downloadedPath)
+                                        if (sourceFile.exists()) {
+                                            val targetFile = localSourceMangaDir.createFile("$chapterName.cbz")
+                                            if (targetFile != null) {
+                                                sourceFile.inputStream().use { input ->
+                                                    targetFile.openOutputStream().use { output ->
+                                                        input.copyTo(output)
+                                                    }
                                                 }
+                                                logcat(LogPriority.INFO) { "Restaurado com sucesso!" }
+                                                showNotification("Nuvem Telegram", "Capítulo restaurado", ongoing = false)
+                                                continuation.resumeWith(Result.success(true))
+                                                return@send
                                             }
-                                            logcat(LogPriority.INFO) { "Capítulo $chapterName restaurado com sucesso na Fonte Local!" }
                                         }
                                     }
                                 }
+                                continuation.resumeWith(Result.success(false))
                             }
+                        } else {
+                            continuation.resumeWith(Result.success(false))
                         }
                     } else {
-                        logcat(LogPriority.WARN) { "Mensagem encontrada não é um documento CBZ." }
+                        continuation.resumeWith(Result.success(false))
                     }
-                } else {
-                    logcat(LogPriority.WARN) { "Capítulo não encontrado no Telegram." }
-                }
+                } ?: continuation.resumeWith(Result.success(false))
             }
         }
     }
