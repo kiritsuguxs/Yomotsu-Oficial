@@ -52,3 +52,4 @@ A versão mais recente está disponível na página de lançamentos:
 
 - Android 8.0 ou superior.
 - Para DeepL, Gemini e OpenRouter, é necessária uma chave de API configurada pelo usuário.
+ 
