@@ -1104,55 +1104,64 @@ class TelegramCloudManager(
 
         showNotification("Nuvem Telegram", "Baixando $mangaTitle para Fonte Local...", ongoing = true)
 
-        setupLocalSourceMetadata(mangaDir, mangaTitle, cloudManga)
-
         var downloadedCount = 0
-        for ((index, chapter) in chapters.withIndex()) {
-            onProgress(index + 1, chapters.size)
-            val cleanName = chapter.name.removeSuffix(".cbz").removeSuffix(".zip")
-            val chapterFilename = DiskUtil.buildValidFilename(cleanName) + ".cbz"
-            val existingFile = mangaDir.findFile(chapterFilename)
-            if (existingFile != null && existingFile.length() > 0L) {
-                downloadedCount++
-                continue
-            }
+        try {
+            setupLocalSourceMetadata(mangaDir, mangaTitle, cloudManga)
 
-            val downloadedPath = downloadChapterFile(mangaTitle, chapter, targetChatId) ?: continue
-            val sourceFile = File(downloadedPath)
-            if (sourceFile.exists() && sourceFile.length() > 0L) {
-                existingFile?.delete()
-                val targetFile = mangaDir.createFile(chapterFilename)
-                if (targetFile != null) {
-                    sourceFile.inputStream().use { input ->
-                        targetFile.openOutputStream().use { output ->
-                            input.copyTo(output)
-                        }
-                    }
-                    if (downloadedPath.startsWith(context.cacheDir.absolutePath)) {
-                        sourceFile.delete()
-                    }
+            for ((index, chapter) in chapters.withIndex()) {
+                onProgress(index + 1, chapters.size)
+                val cleanName = chapter.name.removeSuffix(".cbz").removeSuffix(".zip")
+                val chapterFilename = DiskUtil.buildValidFilename(cleanName) + ".cbz"
+                val existingFile = mangaDir.findFile(chapterFilename)
+                if (existingFile != null && existingFile.length() > 0L) {
                     downloadedCount++
-                    // Extrai capa do capitulo baixado se ainda nao tiver
-                    extractCoverFromChapter(targetFile, mangaDir)
+                    continue
+                }
+
+                val downloadedPath = downloadChapterFile(mangaTitle, chapter, targetChatId) ?: continue
+                val sourceFile = File(downloadedPath)
+                if (sourceFile.exists() && sourceFile.length() > 0L) {
+                    existingFile?.delete()
+                    val targetFile = mangaDir.createFile(chapterFilename)
+                    if (targetFile != null) {
+                        sourceFile.inputStream().use { input ->
+                            targetFile.openOutputStream().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                        if (downloadedPath.startsWith(context.cacheDir.absolutePath)) {
+                            sourceFile.delete()
+                        }
+                        downloadedCount++
+                        // Extrai capa do capitulo baixado se ainda nao tiver
+                        extractCoverFromChapter(targetFile, mangaDir)
+                    }
                 }
             }
-        }
 
-        // Garante que a capa existe
-        val coverFile = mangaDir.findFile("cover.jpg") ?: mangaDir.findFile("cover.png")
-        if (coverFile == null || coverFile.length() == 0L) {
-            val firstChapterFile = mangaDir.listFiles()?.firstOrNull { file ->
-                val fn = file.name ?: ""
-                file.isFile && (fn.endsWith(".cbz", ignoreCase = true) || fn.endsWith(".zip", ignoreCase = true))
+            // Garante que a capa existe
+            val coverFile = mangaDir.findFile("cover.jpg") ?: mangaDir.findFile("cover.png")
+            if (coverFile == null || coverFile.length() == 0L) {
+                val firstChapterFile = mangaDir.listFiles()?.firstOrNull { file ->
+                    val fn = file.name ?: ""
+                    file.isFile && (fn.endsWith(".cbz", ignoreCase = true) || fn.endsWith(".zip", ignoreCase = true))
+                }
+                if (firstChapterFile != null) {
+                    extractCoverFromChapter(firstChapterFile, mangaDir)
+                }
             }
-            if (firstChapterFile != null) {
-                extractCoverFromChapter(firstChapterFile, mangaDir)
-            }
+
+            DiskUtil.createNoMediaFile(mangaDir, context)
+
+            showNotification("Nuvem Telegram", "$mangaTitle salvo na Fonte Local! ($downloadedCount/${chapters.size})", autoDismiss = true)
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) { "Erro ao baixar manga $mangaTitle" }
+            showNotification("Nuvem Telegram", "Erro ao baixar: $mangaTitle", autoDismiss = true)
+        } finally {
+            val notificationManager = androidx.core.app.NotificationManagerCompat.from(context)
+            notificationManager.cancel(889911)
         }
-
-        DiskUtil.createNoMediaFile(mangaDir, context)
-
-        showNotification("Nuvem Telegram", "$mangaTitle salvo na Fonte Local! ($downloadedCount/${chapters.size})", autoDismiss = true)
+        
         downloadedCount > 0
     }
 
@@ -1179,38 +1188,61 @@ class TelegramCloudManager(
             } ?: CloudChapter(name = chapterName, messageId = 0L, fileId = 0, remoteFileId = "")
 
             showNotification("Nuvem Telegram", "Restaurando da Nuvem: $mangaTitle - $chapterName", ongoing = true)
-            val downloadedPath = downloadChapterFile(mangaTitle, cloudChapter, targetChatId)
-            if (downloadedPath.isNullOrBlank()) {
-                showNotification("Nuvem Telegram", "Falha ao restaurar: $mangaTitle - $chapterName", autoDismiss = true)
-                return@withContext false
-            }
+            var success = false
+            try {
+                val downloadedPath = downloadChapterFile(mangaTitle, cloudChapter, targetChatId)
+                if (downloadedPath.isNullOrBlank()) {
+                    showNotification("Nuvem Telegram", "Falha ao restaurar: $mangaTitle - $chapterName", autoDismiss = true)
+                    return@withContext false
+                }
 
-            val sourceFile = File(downloadedPath)
-            if (!sourceFile.exists() || sourceFile.length() == 0L) return@withContext false
+                val sourceFile = File(downloadedPath)
+                if (!sourceFile.exists() || sourceFile.length() == 0L) {
+                    showNotification("Nuvem Telegram", "Arquivo inválido ou vazio: $chapterName", autoDismiss = true)
+                    return@withContext false
+                }
 
-            val cleanName = (if (chapterDirname.isNotBlank()) chapterDirname else chapterName)
-                .removeSuffix(".cbz").removeSuffix(".zip")
-            val targetFileName = DiskUtil.buildValidFilename(cleanName) + ".cbz"
+                val cleanName = (if (chapterDirname.isNotBlank()) chapterDirname else chapterName)
+                    .removeSuffix(".cbz").removeSuffix(".zip")
+                val targetFileName = DiskUtil.buildValidFilename(cleanName) + ".cbz"
 
-            val existing = localSourceMangaDir.findFile(targetFileName)
-            existing?.delete()
+                val existing = localSourceMangaDir.findFile(targetFileName)
+                existing?.delete()
 
-            val targetFile = localSourceMangaDir.createFile(targetFileName) ?: return@withContext false
+                val targetFile = localSourceMangaDir.createFile(targetFileName)
+                if (targetFile == null) {
+                    showNotification("Nuvem Telegram", "Erro ao criar arquivo: $chapterName", autoDismiss = true)
+                    return@withContext false
+                }
 
-            sourceFile.inputStream().use { input ->
-                targetFile.openOutputStream().use { output ->
-                    input.copyTo(output)
+                sourceFile.inputStream().use { input ->
+                    targetFile.openOutputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+
+                if (downloadedPath.startsWith(context.cacheDir.absolutePath)) {
+                    sourceFile.delete()
+                }
+
+                extractCoverFromChapter(targetFile, localSourceMangaDir)
+                DiskUtil.createNoMediaFile(localSourceMangaDir, context)
+                showNotification("Nuvem Telegram", "Capitulo $chapterName restaurado!", autoDismiss = true)
+                success = true
+                true
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Erro ao restaurar capitulo $chapterName" }
+                showNotification("Nuvem Telegram", "Erro fatal ao restaurar: $chapterName", autoDismiss = true)
+                false
+            } finally {
+                if (!success) {
+                    // Ensure the notification is not left as ongoing if we return false or throw exception
+                    // showNotification with autoDismiss=true would have already cleared ongoing=true,
+                    // but in case of an unhandled throw before our catch, it's safe to clear it.
+                    val notificationManager = androidx.core.app.NotificationManagerCompat.from(context)
+                    notificationManager.cancel(889911)
                 }
             }
-
-            if (downloadedPath.startsWith(context.cacheDir.absolutePath)) {
-                sourceFile.delete()
-            }
-
-            extractCoverFromChapter(targetFile, localSourceMangaDir)
-            DiskUtil.createNoMediaFile(localSourceMangaDir, context)
-            showNotification("Nuvem Telegram", "Capitulo $chapterName restaurado!", autoDismiss = true)
-            true
         }
     }
 
