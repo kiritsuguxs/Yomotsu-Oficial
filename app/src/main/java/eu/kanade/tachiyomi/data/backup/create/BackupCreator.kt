@@ -94,10 +94,14 @@ class BackupCreator(
                 throw IllegalStateException(context.stringResource(MR.strings.empty_backup_error))
             }
 
-            file.openOutputStream()
-                .sink().gzip().buffer().use {
-                    it.write(byteArray)
-                }
+            val outputStream = runCatching { context.contentResolver.openOutputStream(file.uri, "wt") }.getOrNull()
+                ?: file.openOutputStream()
+                ?: throw IllegalStateException(context.stringResource(MR.strings.create_backup_file_error))
+
+            outputStream.sink().gzip().buffer().use {
+                it.write(byteArray)
+                it.flush()
+            }
             val fileUri = file.uri
 
             // Make sure it's a valid backup file

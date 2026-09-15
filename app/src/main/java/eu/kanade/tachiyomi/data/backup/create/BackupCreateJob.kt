@@ -123,7 +123,7 @@ class BackupCreateJob(private val context: Context, workerParams: WorkerParamete
                 .addTag(TAG_MANUAL)
                 .setInputData(inputData)
                 .build()
-            context.workManager.enqueueUniqueWork(TAG_MANUAL, ExistingWorkPolicy.KEEP, request)
+            context.workManager.enqueueUniqueWork(TAG_MANUAL, ExistingWorkPolicy.REPLACE, request)
         }
     }
 }

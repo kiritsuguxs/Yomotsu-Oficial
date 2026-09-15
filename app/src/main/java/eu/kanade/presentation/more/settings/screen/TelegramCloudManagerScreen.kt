@@ -24,6 +24,7 @@ import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.FolderSpecial
 import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -39,8 +40,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,6 +54,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import eu.kanade.presentation.components.AppBarTitle
+import eu.kanade.presentation.components.SearchToolbar
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.data.telegram.CloudManga
 import eu.kanade.tachiyomi.data.telegram.TelegramCloudManager
@@ -73,12 +74,22 @@ class TelegramCloudManagerScreen : Screen() {
         val snackbarHostState = remember { SnackbarHostState() }
 
         var mangas by remember { mutableStateOf(cloudManager.getCloudIndex()) }
+        var searchQuery by remember { mutableStateOf<String?>(null) }
         var isSyncing by remember { mutableStateOf(false) }
         var downloadingManga by remember { mutableStateOf<String?>(null) }
         var downloadProgress by remember { mutableStateOf<Pair<Int, Int>?>(null) }
         val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
         var downloadingChapterKey by remember { mutableStateOf<String?>(null) }
         var mangaToDelete by remember { mutableStateOf<CloudManga?>(null) }
+
+        val filteredMangas = remember(mangas, searchQuery) {
+            val query = searchQuery?.trim()
+            if (query.isNullOrEmpty()) {
+                mangas
+            } else {
+                mangas.filter { it.title.contains(query, ignoreCase = true) }
+            }
+        }
 
         LaunchedEffect(Unit) {
             cloudManager.initializeTdlib()
@@ -87,13 +98,12 @@ class TelegramCloudManagerScreen : Screen() {
 
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = { Text("Gerenciador da Nuvem") },
-                    navigationIcon = {
-                        IconButton(onClick = { navigator.pop() }) {
-                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Voltar")
-                        }
-                    },
+                SearchToolbar(
+                    titleContent = { AppBarTitle("Gerenciador da Nuvem") },
+                    searchQuery = searchQuery,
+                    onChangeSearchQuery = { searchQuery = it },
+                    placeholderText = "Buscar obra na nuvem...",
+                    navigateUp = { navigator.pop() },
                     actions = {
                         IconButton(
                             onClick = {
@@ -118,10 +128,7 @@ class TelegramCloudManagerScreen : Screen() {
                                 Icon(Icons.Outlined.CloudSync, contentDescription = "Sincronizar com o Telegram")
                             }
                         }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
+                    }
                 )
             },
             snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -176,6 +183,33 @@ class TelegramCloudManagerScreen : Screen() {
                             Text("Sincronizar do Telegram")
                         }
                     }
+                } else if (filteredMangas.isEmpty() && !searchQuery.isNullOrBlank()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Search,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Nenhuma obra encontrada",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Nenhum resultado para \"${searchQuery?.trim()}\"",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 } else {
                     LazyColumn(
                         modifier = Modifier
@@ -183,7 +217,7 @@ class TelegramCloudManagerScreen : Screen() {
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(mangas, key = { it.title }) { manga ->
+                        items(filteredMangas, key = { it.title }) { manga ->
                             val isExpanded = expandedMap[manga.title] == true
                             val isDownloadingThis = downloadingManga == manga.title
 
