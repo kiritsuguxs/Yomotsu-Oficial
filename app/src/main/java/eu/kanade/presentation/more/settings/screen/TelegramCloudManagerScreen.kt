@@ -249,9 +249,9 @@ class TelegramCloudManagerScreen : Screen() {
                                                         downloadProgress = curr to tot
                                                     }
                                                     if (success) {
-                                                        snackbarHostState.showSnackbar("${manga.title} baixado para a Fonte Local!")
+                                                        snackbarHostState.showSnackbar("${manga.title} salvo na Fonte Local!")
                                                     } else {
-                                                        snackbarHostState.showSnackbar("Falha ao baixar alguns capítulos de ${manga.title}")
+                                                        snackbarHostState.showSnackbar("Nenhum capítulo novo foi baixado para ${manga.title}")
                                                     }
                                                 } finally {
                                                     downloadingManga = null
@@ -277,6 +277,17 @@ class TelegramCloudManagerScreen : Screen() {
                                                 Row(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
+                                                        .clickable {
+                                                            scope.launch {
+                                                                snackbarHostState.showSnackbar("Baixando ${chapter.name}...")
+                                                                val ok = cloudManager.downloadSingleChapterToLocalSource(manga.title, chapter)
+                                                                if (ok) {
+                                                                    snackbarHostState.showSnackbar("${chapter.name} salvo na Fonte Local!")
+                                                                } else {
+                                                                    snackbarHostState.showSnackbar("Erro ao baixar ${chapter.name}")
+                                                                }
+                                                            }
+                                                        }
                                                         .padding(vertical = 4.dp),
                                                     horizontalArrangement = Arrangement.SpaceBetween,
                                                     verticalAlignment = Alignment.CenterVertically
