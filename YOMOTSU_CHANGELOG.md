@@ -3,6 +3,15 @@
 Este arquivo contém somente as mudanças importantes para quem usa o aplicativo.
 O workflow de lançamento lê automaticamente a seção correspondente à versão publicada.
 
+## 0.20.4-Y28
+- Adicionada barra de busca e pesquisa por título no Gerenciador da Nuvem Telegram para localizar obras rapidamente.
+- Corrigido o erro na criação de backup manual que gerava arquivos zerados (0B) em aparelhos Samsung e outras marcas devido a restrições de permissão do sistema (SAF).
+- Gravação direta e descarga forçada de dados no armazenamento ao gerar backups.
+
+## 0.20.4-Y27
+- Sincronização inteligente não destrutiva da Nuvem do Telegram, removendo apenas capítulos efetivamente apagados no grupo.
+- Eliminação de deadlock de índice e prevenção de vazamento de arquivos temporários de cache.
+
 ## 0.20.4-Y23
 - Suporte oficial completo a Light Novels com motor QuickJS e plugins LNReader.
 - Nova aba "Fontes LN" na tela Explorar para navegar, instalar e atualizar extensões de novel.
