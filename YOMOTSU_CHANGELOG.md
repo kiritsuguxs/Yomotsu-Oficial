@@ -3,6 +3,11 @@
 Este arquivo contém somente as mudanças importantes para quem usa o aplicativo.
 O workflow de lançamento lê automaticamente a seção correspondente à versão publicada.
 
+## 0.20.4-Y29
+- Correção definitiva do backup manual gerando arquivo vazio (0B): o botão "Criar" agora salva o backup compactado (.tachibk completo) diretamente na pasta padrão do aplicativo (/Yomotsu/autobackup/), usando a mesma rota confiável do backup automático.
+- Adicionado botão de pasta no topo para exportação opcional com suporte unificado a diretórios e documentos SAF.
+- Validação tolerante a falhas que previne exclusão indevida de backups já gravados.
+
 ## 0.20.4-Y28
 - Adicionada barra de busca e pesquisa por título no Gerenciador da Nuvem Telegram para localizar obras rapidamente.
 - Corrigido o erro na criação de backup manual que gerava arquivos zerados (0B) em aparelhos Samsung e outras marcas devido a restrições de permissão do sistema (SAF).

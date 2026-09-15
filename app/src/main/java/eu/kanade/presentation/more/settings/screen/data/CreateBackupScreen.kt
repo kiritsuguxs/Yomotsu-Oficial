@@ -6,10 +6,15 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -26,12 +31,15 @@ import kotlinx.coroutines.flow.update
 import logcat.LogPriority
 import mihon.core.viewmodel.StateViewModel
 import tachiyomi.core.common.util.system.logcat
+import tachiyomi.domain.storage.service.StorageManager
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.LabeledCheckbox
 import tachiyomi.presentation.core.components.LazyColumnWithAction
 import tachiyomi.presentation.core.components.SectionCard
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.stringResource
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 class CreateBackupScreen : Screen() {
 
@@ -41,6 +49,7 @@ class CreateBackupScreen : Screen() {
         val navigator = LocalNavigator.currentOrThrow
         val viewModel = viewModel<CreateBackupViewModel>()
         val state by viewModel.state.collectAsState()
+        val storageManager = remember { Injekt.get<StorageManager>() }
 
         val chooseBackupDir = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.CreateDocument("application/*"),
@@ -52,7 +61,7 @@ class CreateBackupScreen : Screen() {
                         Intent.FLAG_GRANT_READ_URI_PERMISSION or
                             Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
                     )
-                } catch (e: SecurityException) {
+                } catch (e: Exception) {
                     logcat(LogPriority.WARN, e)
                 }
                 viewModel.createBackup(context, it)
@@ -66,6 +75,26 @@ class CreateBackupScreen : Screen() {
                     title = stringResource(MR.strings.pref_create_backup),
                     navigateUp = navigator::pop,
                     scrollBehavior = it,
+                    actions = {
+                        IconButton(
+                            onClick = {
+                                if (!BackupCreateJob.isManualJobRunning(context)) {
+                                    try {
+                                        chooseBackupDir.launch(BackupCreator.getFilename())
+                                    } catch (e: ActivityNotFoundException) {
+                                        context.toast(MR.strings.file_picker_error)
+                                    }
+                                } else {
+                                    context.toast(MR.strings.backup_in_progress)
+                                }
+                            },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Folder,
+                                contentDescription = "Salvar em outro local",
+                            )
+                        }
+                    },
                 )
             },
         ) { contentPadding ->
@@ -75,10 +104,17 @@ class CreateBackupScreen : Screen() {
                 actionEnabled = state.options.canCreate(),
                 onClickAction = {
                     if (!BackupCreateJob.isManualJobRunning(context)) {
-                        try {
-                            chooseBackupDir.launch(BackupCreator.getFilename())
-                        } catch (e: ActivityNotFoundException) {
-                            context.toast(MR.strings.file_picker_error)
+                        val autoBackupDir = storageManager.getAutomaticBackupsDirectory()
+                        if (autoBackupDir != null) {
+                            viewModel.createBackup(context, autoBackupDir.uri)
+                            context.toast("Criando backup na pasta Yomotsu...")
+                            navigator.pop()
+                        } else {
+                            try {
+                                chooseBackupDir.launch(BackupCreator.getFilename())
+                            } catch (e: ActivityNotFoundException) {
+                                context.toast(MR.strings.file_picker_error)
+                            }
                         }
                     } else {
                         context.toast(MR.strings.backup_in_progress)
