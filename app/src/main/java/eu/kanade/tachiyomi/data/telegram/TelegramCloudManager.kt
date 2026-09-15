@@ -185,10 +185,34 @@ class TelegramCloudManager(
                 }
             }
             is TdApi.UpdateMessageSendSucceeded -> {
-                val messageId = update.oldMessageId
-                val pending = pendingUploads.remove(messageId)
-                logcat(LogPriority.INFO) { "Upload finalizado pelo Telegram com SUCESSO." }
-                showNotification("Nuvem Telegram", "Upload concluido!", autoDismiss = true)
+                val oldMessageId = update.oldMessageId
+                val pending = pendingUploads.remove(oldMessageId)
+                val realMessage = update.message
+                val realMessageId = realMessage.id
+                val doc = (realMessage.content as? TdApi.MessageDocument)?.document?.document
+                val realFileId = doc?.id ?: 0
+                val realRemoteId = doc?.remote?.id ?: ""
+
+                logcat(LogPriority.INFO) { "Upload finalizado pelo Telegram com SUCESSO. Real ID: $realMessageId, RemoteId: $realRemoteId" }
+                showNotification("Nuvem Telegram", "Upload concluído!", autoDismiss = true)
+
+                if (pending?.manga != null && pending.chapter != null) {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        registerInIndex(
+                            mangaTitle = pending.manga.title,
+                            description = pending.manga.description ?: "",
+                            coverUrl = pending.manga.thumbnailUrl ?: "",
+                            chapterName = pending.chapter.name,
+                            messageId = realMessageId,
+                            fileId = realFileId,
+                            remoteFileId = realRemoteId
+                        )
+                    }
+                } else {
+                    CoroutineScope(Dispatchers.IO).launch {
+                        updateMessageIdInIndex(oldMessageId, realMessageId, realFileId, realRemoteId)
+                    }
+                }
 
                 if (pending != null && preferences.deleteLocalAfterUpload.get()) {
                     val deleted = pending.file.delete()
@@ -291,6 +315,60 @@ class TelegramCloudManager(
         }
     }
 
+    suspend fun clearCloudIndex() = indexMutex.withLock {
+        withContext(Dispatchers.IO) {
+            try {
+                val file = getIndexFile()
+                if (file.exists()) {
+                    file.delete()
+                }
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Erro ao limpar índice da nuvem" }
+            }
+        }
+    }
+
+    suspend fun removeChapterFromIndex(mangaTitle: String, chapterName: String) = indexMutex.withLock {
+        withContext(Dispatchers.IO) {
+            val current = getCloudIndex().toMutableList()
+            val manga = current.find { it.title.equals(mangaTitle, ignoreCase = true) } ?: return@withContext
+            manga.chapters.removeAll { it.name.equals(chapterName, ignoreCase = true) }
+            if (manga.chapters.isEmpty()) {
+                current.remove(manga)
+            }
+            saveCloudIndex(current)
+        }
+    }
+
+    suspend fun updateMessageIdInIndex(
+        oldMessageId: Long,
+        realMessageId: Long,
+        fileId: Int,
+        remoteFileId: String
+    ) = indexMutex.withLock {
+        withContext(Dispatchers.IO) {
+            val current = getCloudIndex().toMutableList()
+            var modified = false
+            for (manga in current) {
+                for (i in manga.chapters.indices) {
+                    val ch = manga.chapters[i]
+                    if (ch.messageId == oldMessageId) {
+                        manga.chapters[i] = ch.copy(
+                            messageId = realMessageId,
+                            fileId = if (fileId != 0) fileId else ch.fileId,
+                            remoteFileId = if (remoteFileId.isNotBlank()) remoteFileId else ch.remoteFileId,
+                            date = System.currentTimeMillis()
+                        )
+                        modified = true
+                    }
+                }
+            }
+            if (modified) {
+                saveCloudIndex(current)
+            }
+        }
+    }
+
     suspend fun registerInIndex(
         mangaTitle: String,
         description: String,
@@ -305,20 +383,87 @@ class TelegramCloudManager(
         if (manga == null) {
             manga = CloudManga(title = mangaTitle, description = description, coverUrl = coverUrl)
             current.add(manga)
+        } else {
+            if (manga.description.isBlank() && description.isNotBlank()) {
+                val mIdx = current.indexOf(manga)
+                manga = manga.copy(description = description)
+                current[mIdx] = manga
+            }
+            if (manga.coverUrl.isBlank() && coverUrl.isNotBlank()) {
+                val mIdx = current.indexOf(manga)
+                manga = manga.copy(coverUrl = coverUrl)
+                current[mIdx] = manga
+            }
         }
         val existingIndex = manga.chapters.indexOfFirst { it.name.equals(chapterName, ignoreCase = true) }
         val chapterObj = CloudChapter(
             name = chapterName,
             messageId = messageId,
             fileId = fileId,
-            remoteFileId = remoteFileId
+            remoteFileId = remoteFileId,
+            date = System.currentTimeMillis()
         )
         if (existingIndex >= 0) {
-            manga.chapters[existingIndex] = chapterObj
+            val old = manga.chapters[existingIndex]
+            manga.chapters[existingIndex] = CloudChapter(
+                name = chapterName,
+                messageId = if (messageId != 0L) messageId else old.messageId,
+                fileId = if (fileId != 0) fileId else old.fileId,
+                remoteFileId = if (remoteFileId.isNotBlank()) remoteFileId else old.remoteFileId,
+                date = System.currentTimeMillis()
+            )
         } else {
             manga.chapters.add(chapterObj)
         }
+
+        manga.chapters.sortBy { chap ->
+            val numStr = chap.name.replace(Regex("""[^0-9.]"""), "")
+            numStr.toFloatOrNull() ?: 999999f
+        }
+
         saveCloudIndex(current)
+    }
+
+    suspend fun deleteChapter(mangaTitle: String, chapter: CloudChapter): Boolean = withContext(Dispatchers.IO) {
+        val chatId = preferences.chatId.get().toLongOrNull() ?: 0L
+        if (chatId != 0L && chapter.messageId != 0L) {
+            val targetId = if (chapter.messageId in 1..1048575L) chapter.messageId shl 20 else chapter.messageId
+            try {
+                tdClient?.send(TdApi.DeleteMessages(chatId, longArrayOf(targetId), true)) { res ->
+                    logcat(LogPriority.INFO) { "DeleteMessages resultado: $res" }
+                }
+            } catch (e: Exception) {
+                logcat(LogPriority.ERROR, e) { "Erro ao deletar mensagem no Telegram" }
+            }
+        }
+        removeChapterFromIndex(mangaTitle, chapter.name)
+        true
+    }
+
+    suspend fun deleteManga(mangaTitle: String): Boolean = withContext(Dispatchers.IO) {
+        val chatId = preferences.chatId.get().toLongOrNull() ?: 0L
+        val current = getCloudIndex().toMutableList()
+        val manga = current.find { it.title.equals(mangaTitle, ignoreCase = true) } ?: return@withContext false
+
+        if (chatId != 0L) {
+            val msgIds = manga.chapters.map { chap ->
+                if (chap.messageId in 1..1048575L) chap.messageId shl 20 else chap.messageId
+            }.filter { it != 0L }.toLongArray()
+
+            if (msgIds.isNotEmpty()) {
+                try {
+                    tdClient?.send(TdApi.DeleteMessages(chatId, msgIds, true)) { res ->
+                        logcat(LogPriority.INFO) { "DeleteMessages (manga completo) resultado: $res" }
+                    }
+                } catch (e: Exception) {
+                    logcat(LogPriority.ERROR, e) { "Erro ao deletar mensagens no Telegram" }
+                }
+            }
+        }
+
+        current.remove(manga)
+        saveCloudIndex(current)
+        true
     }
 
     // ==========================================
@@ -591,7 +736,7 @@ class TelegramCloudManager(
                     val combined = "$caption $fn"
                     val matchesTitle = combined.contains(mangaTitle, ignoreCase = true)
                     val matchesCap = combined.contains(cleanChapterName, ignoreCase = true) ||
-                        (chapterNumOnly.isNotBlank() && combined.contains(chapterNumOnly, ignoreCase = true))
+                        (chapterNumOnly.isNotBlank() && Regex("""(?i)\bcap(?:[íi]tulo)?\s*0*$chapterNumOnly\b""").containsMatchIn(combined))
                     matchesTitle && matchesCap
                 } else false
             }
@@ -639,14 +784,20 @@ class TelegramCloudManager(
 
         var message: TdApi.Message? = null
 
+        val targetMessageId = if (chapter.messageId in 1..1048575L) {
+            chapter.messageId shl 20
+        } else {
+            chapter.messageId
+        }
+
         // Tenta obter mensagem via GetMessages (busca ativa do servidor do Telegram)
-        if (chapter.messageId != 0L && chatId != 0L) {
+        if (targetMessageId != 0L && chatId != 0L) {
             message = suspendCancellableCoroutine { cont ->
-                tdClient?.send(TdApi.GetMessages(chatId, longArrayOf(chapter.messageId))) { res ->
+                tdClient?.send(TdApi.GetMessages(chatId, longArrayOf(targetMessageId))) { res ->
                     if (res is TdApi.Messages && res.messages.isNotEmpty() && res.messages[0] != null) {
                         cont.resume(res.messages[0])
                     } else {
-                        tdClient?.send(TdApi.GetMessage(chatId, chapter.messageId)) { res2 ->
+                        tdClient?.send(TdApi.GetMessage(chatId, targetMessageId)) { res2 ->
                             if (res2 is TdApi.Message) cont.resume(res2)
                             else cont.resume(null)
                         }
@@ -659,12 +810,19 @@ class TelegramCloudManager(
         if (message == null && chatId != 0L) {
             message = findMessageInChat(chatId, mangaTitle, chapter.name)
             if (message != null) {
+                val foundDoc = (message.content as? TdApi.MessageDocument)?.document?.document
+                val foundFileId = foundDoc?.id ?: 0
+                val foundRemoteId = foundDoc?.remote?.id ?: ""
                 CoroutineScope(Dispatchers.IO).launch {
                     val current = getCloudIndex().toMutableList()
                     val m = current.find { it.title.equals(mangaTitle, ignoreCase = true) }
                     val ch = m?.chapters?.find { it.name.equals(chapter.name, ignoreCase = true) }
                     if (ch != null) {
-                        val updated = ch.copy(messageId = message.id)
+                        val updated = ch.copy(
+                            messageId = message.id,
+                            fileId = if (foundFileId != 0) foundFileId else ch.fileId,
+                            remoteFileId = if (foundRemoteId.isNotBlank()) foundRemoteId else ch.remoteFileId
+                        )
                         val idx = m.chapters.indexOf(ch)
                         m.chapters[idx] = updated
                         saveCloudIndex(current)
@@ -687,7 +845,9 @@ class TelegramCloudManager(
         }
 
         if (fileToDownload == null) {
-            lastDownloadError = "Capítulo não encontrado no canal."
+            lastDownloadError = "Capítulo não encontrado no canal (removido da lista)."
+            logcat(LogPriority.WARN) { "Capítulo $mangaTitle - ${chapter.name} não encontrado no canal. Removendo do índice." }
+            removeChapterFromIndex(mangaTitle, chapter.name)
             return null
         }
 
@@ -1067,11 +1227,20 @@ class TelegramCloudManager(
 
         var fromMessageId = 0L
         var iterations = 0
-        val scannedList = getCloudIndex().toMutableList()
+        val scannedList = mutableListOf<CloudManga>()
 
-        val obraRegex = """(?i)(?:📖\s*)?Obra:\s*(.+)""".toRegex()
-        val capRegex = """(?i)(?:📄\s*)?Cap[íi]tulo:\s*(.+)""".toRegex()
-        val sinopseRegex = """(?i)(?:📝\s*)?Sinopse:\s*(.+)""".toRegex()
+        val existingIndex = getCloudIndex()
+        val existingCovers = existingIndex.associate { it.title.lowercase() to it.coverUrl }
+        val existingDescs = existingIndex.associate { it.title.lowercase() to it.description }
+        val libraryMangas = try {
+            Injekt.get<GetLibraryManga>().await().associate { it.manga.title.lowercase() to (it.manga.thumbnailUrl ?: "") }
+        } catch (e: Exception) {
+            emptyMap()
+        }
+
+        val obraRegex = """(?i)(?:📖\s*)?Obra\s*:\s*(.+)""".toRegex()
+        val capRegex = """(?i)(?:📄\s*)?Cap[íi]tulo\s*:\s*(.+)""".toRegex()
+        val sinopseRegex = """(?i)(?:📝\s*)?Sinopse\s*:\s*(.+)""".toRegex()
 
         while (iterations < 100) {
             val messages = suspendCancellableCoroutine<Array<TdApi.Message>> { cont ->
@@ -1113,9 +1282,12 @@ class TelegramCloudManager(
                     if (!titleMatch.isNullOrBlank() && !capMatch.isNullOrBlank()) {
                         var manga = scannedList.find { it.title.equals(titleMatch, ignoreCase = true) }
                         if (manga == null) {
+                            val fallbackCover = existingCovers[titleMatch.lowercase()] ?: libraryMangas[titleMatch.lowercase()] ?: ""
+                            val fallbackDesc = sinopseMatch ?: existingDescs[titleMatch.lowercase()] ?: ""
                             manga = CloudManga(
                                 title = titleMatch,
-                                description = sinopseMatch ?: ""
+                                description = fallbackDesc,
+                                coverUrl = fallbackCover
                             )
                             scannedList.add(manga)
                         } else if (manga.description.isBlank() && !sinopseMatch.isNullOrBlank()) {

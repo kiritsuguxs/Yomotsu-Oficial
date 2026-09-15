@@ -17,11 +17,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.CloudSync
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.FolderSpecial
 import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,6 +38,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -74,6 +78,7 @@ class TelegramCloudManagerScreen : Screen() {
         var downloadProgress by remember { mutableStateOf<Pair<Int, Int>?>(null) }
         val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
         var downloadingChapterKey by remember { mutableStateOf<String?>(null) }
+        var mangaToDelete by remember { mutableStateOf<CloudManga?>(null) }
 
         LaunchedEffect(Unit) {
             cloudManager.initializeTdlib()
@@ -90,6 +95,26 @@ class TelegramCloudManagerScreen : Screen() {
                         }
                     },
                     actions = {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    isSyncing = true
+                                    try {
+                                        snackbarHostState.showSnackbar("Limpando índice e buscando do Telegram...")
+                                        cloudManager.clearCloudIndex()
+                                        mangas = cloudManager.syncFromTelegram()
+                                        snackbarHostState.showSnackbar("Sincronização concluída! ${mangas.size} obras encontradas.")
+                                    } catch (e: Exception) {
+                                        snackbarHostState.showSnackbar("Erro ao sincronizar: ${e.message}")
+                                    } finally {
+                                        isSyncing = false
+                                    }
+                                }
+                            },
+                            enabled = !isSyncing
+                        ) {
+                            Icon(Icons.Outlined.DeleteSweep, contentDescription = "Limpar e Re-sincronizar")
+                        }
                         IconButton(
                             onClick = {
                                 scope.launch {
@@ -215,6 +240,16 @@ class TelegramCloudManagerScreen : Screen() {
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
+                                        IconButton(
+                                            onClick = { mangaToDelete = manga },
+                                            enabled = downloadingManga == null && downloadingChapterKey == null
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Outlined.Delete,
+                                                contentDescription = "Apagar obra da Nuvem",
+                                                tint = MaterialTheme.colorScheme.error
+                                            )
+                                        }
                                         IconButton(onClick = { expandedMap[manga.title] = !isExpanded }) {
                                             Icon(
                                                 imageVector = if (isExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
@@ -259,6 +294,7 @@ class TelegramCloudManagerScreen : Screen() {
                                                 } finally {
                                                     downloadingManga = null
                                                     downloadProgress = null
+                                                    mangas = cloudManager.getCloudIndex()
                                                 }
                                             }
                                         },
@@ -283,24 +319,6 @@ class TelegramCloudManagerScreen : Screen() {
                                                 Row(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .clickable(enabled = downloadingManga == null && downloadingChapterKey == null) {
-                                                            scope.launch {
-                                                                downloadingChapterKey = chapterKey
-                                                                try {
-                                                                    snackbarHostState.showSnackbar("Baixando ${chapter.name}...")
-                                                                    val ok = cloudManager.downloadSingleChapterToLocalSource(manga.title, chapter)
-                                                                    if (ok) {
-                                                                        snackbarHostState.showSnackbar("${chapter.name} salvo na Fonte Local!")
-                                                                    } else {
-                                                                        val err = cloudManager.lastDownloadError
-                                                                        val msg = if (!err.isNullOrBlank()) "Erro ao baixar ${chapter.name}: $err" else "Erro ao baixar ${chapter.name}"
-                                                                        snackbarHostState.showSnackbar(msg)
-                                                                    }
-                                                                } finally {
-                                                                    downloadingChapterKey = null
-                                                                }
-                                                            }
-                                                        }
                                                         .padding(vertical = 4.dp),
                                                     horizontalArrangement = Arrangement.SpaceBetween,
                                                     verticalAlignment = Alignment.CenterVertically
@@ -308,20 +326,88 @@ class TelegramCloudManagerScreen : Screen() {
                                                     Text(
                                                         text = chapter.name,
                                                         style = MaterialTheme.typography.bodyMedium,
-                                                        modifier = Modifier.weight(1f)
+                                                        modifier = Modifier
+                                                            .weight(1f)
+                                                            .clickable(enabled = downloadingManga == null && downloadingChapterKey == null) {
+                                                                scope.launch {
+                                                                    downloadingChapterKey = chapterKey
+                                                                    try {
+                                                                        snackbarHostState.showSnackbar("Baixando ${chapter.name}...")
+                                                                        val ok = cloudManager.downloadSingleChapterToLocalSource(manga.title, chapter)
+                                                                        if (ok) {
+                                                                            snackbarHostState.showSnackbar("${chapter.name} salvo na Fonte Local!")
+                                                                        } else {
+                                                                            val err = cloudManager.lastDownloadError
+                                                                            val msg = if (!err.isNullOrBlank()) "Erro ao baixar ${chapter.name}: $err" else "Erro ao baixar ${chapter.name}"
+                                                                            snackbarHostState.showSnackbar(msg)
+                                                                        }
+                                                                    } finally {
+                                                                        downloadingChapterKey = null
+                                                                        mangas = cloudManager.getCloudIndex()
+                                                                    }
+                                                                }
+                                                            }
                                                     )
-                                                    if (isThisChapterDownloading) {
-                                                        CircularProgressIndicator(
-                                                            modifier = Modifier.size(20.dp),
-                                                            strokeWidth = 2.dp
-                                                        )
-                                                    } else {
-                                                        Icon(
-                                                            imageVector = Icons.Outlined.Download,
-                                                            contentDescription = "Baixar capítulo",
-                                                            modifier = Modifier.size(20.dp),
-                                                            tint = MaterialTheme.colorScheme.primary
-                                                        )
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        IconButton(
+                                                            onClick = {
+                                                                scope.launch {
+                                                                    snackbarHostState.showSnackbar("Apagando ${chapter.name}...")
+                                                                    cloudManager.deleteChapter(manga.title, chapter)
+                                                                    mangas = cloudManager.getCloudIndex()
+                                                                    snackbarHostState.showSnackbar("${chapter.name} apagado!")
+                                                                }
+                                                            },
+                                                            enabled = downloadingManga == null && downloadingChapterKey == null,
+                                                            modifier = Modifier.size(32.dp)
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Outlined.Delete,
+                                                                contentDescription = "Apagar capítulo",
+                                                                modifier = Modifier.size(18.dp),
+                                                                tint = MaterialTheme.colorScheme.error
+                                                            )
+                                                        }
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        if (isThisChapterDownloading) {
+                                                            CircularProgressIndicator(
+                                                                modifier = Modifier.size(20.dp),
+                                                                strokeWidth = 2.dp
+                                                            )
+                                                        } else {
+                                                            IconButton(
+                                                                onClick = {
+                                                                    scope.launch {
+                                                                        downloadingChapterKey = chapterKey
+                                                                        try {
+                                                                            snackbarHostState.showSnackbar("Baixando ${chapter.name}...")
+                                                                            val ok = cloudManager.downloadSingleChapterToLocalSource(manga.title, chapter)
+                                                                            if (ok) {
+                                                                                snackbarHostState.showSnackbar("${chapter.name} salvo na Fonte Local!")
+                                                                            } else {
+                                                                                val err = cloudManager.lastDownloadError
+                                                                                val msg = if (!err.isNullOrBlank()) "Erro ao baixar ${chapter.name}: $err" else "Erro ao baixar ${chapter.name}"
+                                                                                snackbarHostState.showSnackbar(msg)
+                                                                            }
+                                                                        } finally {
+                                                                            downloadingChapterKey = null
+                                                                            mangas = cloudManager.getCloudIndex()
+                                                                        }
+                                                                    }
+                                                                },
+                                                                enabled = downloadingManga == null && downloadingChapterKey == null,
+                                                                modifier = Modifier.size(32.dp)
+                                                            ) {
+                                                                Icon(
+                                                                    imageVector = Icons.Outlined.Download,
+                                                                    contentDescription = "Baixar capítulo",
+                                                                    modifier = Modifier.size(20.dp),
+                                                                    tint = MaterialTheme.colorScheme.primary
+                                                                )
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -333,6 +419,38 @@ class TelegramCloudManagerScreen : Screen() {
                     }
                 }
             }
+        }
+
+        if (mangaToDelete != null) {
+            val target = mangaToDelete!!
+            AlertDialog(
+                onDismissRequest = { mangaToDelete = null },
+                title = { Text("Apagar Obra da Nuvem?") },
+                text = { Text("Deseja apagar \"${target.title}\" e todos os seus ${target.chapters.size} capítulos da Nuvem do Telegram?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            val title = target.title
+                            mangaToDelete = null
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Apagando $title da Nuvem...")
+                                val ok = cloudManager.deleteManga(title)
+                                mangas = cloudManager.getCloudIndex()
+                                if (ok) {
+                                    snackbarHostState.showSnackbar("$title apagado da Nuvem!")
+                                }
+                            }
+                        }
+                    ) {
+                        Text("Apagar", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { mangaToDelete = null }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
         }
     }
 }
