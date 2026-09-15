@@ -757,8 +757,9 @@ class TelegramCloudManager(
                 var coverSaved = false
 
                 // Tenta extrair a capa de qualquer capitulo ja presente na pasta
-                val existingChapterFile = mangaDir.listFiles()?.firstOrNull {
-                    it.isFile && (it.name?.endsWith(".cbz", ignoreCase = true) == true || it.name?.endsWith(".zip", ignoreCase = true))
+                val existingChapterFile = mangaDir.listFiles()?.firstOrNull { file ->
+                    val fn = file.name ?: ""
+                    file.isFile && (fn.endsWith(".cbz", ignoreCase = true) || fn.endsWith(".zip", ignoreCase = true))
                 }
                 if (existingChapterFile != null) {
                     coverSaved = extractCoverFromChapter(existingChapterFile, mangaDir)
@@ -980,8 +981,9 @@ class TelegramCloudManager(
         // Garante que a capa existe
         val coverFile = mangaDir.findFile("cover.jpg") ?: mangaDir.findFile("cover.png")
         if (coverFile == null || coverFile.length() == 0L) {
-            val firstChapterFile = mangaDir.listFiles()?.firstOrNull {
-                it.isFile && (it.name?.endsWith(".cbz", ignoreCase = true) == true || it.name?.endsWith(".zip", ignoreCase = true))
+            val firstChapterFile = mangaDir.listFiles()?.firstOrNull { file ->
+                val fn = file.name ?: ""
+                file.isFile && (fn.endsWith(".cbz", ignoreCase = true) || fn.endsWith(".zip", ignoreCase = true))
             }
             if (firstChapterFile != null) {
                 extractCoverFromChapter(firstChapterFile, mangaDir)
