@@ -100,28 +100,9 @@ class TelegramCloudManagerScreen : Screen() {
                                 scope.launch {
                                     isSyncing = true
                                     try {
-                                        snackbarHostState.showSnackbar("Limpando índice e buscando do Telegram...")
-                                        cloudManager.clearCloudIndex()
+                                        snackbarHostState.showSnackbar("Sincronizando com a Nuvem Telegram...")
                                         mangas = cloudManager.syncFromTelegram()
-                                        snackbarHostState.showSnackbar("Sincronização concluída! ${mangas.size} obras encontradas.")
-                                    } catch (e: Exception) {
-                                        snackbarHostState.showSnackbar("Erro ao sincronizar: ${e.message}")
-                                    } finally {
-                                        isSyncing = false
-                                    }
-                                }
-                            },
-                            enabled = !isSyncing
-                        ) {
-                            Icon(Icons.Outlined.DeleteSweep, contentDescription = "Limpar e Re-sincronizar")
-                        }
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    isSyncing = true
-                                    try {
-                                        mangas = cloudManager.syncFromTelegram()
-                                        snackbarHostState.showSnackbar("Sincronização concluída! ${mangas.size} obras encontradas.")
+                                        snackbarHostState.showSnackbar("Sincronização concluída! ${mangas.size} obras sincronizadas.")
                                     } catch (e: Exception) {
                                         snackbarHostState.showSnackbar("Erro ao sincronizar: ${e.message}")
                                     } finally {
@@ -134,7 +115,7 @@ class TelegramCloudManagerScreen : Screen() {
                             if (isSyncing) {
                                 CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                             } else {
-                                Icon(Icons.Outlined.CloudSync, contentDescription = "Sincronizar do Telegram")
+                                Icon(Icons.Outlined.CloudSync, contentDescription = "Sincronizar com o Telegram")
                             }
                         }
                     },
