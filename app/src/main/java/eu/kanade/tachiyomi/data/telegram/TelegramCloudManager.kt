@@ -1273,33 +1273,111 @@ class TelegramCloudManager(
 
     suspend fun syncFromTelegram(): List<CloudManga> = withContext(Dispatchers.IO) {
         if (tdClient == null) initializeTdlib()
-        isAuthReady.first { it }
+        val ready = withTimeoutOrNull(15000) {
+            isAuthReady.first { it }
+            true
+        } ?: false
+
+        if (!ready) {
+            logcat(LogPriority.ERROR) { "TDLib nao autenticado para syncFromTelegram" }
+            return@withContext getCloudIndex()
+        }
 
         val chatIdString = preferences.chatId.get()
-        val targetChatId = chatIdString.toLongOrNull() ?: return@withContext emptyList()
+        val targetChatId = chatIdString.toLongOrNull() ?: return@withContext getCloudIndex()
 
-        var fromMessageId = 0L
-        var iterations = 0
-        val scannedList = mutableListOf<CloudManga>()
+        // Garante que o chat está carregado e aberto no TDLib
+        suspendCancellableCoroutine<Unit> { cont ->
+            tdClient?.send(TdApi.GetChat(targetChatId)) { _ ->
+                tdClient?.send(TdApi.OpenChat(targetChatId)) { _ ->
+                    cont.resume(Unit)
+                }
+            }
+        }
 
-        val existingIndex = getCloudIndex()
-        val existingCovers = existingIndex.associate { it.title.lowercase() to it.coverUrl }
-        val existingDescs = existingIndex.associate { it.title.lowercase() to it.description }
+        val currentIndex = getCloudIndex().map { it.copy(chapters = it.chapters.toMutableList()) }.toMutableList()
+
+        // 1. VERIFICAR CAPÍTULOS EXISTENTES NO ÍNDICE CONTRA O TELEGRAM
+        // Se a mensagem foi confirmada como apagada no Telegram, removemos do índice ("sumir só o que não estiver mais lá")
+        val chaptersToCheck = mutableListOf<Pair<CloudManga, CloudChapter>>()
+        for (manga in currentIndex) {
+            for (chapter in manga.chapters) {
+                if (chapter.messageId != 0L) {
+                    chaptersToCheck.add(manga to chapter)
+                }
+            }
+        }
+
+        // Checa em lotes de até 100 mensagens
+        val deadChapters = mutableSetOf<Pair<String, String>>()
+        for (chunk in chaptersToCheck.chunked(100)) {
+            val ids = chunk.map { (_, chap) ->
+                if (chap.messageId in 1..1048575L) chap.messageId shl 20 else chap.messageId
+            }.toLongArray()
+
+            val res = suspendCancellableCoroutine<TdApi.Messages?> { cont ->
+                tdClient?.send(TdApi.GetMessages(targetChatId, ids)) { result ->
+                    if (result is TdApi.Messages) cont.resume(result)
+                    else cont.resume(null)
+                }
+            }
+
+            if (res != null) {
+                for ((index, msg) in res.messages.withIndex()) {
+                    if (index < chunk.size) {
+                        val (manga, chap) = chunk[index]
+                        if (msg == null || msg.id == 0L || msg.content !is TdApi.MessageDocument) {
+                            deadChapters.add(manga.title to chap.name)
+                            logcat(LogPriority.INFO) { "Capítulo confirmado como apagado no Telegram: ${manga.title} - ${chap.name}" }
+                        } else {
+                            val doc = (msg.content as TdApi.MessageDocument).document.document
+                            val updatedChap = chap.copy(
+                                messageId = msg.id,
+                                fileId = if (doc.id != 0) doc.id else chap.fileId,
+                                remoteFileId = if (doc.remote.id.isNotBlank()) doc.remote.id else chap.remoteFileId
+                            )
+                            val cIdx = manga.chapters.indexOf(chap)
+                            if (cIdx >= 0) {
+                                manga.chapters[cIdx] = updatedChap
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Remove os capítulos mortos
+        for ((mTitle, cName) in deadChapters) {
+            val m = currentIndex.find { it.title.equals(mTitle, ignoreCase = true) }
+            m?.chapters?.removeAll { it.name.equals(cName, ignoreCase = true) }
+        }
+        // Remove obras que ficaram sem capítulos
+        currentIndex.removeAll { it.chapters.isEmpty() }
+
+        // 2. ESCANEAR HISTÓRICO DO TELEGRAM PARA DESCOBRIR NOVOS CAPÍTULOS
+        val existingCovers = currentIndex.associate { it.title.lowercase() to it.coverUrl }
+        val existingDescs = currentIndex.associate { it.title.lowercase() to it.description }
         val libraryMangas = try {
             Injekt.get<GetLibraryManga>().await().associate { it.manga.title.lowercase() to (it.manga.thumbnailUrl ?: "") }
         } catch (e: Exception) {
             emptyMap()
         }
 
-        val obraRegex = """(?i)(?:📖\s*)?Obra\s*:\s*(.+)""".toRegex()
-        val capRegex = """(?i)(?:📄\s*)?Cap[íi]tulo\s*:\s*(.+)""".toRegex()
-        val sinopseRegex = """(?i)(?:📝\s*)?Sinopse\s*:\s*(.+)""".toRegex()
+        val obraRegex = """(?i)(?:📖\s*)?(?:Obra|Título|Manga|Manhwa|Novel)\s*:\s*(.+)""".toRegex()
+        val capRegex = """(?i)(?:📄\s*)?(?:Cap[íi]tulo|Cap|Ep|Episode)\s*:\s*(.+)""".toRegex()
+        val sinopseRegex = """(?i)(?:📝\s*)?(?:Sinopse|Description|Desc)\s*:\s*(.+)""".toRegex()
+
+        var fromMessageId = 0L
+        var iterations = 0
 
         while (iterations < 100) {
             val messages = suspendCancellableCoroutine<Array<TdApi.Message>> { cont ->
                 tdClient?.send(TdApi.GetChatHistory(targetChatId, fromMessageId, 0, 100, false)) { result ->
                     if (result is TdApi.Messages) cont.resume(result.messages)
-                    else cont.resume(emptyArray())
+                    else {
+                        logcat(LogPriority.WARN) { "GetChatHistory retornou: $result" }
+                        cont.resume(emptyArray())
+                    }
                 }
             }
             if (messages.isEmpty()) break
@@ -1315,10 +1393,20 @@ class TelegramCloudManager(
                     var capMatch: String? = null
                     var sinopseMatch: String? = null
 
-                    if (caption.contains("#Yomotsu", ignoreCase = true)) {
-                        titleMatch = obraRegex.find(caption)?.groupValues?.get(1)?.trim()
-                        capMatch = capRegex.find(caption)?.groupValues?.get(1)?.trim()
-                        sinopseMatch = sinopseRegex.find(caption)?.groupValues?.get(1)?.trim()
+                    val oMatch = obraRegex.find(caption)?.groupValues?.get(1)?.trim()
+                    val cMatch = capRegex.find(caption)?.groupValues?.get(1)?.trim()
+                    val sMatch = sinopseRegex.find(caption)?.groupValues?.get(1)?.trim()
+
+                    if (!oMatch.isNullOrBlank()) titleMatch = oMatch
+                    if (!cMatch.isNullOrBlank()) capMatch = cMatch
+                    if (!sMatch.isNullOrBlank()) sinopseMatch = sMatch
+
+                    if (titleMatch.isNullOrBlank() || capMatch.isNullOrBlank()) {
+                        val lines = caption.lines().map { it.trim() }.filter { it.isNotBlank() && !it.startsWith("#") }
+                        if (lines.size >= 2) {
+                            if (titleMatch.isNullOrBlank()) titleMatch = lines[0].removePrefix("📖").trim()
+                            if (capMatch.isNullOrBlank()) capMatch = lines[1].removePrefix("📄").trim()
+                        }
                     }
 
                     if (titleMatch.isNullOrBlank() || capMatch.isNullOrBlank()) {
@@ -1333,7 +1421,7 @@ class TelegramCloudManager(
                     }
 
                     if (!titleMatch.isNullOrBlank() && !capMatch.isNullOrBlank()) {
-                        var manga = scannedList.find { it.title.equals(titleMatch, ignoreCase = true) }
+                        var manga = currentIndex.find { it.title.equals(titleMatch, ignoreCase = true) }
                         if (manga == null) {
                             val fallbackCover = existingCovers[titleMatch.lowercase()] ?: libraryMangas[titleMatch.lowercase()] ?: ""
                             val fallbackDesc = sinopseMatch ?: existingDescs[titleMatch.lowercase()] ?: ""
@@ -1342,11 +1430,11 @@ class TelegramCloudManager(
                                 description = fallbackDesc,
                                 coverUrl = fallbackCover
                             )
-                            scannedList.add(manga)
+                            currentIndex.add(manga)
                         } else if (manga.description.isBlank() && !sinopseMatch.isNullOrBlank()) {
                             val updatedManga = manga.copy(description = sinopseMatch)
-                            val mIdx = scannedList.indexOf(manga)
-                            scannedList[mIdx] = updatedManga
+                            val mIdx = currentIndex.indexOf(manga)
+                            currentIndex[mIdx] = updatedManga
                             manga = updatedManga
                         }
 
@@ -1371,16 +1459,16 @@ class TelegramCloudManager(
             iterations++
         }
 
-        // Ordena capitulos numericamente
-        scannedList.forEach { manga ->
+        // Ordena capítulos numericamente
+        currentIndex.forEach { manga ->
             manga.chapters.sortBy { chap ->
                 val numStr = chap.name.replace(Regex("""[^0-9.]"""), "")
                 numStr.toFloatOrNull() ?: 999999f
             }
         }
 
-        saveCloudIndex(scannedList)
-        scannedList
+        saveCloudIndex(currentIndex)
+        currentIndex
     }
 
     // ==========================================
