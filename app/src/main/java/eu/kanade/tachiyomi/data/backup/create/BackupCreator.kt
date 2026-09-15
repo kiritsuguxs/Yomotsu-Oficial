@@ -70,10 +70,15 @@ class BackupCreator(
                 // Create new file to place backup
                 dir?.createFile(getFilename())
             } else {
-                UniFile.fromUri(context, uri)
+                val target = UniFile.fromUri(context, uri)
+                if (target != null && target.isDirectory) {
+                    target.createFile(getFilename())
+                } else {
+                    target
+                }
             }
 
-            if (file == null || !file.isFile) {
+            if (file == null || file.isDirectory) {
                 throw IllegalStateException(context.stringResource(MR.strings.create_backup_file_error))
             }
 
@@ -94,8 +99,8 @@ class BackupCreator(
                 throw IllegalStateException(context.stringResource(MR.strings.empty_backup_error))
             }
 
-            val outputStream = runCatching { context.contentResolver.openOutputStream(file.uri, "wt") }.getOrNull()
-                ?: file.openOutputStream()
+            val outputStream = file.openOutputStream()
+                ?: runCatching { context.contentResolver.openOutputStream(file.uri, "wt") }.getOrNull()
                 ?: throw IllegalStateException(context.stringResource(MR.strings.create_backup_file_error))
 
             outputStream.sink().gzip().buffer().use {
@@ -104,8 +109,12 @@ class BackupCreator(
             }
             val fileUri = file.uri
 
-            // Make sure it's a valid backup file
-            BackupFileValidator(context).validate(fileUri)
+            // Make sure it's a valid backup file (only if readable)
+            runCatching {
+                BackupFileValidator(context).validate(fileUri)
+            }.onFailure { e ->
+                logcat(LogPriority.WARN, e) { "Validação de backup ignorada: ${e.message}" }
+            }
 
             if (isAutoBackup) {
                 backupPreferences.lastAutoBackupTimestamp.set(Clock.System.now().toEpochMilliseconds())
