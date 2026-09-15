@@ -73,6 +73,7 @@ class TelegramCloudManagerScreen : Screen() {
         var downloadingManga by remember { mutableStateOf<String?>(null) }
         var downloadProgress by remember { mutableStateOf<Pair<Int, Int>?>(null) }
         val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
+        var downloadingChapterKey by remember { mutableStateOf<String?>(null) }
 
         LaunchedEffect(Unit) {
             cloudManager.initializeTdlib()
@@ -251,7 +252,9 @@ class TelegramCloudManagerScreen : Screen() {
                                                     if (success) {
                                                         snackbarHostState.showSnackbar("${manga.title} salvo na Fonte Local!")
                                                     } else {
-                                                        snackbarHostState.showSnackbar("Nenhum capítulo novo foi baixado para ${manga.title}")
+                                                        val err = cloudManager.lastDownloadError
+                                                        val msg = if (!err.isNullOrBlank()) "Erro ao baixar: $err" else "Nenhum capítulo novo foi baixado para ${manga.title}"
+                                                        snackbarHostState.showSnackbar(msg)
                                                     }
                                                 } finally {
                                                     downloadingManga = null
@@ -259,7 +262,7 @@ class TelegramCloudManagerScreen : Screen() {
                                                 }
                                             }
                                         },
-                                        enabled = downloadingManga == null,
+                                        enabled = downloadingManga == null && downloadingChapterKey == null,
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Icon(Icons.Outlined.FolderSpecial, contentDescription = null)
@@ -274,17 +277,27 @@ class TelegramCloudManagerScreen : Screen() {
                                             verticalArrangement = Arrangement.spacedBy(6.dp)
                                         ) {
                                             manga.chapters.forEach { chapter ->
+                                                val chapterKey = "${manga.title}_${chapter.name}"
+                                                val isThisChapterDownloading = downloadingChapterKey == chapterKey
+
                                                 Row(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .clickable {
+                                                        .clickable(enabled = downloadingManga == null && downloadingChapterKey == null) {
                                                             scope.launch {
-                                                                snackbarHostState.showSnackbar("Baixando ${chapter.name}...")
-                                                                val ok = cloudManager.downloadSingleChapterToLocalSource(manga.title, chapter)
-                                                                if (ok) {
-                                                                    snackbarHostState.showSnackbar("${chapter.name} salvo na Fonte Local!")
-                                                                } else {
-                                                                    snackbarHostState.showSnackbar("Erro ao baixar ${chapter.name}")
+                                                                downloadingChapterKey = chapterKey
+                                                                try {
+                                                                    snackbarHostState.showSnackbar("Baixando ${chapter.name}...")
+                                                                    val ok = cloudManager.downloadSingleChapterToLocalSource(manga.title, chapter)
+                                                                    if (ok) {
+                                                                        snackbarHostState.showSnackbar("${chapter.name} salvo na Fonte Local!")
+                                                                    } else {
+                                                                        val err = cloudManager.lastDownloadError
+                                                                        val msg = if (!err.isNullOrBlank()) "Erro ao baixar ${chapter.name}: $err" else "Erro ao baixar ${chapter.name}"
+                                                                        snackbarHostState.showSnackbar(msg)
+                                                                    }
+                                                                } finally {
+                                                                    downloadingChapterKey = null
                                                                 }
                                                             }
                                                         }
@@ -297,12 +310,19 @@ class TelegramCloudManagerScreen : Screen() {
                                                         style = MaterialTheme.typography.bodyMedium,
                                                         modifier = Modifier.weight(1f)
                                                     )
-                                                    Icon(
-                                                        imageVector = Icons.Outlined.Download,
-                                                        contentDescription = "Disponível na nuvem",
-                                                        modifier = Modifier.size(20.dp),
-                                                        tint = MaterialTheme.colorScheme.primary
-                                                    )
+                                                    if (isThisChapterDownloading) {
+                                                        CircularProgressIndicator(
+                                                            modifier = Modifier.size(20.dp),
+                                                            strokeWidth = 2.dp
+                                                        )
+                                                    } else {
+                                                        Icon(
+                                                            imageVector = Icons.Outlined.Download,
+                                                            contentDescription = "Baixar capítulo",
+                                                            modifier = Modifier.size(20.dp),
+                                                            tint = MaterialTheme.colorScheme.primary
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
