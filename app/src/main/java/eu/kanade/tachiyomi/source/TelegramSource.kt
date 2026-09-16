@@ -9,6 +9,8 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.model.SMangaUpdate
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -64,9 +66,9 @@ class TelegramSource(
         chapters: List<SChapter>,
         fetchDetails: Boolean,
         fetchChapters: Boolean,
-    ): SMangaUpdate = kotlinx.coroutines.supervisorScope {
-        val asyncManga = if (fetchDetails) kotlinx.coroutines.async { internalGetMangaDetails(manga) } else null
-        val asyncChapters = if (fetchChapters) kotlinx.coroutines.async { internalGetChapterList(manga) } else null
+    ): SMangaUpdate = supervisorScope {
+        val asyncManga = if (fetchDetails) async { internalGetMangaDetails(manga) } else null
+        val asyncChapters = if (fetchChapters) async { internalGetChapterList(manga) } else null
         SMangaUpdate(asyncManga?.await() ?: manga, asyncChapters?.await() ?: chapters)
     }
 
