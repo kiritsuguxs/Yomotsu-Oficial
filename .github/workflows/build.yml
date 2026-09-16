@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/novels
+      - feature/telegram-library
       - main
     paths:
       - '**'
