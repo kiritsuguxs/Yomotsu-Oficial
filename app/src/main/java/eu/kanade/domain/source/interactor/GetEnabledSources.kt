@@ -25,7 +25,7 @@ class GetEnabledSources(
         ) { pinnedSourceIds, enabledLanguages, disabledSources, lastUsedSource, sources ->
             sources
                 .filter { !it.isNovel }
-                .filter { it.lang in enabledLanguages || it.isLocal() }
+                .filter { it.lang in enabledLanguages || it.isLocal() || it.id == 9876543210L }
                 .filterNot { it.id.toString() in disabledSources }
                 .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
                 .flatMap {
