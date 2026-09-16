@@ -58,6 +58,7 @@ class AndroidSourceManager(
                             Injekt.get(),
                             Injekt.get(),
                         ),
+                        eu.kanade.tachiyomi.source.TelegramSource.ID to eu.kanade.tachiyomi.source.TelegramSource(context),
                     ),
                 )
                 mangaExtensions.forEach { extension ->
