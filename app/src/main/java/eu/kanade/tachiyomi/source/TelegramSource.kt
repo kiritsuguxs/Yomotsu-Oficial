@@ -2,32 +2,66 @@ package eu.kanade.tachiyomi.source
 
 import android.content.Context
 import eu.kanade.tachiyomi.data.telegram.TelegramCloudManager
+import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.model.SMangaUpdate
+import eu.kanade.tachiyomi.source.online.HttpSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
+import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
+import tachiyomi.domain.telegram.TelegramPreferences
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.File
 import java.util.zip.ZipFile
-import tachiyomi.domain.telegram.TelegramPreferences
 
 class TelegramSource(
     private val context: Context,
     private val telegramCloudManager: TelegramCloudManager = Injekt.get(),
     private val preferences: TelegramPreferences = Injekt.get()
-) : CatalogueSource, UnmeteredSource {
+) : HttpSource(), UnmeteredSource {
 
     override val id: Long = ID
     override val name: String = "Biblioteca Telegram"
-    override val lang: String = "pt-BR"
+    override val lang: String = "other" // Coloca na aba "Outras" igual a Fonte Local
     override val supportsLatest: Boolean = false
+    override val baseUrl: String = "http://telegram-cache"
+
+    override val client: OkHttpClient = Injekt.get<NetworkHelper>().client.newBuilder()
+        .addInterceptor { chain ->
+            val url = chain.request().url.toString()
+            if (url.startsWith("http://telegram-cache/")) {
+                val filename = url.substringAfterLast("/")
+                val file = File(context.cacheDir, "telegram_pages/$filename")
+                val body = if (file.exists()) {
+                    file.readBytes()
+                } else {
+                    ByteArray(0)
+                }
+                
+                Response.Builder()
+                    .code(200)
+                    .message("OK")
+                    .protocol(Protocol.HTTP_1_1)
+                    .request(chain.request())
+                    .body(body.toResponseBody("image/jpeg".toMediaTypeOrNull()))
+                    .build()
+            } else {
+                chain.proceed(chain.request())
+            }
+        }.build()
 
     override suspend fun getPopularManga(page: Int): MangasPage = withContext(Dispatchers.IO) {
         val index = telegramCloudManager.getCloudIndex()
@@ -142,7 +176,7 @@ class TelegramSource(
                             input.copyTo(output)
                         }
                     }
-                    val pageUri = "file://${extractedFile.absolutePath}"
+                    val pageUri = "http://telegram-cache/${extractedFile.name}"
                     pages.add(Page(i, "", pageUri))
                 }
             }
@@ -154,6 +188,10 @@ class TelegramSource(
         }
 
         pages
+    }
+
+    override fun imageRequest(page: Page): Request {
+        return Request.Builder().url(page.imageUrl!!).build()
     }
 
     override fun getFilterList(): FilterList = FilterList()
