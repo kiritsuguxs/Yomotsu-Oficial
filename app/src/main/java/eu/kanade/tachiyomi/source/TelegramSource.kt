@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.source
 
 import android.content.Context
 import eu.kanade.tachiyomi.data.telegram.TelegramCloudManager
-import eu.kanade.tachiyomi.data.telegram.CloudChapter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -33,7 +32,7 @@ class TelegramSource(
         val mangas = index.map { cloudManga ->
             SManga.create().apply {
                 title = cloudManga.title
-                url = cloudManga.title 
+                url = cloudManga.title
                 description = cloudManga.description
                 thumbnail_url = cloudManga.coverUrl
                 status = SManga.UNKNOWN
@@ -46,8 +45,8 @@ class TelegramSource(
 
     override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage = withContext(Dispatchers.IO) {
         val index = telegramCloudManager.getCloudIndex()
-        val mangas = index.filter { 
-            it.title.contains(query, ignoreCase = true) 
+        val mangas = index.filter {
+            it.title.contains(query, ignoreCase = true)
         }.map { cloudManga ->
             SManga.create().apply {
                 title = cloudManga.title
@@ -87,10 +86,10 @@ class TelegramSource(
     private suspend fun internalGetChapterList(manga: SManga): List<SChapter> = withContext(Dispatchers.IO) {
         val index = telegramCloudManager.getCloudIndex()
         val cloudManga = index.find { it.title == manga.url } ?: return@withContext emptyList()
-        
+
         cloudManga.chapters.map { cloudChapter ->
             SChapter.create().apply {
-                url = "${manga.url}||${cloudChapter.name}" 
+                url = "${manga.url}||${cloudChapter.name}"
                 name = cloudChapter.name
                 date_upload = cloudChapter.date
                 chapter_number = cloudChapter.name.replace(Regex("""[^0-9.]"""), "").toFloatOrNull() ?: -1f
@@ -101,14 +100,14 @@ class TelegramSource(
     override suspend fun getPageList(chapter: SChapter): List<Page> = withContext(Dispatchers.IO) {
         val parts = chapter.url.split("||")
         if (parts.size != 2) return@withContext emptyList()
-        
+
         val mangaTitle = parts[0]
         val chapterName = parts[1]
-        
+
         val index = telegramCloudManager.getCloudIndex()
         val cloudManga = index.find { it.title == mangaTitle } ?: return@withContext emptyList()
         val cloudChapter = cloudManga.chapters.find { it.name == chapterName } ?: return@withContext emptyList()
-        
+
         val chatId = preferences.chatId.get().toLongOrNull() ?: return@withContext emptyList()
 
         telegramCloudManager.showNotification("Biblioteca Telegram", "Baixando o capítulo da nuvem...", ongoing = true)
@@ -151,13 +150,13 @@ class TelegramSource(
             cbzFile.delete()
             telegramCloudManager.showNotification("Biblioteca Telegram", "Capítulo carregado!", autoDismiss = true)
         }
-        
+
         pages
     }
 
     override fun getFilterList(): FilterList = FilterList()
 
     companion object {
-        const val ID = 9876543210L 
+        const val ID = 9876543210L
     }
 }
