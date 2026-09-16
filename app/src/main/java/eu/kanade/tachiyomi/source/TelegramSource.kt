@@ -8,6 +8,7 @@ import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.source.model.SMangaUpdate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import uy.kohesive.injekt.Injekt
@@ -59,7 +60,18 @@ class TelegramSource(
         MangasPage(mangas, false)
     }
 
-    override suspend fun getMangaDetails(manga: SManga): SManga = withContext(Dispatchers.IO) {
+    override suspend fun getMangaUpdate(
+        manga: SManga,
+        chapters: List<SChapter>,
+        fetchDetails: Boolean,
+        fetchChapters: Boolean,
+    ): SMangaUpdate = kotlinx.coroutines.supervisorScope {
+        val asyncManga = if (fetchDetails) kotlinx.coroutines.async { internalGetMangaDetails(manga) } else null
+        val asyncChapters = if (fetchChapters) kotlinx.coroutines.async { internalGetChapterList(manga) } else null
+        SMangaUpdate(asyncManga?.await() ?: manga, asyncChapters?.await() ?: chapters)
+    }
+
+    private suspend fun internalGetMangaDetails(manga: SManga): SManga = withContext(Dispatchers.IO) {
         val index = telegramCloudManager.getCloudIndex()
         val cloudManga = index.find { it.title == manga.url }
         if (cloudManga != null) {
@@ -72,7 +84,7 @@ class TelegramSource(
         manga
     }
 
-    override suspend fun getChapterList(manga: SManga): List<SChapter> = withContext(Dispatchers.IO) {
+    private suspend fun internalGetChapterList(manga: SManga): List<SChapter> = withContext(Dispatchers.IO) {
         val index = telegramCloudManager.getCloudIndex()
         val cloudManga = index.find { it.title == manga.url } ?: return@withContext emptyList()
         
@@ -99,17 +111,14 @@ class TelegramSource(
         
         val chatId = preferences.chatId.get().toLongOrNull() ?: return@withContext emptyList()
 
-        // Notifica inicio
         telegramCloudManager.showNotification("Biblioteca Telegram", "Baixando o capítulo da nuvem...", ongoing = true)
 
-        // Limpa a pasta temporária do Telegram de capítulos anteriores
         val extractDir = File(context.cacheDir, "telegram_pages")
         if (extractDir.exists()) {
             extractDir.deleteRecursively()
         }
         extractDir.mkdirs()
 
-        // Faz o download do CBZ
         val downloadedPath = telegramCloudManager.downloadChapterFile(mangaTitle, cloudChapter, chatId)
         if (downloadedPath.isNullOrBlank()) {
             telegramCloudManager.showNotification("Biblioteca Telegram", "Falha ao puxar da nuvem.", autoDismiss = true)
@@ -139,7 +148,6 @@ class TelegramSource(
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
-            // Apaga o zip baixado para nao gastar armazenamento
             cbzFile.delete()
             telegramCloudManager.showNotification("Biblioteca Telegram", "Capítulo carregado!", autoDismiss = true)
         }
