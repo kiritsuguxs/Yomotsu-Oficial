@@ -149,3 +149,9 @@ O workflow de lançamento lê automaticamente a seção correspondente à versã
 - Primeira novidade.
 - Segunda novidade.
 -->
+
+## 0.20.4-Y30
+- **Nova Funcionalidade:** Introdução da **Biblioteca Telegram**, permitindo que o Yomotsu use a Nuvem do Telegram como fonte ilimitada, privada e gratuita para armazenamento e leitura de obras, integrando com o Leitor Contínuo.
+- **Melhoria:** Correção da navegação inter-capítulos da Nuvem Telegram, separando o cache de descompressão utilizando hashes individuais, resolvendo bugs de mesclagem de páginas e imagens.
+- **Integração:** Adicionado botão de Sincronização na interface que varre o canal automaticamente detectando exclusões feitas fora do Yomotsu.
+- **Fix:** Oculta nome de pacotes (`eu.kanade...`) na tela de detalhes da Biblioteca Telegram tornando a apresentação idêntica às Extensões Nativas.
