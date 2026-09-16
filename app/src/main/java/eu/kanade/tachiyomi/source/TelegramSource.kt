@@ -43,8 +43,8 @@ class TelegramSource(
         .addInterceptor { chain ->
             val url = chain.request().url.toString()
             if (url.startsWith("http://telegram-cache/")) {
-                val filename = url.substringAfterLast("/")
-                val file = File(context.cacheDir, "telegram_pages/$filename")
+                val path = url.substringAfter("http://telegram-cache/")
+                val file = File(context.cacheDir, "telegram_pages/$path")
                 val body = if (file.exists()) {
                     file.readBytes()
                 } else {
@@ -148,7 +148,15 @@ class TelegramSource(
 
         telegramCloudManager.showNotification("Biblioteca Telegram", "Baixando o capítulo da nuvem...", ongoing = true)
 
-        val extractDir = File(context.cacheDir, "telegram_pages")
+        val chapterHash = chapter.url.hashCode().toString()
+        val rootDir = File(context.cacheDir, "telegram_pages")
+        if (rootDir.exists()) {
+            val dirs = rootDir.listFiles()?.filter { it.isDirectory }?.sortedByDescending { it.lastModified() }
+            if (dirs != null && dirs.size > 2) {
+                dirs.drop(2).forEach { it.deleteRecursively() }
+            }
+        }
+        val extractDir = File(rootDir, chapterHash)
         if (extractDir.exists()) {
             extractDir.deleteRecursively()
         }
@@ -176,7 +184,7 @@ class TelegramSource(
                             input.copyTo(output)
                         }
                     }
-                    val pageUri = "http://telegram-cache/${extractedFile.name}"
+                    val pageUri = "http://telegram-cache/$chapterHash/${extractedFile.name}"
                     pages.add(Page(i, "", pageUri))
                 }
             }
