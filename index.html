@@ -49,7 +49,30 @@
     @media(max-width:900px){nav>a:not(.nav-download){display:none}.hero{grid-template-columns:1fr}.wide{display:block}.wide>p{margin-top:25px}.grid{grid-template-columns:repeat(2,1fr)}.engine-list{grid-template-columns:repeat(2,1fr)}.cta{align-items:flex-start;flex-direction:column}}
     @media(max-width:650px){.shell{width:min(100% - 28px,1160px)}.topbar{height:74px}.brand{font-size:1.08rem}.brand img{width:38px;height:38px}.nav-download{padding:10px 14px;font-size:.78rem}.hero{min-height:auto;padding-block:62px 75px}.hero h1{font-size:clamp(3rem,14vw,4.4rem)}.hero-text{font-size:1rem}.actions{flex-direction:column}.button{width:100%}.facts{display:grid;grid-template-columns:repeat(3,1fr)}.facts li{min-width:0;margin-right:12px;padding-right:12px}.facts strong{font-size:.81rem}.facts span{font-size:.61rem}.visual{min-height:500px}.reader{width:92%;min-height:455px}.page{height:354px}.hero-logo{width:96px;height:96px;right:0}.how,.engines{padding-block:84px}.steps{grid-template-columns:1fr}.step,.step+.step{min-height:150px;padding:26px 10px 26px 0;border-right:0;border-bottom:1px solid var(--line)}.features{padding-block:85px}.grid{grid-template-columns:1fr;margin-top:45px}.card{min-height:230px}.card h3{margin-top:40px}.cta{width:min(100% - 28px,1160px);min-height:400px;padding:43px 27px}.footer{grid-template-columns:1fr;justify-items:center;gap:14px;padding-block:45px}.footer p{margin:0}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
-  </style>
+  
+    /* Animations */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .hero > div, .step, .card, .engine-list > span {
+      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .step:nth-child(2) { animation-delay: 0.1s; }
+    .step:nth-child(3) { animation-delay: 0.2s; }
+    
+    .card { transition: transform 0.3s ease, background 0.3s ease; }
+    .card:hover { transform: translateY(-5px); background: #ffffff; }
+    
+    .button { transition: transform 0.2s ease, opacity 0.2s ease; }
+    .button:hover { transform: scale(1.03); opacity: 0.95; }
+    
+    .engine-list > span { transition: background 0.3s ease; }
+    .engine-list > span:hover { background: rgba(255,255,255,0.02); }
+    
+    .reader { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reader:hover { transform: rotate(0deg) scale(1.02) translateY(-10px); }
+</style>
 </head>
 <body>
   <header class="topbar shell">
