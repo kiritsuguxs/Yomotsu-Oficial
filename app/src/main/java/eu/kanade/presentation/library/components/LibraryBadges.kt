@@ -111,11 +111,14 @@ internal fun LanguageBadge(
                 }
             }
         } else {
-            Badge(
-                text = sourceLanguage.uppercase(),
-                color = MaterialTheme.colorScheme.tertiary,
-                textColor = MaterialTheme.colorScheme.onTertiary,
-            )
+            val flag = getFlagEmoji(sourceLanguage)
+            if (flag.isNotEmpty()) {
+                Text(
+                    text = flag,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(2.dp)
+                )
+            }
         }
     }
 }
