@@ -110,7 +110,7 @@ class LibraryPreferences(
 
     val localBadge: Preference<Boolean> = preferenceStore.getBoolean("display_local_badge", true)
 
-    val languageBadge: Preference<Boolean> = preferenceStore.getBoolean("display_language_badge", false)
+    val languageBadge: Preference<Boolean> = preferenceStore.getBoolean("display_language_badge", true)
 
     val newShowUpdatesCount: Preference<Boolean> = preferenceStore.getBoolean("library_show_updates_count", true)
     val newUpdatesCount: Preference<Int> = preferenceStore.getInt(
