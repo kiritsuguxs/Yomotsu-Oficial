@@ -9,6 +9,9 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import eu.kanade.presentation.theme.TachiyomiPreviewTheme
 import tachiyomi.presentation.core.components.Badge
 import eu.kanade.domain.source.model.icon
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
+
 
 
 @Composable

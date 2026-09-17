@@ -59,6 +59,7 @@ internal fun LibraryList(
                     LanguageBadge(
                         isLocal = libraryItem.badges.isLocal,
                         sourceLanguage = libraryItem.badges.sourceLanguage,
+                        sourceId = manga.source,
                     )
                 },
                 onLongClick = { onLongClick(libraryItem.libraryManga) },
