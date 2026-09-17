@@ -1,5 +1,10 @@
 package tachiyomi.presentation.core.components
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -21,7 +26,6 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.RoundedCornerShape
 
 @Composable
 fun BadgeGroup(
@@ -102,7 +106,7 @@ fun Badge(
 
 @Composable
 fun Badge(
-    imageBitmap: androidx.compose.ui.graphics.ImageBitmap?,
+    imageBitmap: ImageBitmap?,
     text: String,
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.secondary,
@@ -114,16 +118,16 @@ fun Badge(
             .clip(shape)
             .background(color)
             .padding(horizontal = 3.dp, vertical = 1.dp),
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         if (imageBitmap != null) {
-            androidx.compose.foundation.Image(
+            Image(
                 bitmap = imageBitmap,
                 contentDescription = null,
                 modifier = Modifier
                     .padding(end = 2.dp)
-                    .androidx.compose.foundation.layout.size(12.dp)
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
+                    .size(12.dp)
+                    .clip(RoundedCornerShape(2.dp))
             )
         }
         Text(
