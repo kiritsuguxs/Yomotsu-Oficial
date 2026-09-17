@@ -3,7 +3,11 @@ package eu.kanade.tachiyomi.ui.profile
 import androidx.compose.ui.util.fastDistinctBy
 import androidx.lifecycle.viewModelScope
 import eu.kanade.tachiyomi.data.download.DownloadManager
-import eu.kanade.tachiyomi.data.profile.*
+import eu.kanade.tachiyomi.data.profile.ProfilePreferences
+import eu.kanade.tachiyomi.data.profile.YomotsuAchievement
+import eu.kanade.tachiyomi.data.profile.YomotsuAchievementManager
+import eu.kanade.tachiyomi.data.profile.YomotsuLevelManager
+import eu.kanade.tachiyomi.data.profile.YomotsuTitle
 import kotlinx.coroutines.flow.update
 import mihon.core.viewmodel.StateViewModel
 import tachiyomi.core.common.util.lang.launchIO
