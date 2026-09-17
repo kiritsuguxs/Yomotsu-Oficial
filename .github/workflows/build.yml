@@ -4,6 +4,7 @@ on:
     branches:
       - feature/novels
       - feature/telegram-library
+      - feature/yomotsu-profile
       - main
     paths:
       - '**'
