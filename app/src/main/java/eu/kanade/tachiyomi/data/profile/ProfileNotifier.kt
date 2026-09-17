@@ -30,7 +30,7 @@ class ProfileNotifier(private val context: Context) {
         )
 
         val builder = NotificationCompat.Builder(context, Notifications.CHANNEL_COMMON)
-            .setSmallIcon(R.drawable.ic_tachi) // Pode trocar pelo ícone de troféu se tiver
+            .setSmallIcon(R.drawable.ic_mihon) // Pode trocar pelo ícone de troféu se tiver
             .setContentTitle("🏆 Conquista Desbloqueada!")
             .setContentText("${achievement.name}: ${achievement.description}")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
