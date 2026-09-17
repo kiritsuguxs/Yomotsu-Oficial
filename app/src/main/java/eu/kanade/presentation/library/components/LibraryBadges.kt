@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import eu.kanade.presentation.theme.TachiyomiPreviewTheme
 import tachiyomi.presentation.core.components.Badge
+import eu.kanade.domain.source.model.icon
+
 
 @Composable
 internal fun DownloadsBadge(count: Int) {
@@ -42,7 +44,7 @@ internal fun LanguageBadge(
     } else if (sourceLanguage.isNotEmpty()) {
         val sourceManager = uy.kohesive.injekt.Injekt.get<tachiyomi.domain.source.service.SourceManager>()
         val source = sourceId?.let { sourceManager.getOrStub(it) }
-        val icon = source?.let { eu.kanade.domain.source.model.icon(it) }
+        val icon = source?.icon
         
         if (icon != null) {
             Badge(
