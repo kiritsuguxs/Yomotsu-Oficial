@@ -3,6 +3,14 @@
 Este arquivo contém somente as mudanças importantes para quem usa o aplicativo.
 O workflow de lançamento lê automaticamente a seção correspondente à versão publicada.
 
+## 0.20.4-Y34
+- **Repaginada Minimalista:** Atualização visual completa focada em leveza e imersão.
+- **Lineless UI:** Remoção das linhas separadoras (dividers) nos menus, painéis e configurações, oferecendo uma rolagem contínua e imersiva para o tema escuro.
+- **Abas "Pílula":** As abas tradicionais da biblioteca e de categorias foram substituídas por um indicador oval moderno no estilo Material You, removendo as linhas sublinhadas.
+- **Grid Otimizado:** Capas na biblioteca agora possuem bordas arredondadas (12.dp) e os crachás de capítulos novos ganharam formato suave, com maior respiro entre as obras.
+- **Navegação Premium:** Remoção dos textos de categorias inativas na barra de navegação inferior.
+- **Ícone Adaptável:** Fim do fundo branco no ícone do aplicativo! O ícone agora é 100% nativo e se adapta à tela inicial preenchendo a forma com o fundo escuro do próprio logo.
+
 ## 0.20.4-Y29
 - Correção definitiva do backup manual gerando arquivo vazio (0B): o botão "Criar" agora salva o backup compactado (.tachibk completo) diretamente na pasta padrão do aplicativo (/Yomotsu/autobackup/), usando a mesma rota confiável do backup automático.
 - Adicionado botão de pasta no topo para exportação opcional com suporte unificado a diretórios e documentos SAF.
