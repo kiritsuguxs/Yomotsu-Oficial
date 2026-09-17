@@ -67,6 +67,7 @@ jobs:
           for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
             mkdir -p "app/src/main/res/mipmap-$density"
             cp "$RUNNER_TEMP/yomotsu-icon.png" "app/src/main/res/mipmap-$density/ic_launcher.png"
+            cp "$RUNNER_TEMP/yomotsu-icon.png" "app/src/main/res/mipmap-$density/ic_launcher_foreground.png"
           done
       - name: Compilar release com atualizador
         env:
