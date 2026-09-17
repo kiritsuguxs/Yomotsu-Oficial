@@ -600,6 +600,7 @@ class ReaderViewModel @JvmOverloads constructor(
             val sessionReadDuration = chapterReadStartTime?.let { endTime.time - it } ?: 0
 
             upsertHistory.await(HistoryUpdate(chapterId, endTime, sessionReadDuration))
+            eu.kanade.tachiyomi.data.profile.ProfileChecker.checkAchievements(uy.kohesive.injekt.Injekt.get<android.app.Application>())
             chapterReadStartTime = null
         }
     }
