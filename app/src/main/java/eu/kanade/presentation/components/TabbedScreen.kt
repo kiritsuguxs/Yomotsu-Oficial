@@ -9,6 +9,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.TabRow
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -61,7 +67,7 @@ fun TabbedScreen(
             ),
         ) {
             if (tabs.size > 3) {
-                androidx.compose.material3.ScrollableTabRow(
+                ScrollableTabRow(
                     selectedTabIndex = state.currentPage,
                     modifier = Modifier.zIndex(1f),
                     edgePadding = 0.dp,
@@ -76,14 +82,14 @@ fun TabbedScreen(
                             unselectedContentColor = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .padding(horizontal = 4.dp, vertical = 8.dp)
-                                .androidx.compose.ui.draw.clip(androidx.compose.foundation.shape.CircleShape)
-                                .androidx.compose.foundation.background(if (state.currentPage == index) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent),
+                                .clip(CircleShape)
+                                .background(if (state.currentPage == index) MaterialTheme.colorScheme.primary else Color.Transparent),
                             text = { TabText(text = stringResource(tab.titleRes), badgeCount = tab.badgeNumber) },
                         )
                     }
                 }
             } else {
-                androidx.compose.material3.TabRow(
+                TabRow(
                     selectedTabIndex = state.currentPage,
                     modifier = Modifier.zIndex(1f),
                     indicator = {},
@@ -97,8 +103,8 @@ fun TabbedScreen(
                             unselectedContentColor = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .padding(horizontal = 4.dp, vertical = 8.dp)
-                                .androidx.compose.ui.draw.clip(androidx.compose.foundation.shape.CircleShape)
-                                .androidx.compose.foundation.background(if (state.currentPage == index) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent),
+                                .clip(CircleShape)
+                                .background(if (state.currentPage == index) MaterialTheme.colorScheme.primary else Color.Transparent),
                             text = { TabText(text = stringResource(tab.titleRes), badgeCount = tab.badgeNumber) },
                         )
                     }
