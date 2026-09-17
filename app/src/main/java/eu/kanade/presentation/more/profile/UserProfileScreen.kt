@@ -3,8 +3,8 @@ package eu.kanade.presentation.more.profile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -62,95 +62,104 @@ fun UserProfileScreen(
             )
         }
     ) { contentPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
-                .background(MaterialTheme.colorScheme.background)
-                .verticalScroll(rememberScrollState())
+                .background(MaterialTheme.colorScheme.background),
+            contentPadding = PaddingValues(bottom = 32.dp)
         ) {
             // BANNER E AVATAR
-            Box(
-                modifier = Modifier.fillMaxWidth().height(240.dp)
-            ) {
+            item {
                 Box(
-                    modifier = Modifier.fillMaxWidth().height(160.dp)
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.8f), MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f))
-                            )
-                        )
-                )
-                Box(
-                    modifier = Modifier.size(120.dp).align(Alignment.BottomCenter).clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant).border(4.dp, MaterialTheme.colorScheme.background, CircleShape),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier.fillMaxWidth().height(240.dp)
                 ) {
-                    Text("V", fontSize = 48.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(160.dp)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.8f), MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f))
+                                )
+                            )
+                    )
+                    Box(
+                        modifier = Modifier.size(120.dp).align(Alignment.BottomCenter).clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant).border(4.dp, MaterialTheme.colorScheme.background, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("V", fontSize = 48.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Veterano Yomotsu", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-            
-            Text(
-                text = currentTitle.name,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                style = androidx.compose.ui.text.TextStyle(brush = Brush.horizontalGradient(colors = listOf(currentTitle.colorStart, currentTitle.colorEnd)))
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
+            // NOME E TÍTULO
+            item {
+                Text("Veterano Yomotsu", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                Text(
+                    text = currentTitle.name,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    style = androidx.compose.ui.text.TextStyle(brush = Brush.horizontalGradient(colors = listOf(currentTitle.colorStart, currentTitle.colorEnd)))
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
             // BARRA DE XP
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Nível $currentLevel", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    Text("Nível ${currentLevel + 1}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            item {
+                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Nível $currentLevel", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        Text("Nível ${currentLevel + 1}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(50)),
+                        color = currentTitle.colorEnd,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("$totalXp / $nextLevelXp XP", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(50)),
-                    color = currentTitle.colorEnd,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("$totalXp / $nextLevelXp XP", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                Spacer(modifier = Modifier.height(32.dp))
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
 
             // ESTATÍSTICAS
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                StatBox(Icons.Outlined.MenuBook, totalChaptersRead.toString(), "Lidos")
-                StatBox(Icons.Outlined.CollectionsBookmark, totalMangas.toString(), "Na Biblioteca")
+            item {
+                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    StatBox(Icons.Outlined.MenuBook, totalChaptersRead.toString(), "Lidos")
+                    StatBox(Icons.Outlined.CollectionsBookmark, totalMangas.toString(), "Na Biblioteca")
+                }
+                Spacer(modifier = Modifier.height(32.dp))
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            // TÍTULO CONQUISTAS
+            item {
+                Text(
+                    text = "Sala de Troféus (${unlockedAchievements.size}/${unlockedAchievements.size + lockedAchievements.size})",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
-            // CONQUISTAS
-            Text(
-                text = "Sala de Troféus (${unlockedAchievements.size}/${unlockedAchievements.size + lockedAchievements.size})",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 24.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-                unlockedAchievements.forEach { achievement ->
+            // CONQUISTAS DESBLOQUEADAS
+            items(unlockedAchievements) { achievement ->
+                Box(modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)) {
                     AchievementItem(achievement, isUnlocked = true)
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-                lockedAchievements.forEach { achievement ->
-                    AchievementItem(achievement, isUnlocked = false)
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
-            Spacer(modifier = Modifier.height(32.dp))
+
+            // CONQUISTAS BLOQUEADAS
+            items(lockedAchievements) { achievement ->
+                Box(modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)) {
+                    AchievementItem(achievement, isUnlocked = false)
+                }
+            }
         }
     }
 }
