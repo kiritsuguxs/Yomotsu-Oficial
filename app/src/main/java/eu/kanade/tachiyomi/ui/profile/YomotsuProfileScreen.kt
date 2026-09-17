@@ -27,7 +27,9 @@ class YomotsuProfileScreen : Screen() {
                     navigateUp = { navigator.pop() },
                     totalXp = currentState.totalXp,
                     totalChaptersRead = currentState.totalChaptersRead,
-                    totalMangas = currentState.totalMangas
+                    totalMangas = currentState.totalMangas,
+                    unlockedAchievements = currentState.unlockedAchievements,
+                    lockedAchievements = currentState.lockedAchievements
                 )
             }
         }
