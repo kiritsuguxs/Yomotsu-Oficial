@@ -56,6 +56,13 @@ O projeto foi construído sobre a consagrada base do **Mihon (Tachiyomi)**, traz
 
 ## 🚀 Principais recursos
 
+### 🎮 Perfil Gamificado e Conquistas (NOVO!)
+* **Sistema de XP e Níveis:** Ganhe XP automaticamente lendo ou baixando capítulos. Níveis infinitos com cálculo progressivo.
+* **Títulos Equipáveis:** Desbloqueie títulos de progressão sombria e minimalista (como *Iniciante das Sombras* ou *Mestre das Sombras*) e equipe-os no seu perfil.
+* **100 Conquistas Únicas:** Recompensas divididas em categorias (Bronze, Prata, Ouro e Rubi) para suas marcas de leitura, tamanho da biblioteca e histórico de downloads.
+* **Identidade Personalizada:** Escolha seu Nickname, Avatar e um Banner expandido (arquivos salvos com segurança no cache interno).
+* **Notificações em Tempo Real:** Alertas do sistema sempre que você conquistar um novo troféu.
+
 ### 📖 Leitura e Visualização
 * **Suporte Completo a Obras:** Leia mangás, manhwas, webtoons, quadrinhos e **Light Novels / Webnovels**.
 * **Leitor Dedicado de Novels:** Modo texto imersivo com tipografia ajustável (fontes, tamanho de letra, espaçamento entre linhas e margens personalizadas).
