@@ -298,7 +298,7 @@ fun WebViewScreenContent(
                                     .clip(MaterialTheme.shapes.small)
                                     .clickable {
                                         uriHandler.openUri(
-                                            "https://kiritsuguxs.github.io/Yomotsu-Oficial/help.html#cloudflare",
+                                            "https://yomotsu-app.github.io/help.html#cloudflare",
                                         )
                                     },
                             )

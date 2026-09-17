@@ -378,7 +378,7 @@ class LibraryUpdateNotifier(
 
     companion object {
         const val HELP_WARNING_URL =
-            "https://kiritsuguxs.github.io/Yomotsu-Oficial/help.html#library-update"
+            "https://yomotsu-app.github.io/help.html#library-update"
     }
 }
 

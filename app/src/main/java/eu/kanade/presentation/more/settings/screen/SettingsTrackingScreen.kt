@@ -76,7 +76,7 @@ object SettingsTrackingScreen : SearchableSettings {
     override fun RowScope.AppBarAction() {
         val uriHandler = LocalUriHandler.current
         IconButton(onClick = {
-            uriHandler.openUri("https://kiritsuguxs.github.io/Yomotsu-Oficial/help.html#tracking")
+            uriHandler.openUri("https://yomotsu-app.github.io/help.html#tracking")
         }) {
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
