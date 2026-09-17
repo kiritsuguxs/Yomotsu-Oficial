@@ -14,6 +14,7 @@ import uy.kohesive.injekt.api.get
 sealed interface UserProfileState {
     data object Loading : UserProfileState
     data class Success(
+        val username: String,
         val totalXp: Long,
         val totalChaptersRead: Int,
         val totalMangas: Int,
@@ -63,6 +64,7 @@ class UserProfileViewModel(
 
             mutableState.update {
                 UserProfileState.Success(
+                    username = profilePreferences.getUsername(),
                     totalXp = totalXp,
                     totalChaptersRead = readChapterCount,
                     totalMangas = totalMangas,
@@ -84,6 +86,11 @@ class UserProfileViewModel(
 
     fun setAvatarUri(uri: String?) {
         profilePreferences.setAvatarUri(uri)
+        loadProfile()
+    }
+
+    fun setUsername(name: String) {
+        profilePreferences.setUsername(name)
         loadProfile()
     }
 

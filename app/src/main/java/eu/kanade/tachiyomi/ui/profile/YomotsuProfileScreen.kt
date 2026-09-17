@@ -25,6 +25,7 @@ class YomotsuProfileScreen : Screen() {
             is UserProfileState.Success -> {
                 UserProfileScreen(
                     navigateUp = { navigator.pop() },
+                    username = currentState.username,
                     totalXp = currentState.totalXp,
                     totalChaptersRead = currentState.totalChaptersRead,
                     totalMangas = currentState.totalMangas,
@@ -34,6 +35,7 @@ class YomotsuProfileScreen : Screen() {
                     unlockedTitles = currentState.unlockedTitles,
                     avatarUri = currentState.avatarUri,
                     bannerUri = currentState.bannerUri,
+                    onUsernameChanged = { viewModel.setUsername(it) },
                     onTitleSelected = { viewModel.setEquippedTitle(it) },
                     onAvatarSelected = { viewModel.setAvatarUri(it) },
                     onBannerSelected = { viewModel.setBannerUri(it) }

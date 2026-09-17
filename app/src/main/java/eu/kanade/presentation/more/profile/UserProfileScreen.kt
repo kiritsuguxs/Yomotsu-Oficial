@@ -44,6 +44,7 @@ import tachiyomi.presentation.core.components.material.Scaffold
 @Composable
 fun UserProfileScreen(
     navigateUp: () -> Unit,
+    username: String,
     totalXp: Long,
     totalChaptersRead: Int,
     totalMangas: Int,
@@ -53,12 +54,15 @@ fun UserProfileScreen(
     unlockedTitles: List<YomotsuTitle>,
     avatarUri: String?,
     bannerUri: String?,
+    onUsernameChanged: (String) -> Unit,
     onTitleSelected: (YomotsuTitle) -> Unit,
     onAvatarSelected: (String?) -> Unit,
     onBannerSelected: (String?) -> Unit
 ) {
     val context = LocalContext.current
     var showTitleDialog by remember { mutableStateOf(false) }
+    var showNameDialog by remember { mutableStateOf(false) }
+    var newName by remember { mutableStateOf(username) }
 
     val currentLevel = YomotsuLevelManager.calculateLevelFromXp(totalXp)
     val currentLevelXp = YomotsuLevelManager.getXpRequiredForLevel(currentLevel)
@@ -75,6 +79,31 @@ fun UserProfileScreen(
     }
     val avatarLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { onAvatarSelected(it.toString()) }
+    }
+
+
+    if (showNameDialog) {
+        AlertDialog(
+            onDismissRequest = { showNameDialog = false },
+            title = { Text("Mudar Nome de Caçador") },
+            text = {
+                OutlinedTextField(
+                    value = newName,
+                    onValueChange = { newName = it },
+                    singleLine = true,
+                    label = { Text("Nome") }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if(newName.isNotBlank()) onUsernameChanged(newName.trim())
+                    showNameDialog = false
+                }) { Text("Salvar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNameDialog = false }) { Text("Cancelar") }
+            }
+        )
     }
 
     if (showTitleDialog) {
@@ -175,7 +204,11 @@ fun UserProfileScreen(
 
             // NOME E TÍTULO
             item {
-                Text("Veterano Yomotsu", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                Row(modifier = Modifier.fillMaxWidth().clickable { showNameDialog = true }, horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                    Text(username, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(Icons.Outlined.Edit, contentDescription = "Editar Nome", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 Text(
                     text = equippedTitle.name,
                     fontSize = 18.sp,

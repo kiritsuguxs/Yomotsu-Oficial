@@ -9,6 +9,9 @@ import uy.kohesive.injekt.api.get
 class ProfilePreferences(context: Application = Injekt.get()) {
     private val prefs: SharedPreferences = context.getSharedPreferences("yomotsu_profile_prefs", Context.MODE_PRIVATE)
 
+    fun getUsername(): String = prefs.getString("username", "Veterano Yomotsu") ?: "Veterano Yomotsu"
+    fun setUsername(name: String) = prefs.edit().putString("username", name).apply()
+
     fun getEquippedTitleId(): String? = prefs.getString("equipped_title_id", null)
     fun setEquippedTitleId(id: String) = prefs.edit().putString("equipped_title_id", id).apply()
 
