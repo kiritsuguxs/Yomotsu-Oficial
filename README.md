@@ -56,7 +56,7 @@ O projeto foi construído sobre a consagrada base do **Mihon (Tachiyomi)**, traz
 
 ## 🚀 Principais recursos
 
-### 🎮 Sistema de Progressão e Conquistas (NOVO!)
+### 🎮 Sistema de Progressão e Conquistas
 * **Sistema de XP e Níveis:** Ganhe XP automaticamente lendo ou baixando capítulos. Níveis infinitos com cálculo progressivo.
 * **Títulos Equipáveis:** Desbloqueie títulos de progressão sombria e minimalista (como *Iniciante das Sombras* ou *Mestre das Sombras*) e equipe-os no seu perfil.
 * **100 Conquistas Únicas:** Recompensas divididas em categorias (Bronze, Prata, Ouro e Rubi) para suas marcas de leitura, tamanho da biblioteca e histórico de downloads.
