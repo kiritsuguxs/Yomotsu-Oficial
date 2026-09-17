@@ -3,6 +3,17 @@
 Este arquivo contém somente as mudanças importantes para quem usa o aplicativo.
 O workflow de lançamento lê automaticamente a seção correspondente à versão publicada.
 
+## 0.20.4-Y35
+**✨ Novos Recursos:**
+- **Sistema de Insígnias Transparente:** Substituição dos antigos rótulos de texto opacos por insígnias minimalistas com fundo transparente. O design foi redesenhado para garantir total destaque às capas dos mangás.
+- **Identificação Gráfica Inteligente:** Implementação de um novo sistema automático que exibe o ícone nativo da extensão em alta resolução, acompanhado dinamicamente da bandeira do idioma correspondente em Emoji. (Ativado por padrão para todos os usuários).
+- **Expansão do Catálogo de Temas:** Lançamento de 5 novos perfis de cores exclusivos e minimalistas para a interface do aplicativo (Onyx, Neon, Twilight, Orchid, Autumn).
+
+**🛠️ Correções e Aprimoramentos:**
+- **Refinamento Visual:** Ajuste na tabela de cores e contraste dos temas clássicos do aplicativo, alinhando-os perfeitamente com a nova diretriz de design.
+- **Preto AMOLED:** Fundo da tela de carregamento (Splash Screen) em modo noturno agora utiliza a cor preta absoluta (pixels desligados) para telas OLED.
+- **Estabilidade:** Aprimoramento no carregamento da interface da biblioteca e correções relacionadas à busca de metadados de fontes.
+
 ## 0.20.4-Y34
 - **Repaginada Minimalista:** Atualização visual completa focada em leveza e imersão.
 - **Lineless UI:** Remoção das linhas separadoras (dividers) nos menus, painéis e configurações, oferecendo uma rolagem contínua e imersiva para o tema escuro.
