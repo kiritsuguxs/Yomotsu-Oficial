@@ -29,7 +29,14 @@ class YomotsuProfileScreen : Screen() {
                     totalChaptersRead = currentState.totalChaptersRead,
                     totalMangas = currentState.totalMangas,
                     unlockedAchievements = currentState.unlockedAchievements,
-                    lockedAchievements = currentState.lockedAchievements
+                    lockedAchievements = currentState.lockedAchievements,
+                    equippedTitle = currentState.equippedTitle,
+                    unlockedTitles = currentState.unlockedTitles,
+                    avatarUri = currentState.avatarUri,
+                    bannerUri = currentState.bannerUri,
+                    onTitleSelected = { viewModel.setEquippedTitle(it) },
+                    onAvatarSelected = { viewModel.setAvatarUri(it) },
+                    onBannerSelected = { viewModel.setBannerUri(it) }
                 )
             }
         }

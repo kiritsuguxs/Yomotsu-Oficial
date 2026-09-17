@@ -3,9 +3,7 @@ package eu.kanade.tachiyomi.ui.profile
 import androidx.compose.ui.util.fastDistinctBy
 import androidx.lifecycle.viewModelScope
 import eu.kanade.tachiyomi.data.download.DownloadManager
-import eu.kanade.tachiyomi.data.profile.YomotsuLevelManager
-import eu.kanade.tachiyomi.data.profile.YomotsuAchievementManager
-import eu.kanade.tachiyomi.data.profile.YomotsuAchievement
+import eu.kanade.tachiyomi.data.profile.*
 import kotlinx.coroutines.flow.update
 import mihon.core.viewmodel.StateViewModel
 import tachiyomi.core.common.util.lang.launchIO
@@ -20,16 +18,25 @@ sealed interface UserProfileState {
         val totalChaptersRead: Int,
         val totalMangas: Int,
         val unlockedAchievements: List<YomotsuAchievement>,
-        val lockedAchievements: List<YomotsuAchievement>
+        val lockedAchievements: List<YomotsuAchievement>,
+        val equippedTitle: YomotsuTitle,
+        val unlockedTitles: List<YomotsuTitle>,
+        val avatarUri: String?,
+        val bannerUri: String?
     ) : UserProfileState
 }
 
 class UserProfileViewModel(
     private val downloadManager: DownloadManager = Injekt.get(),
     private val getLibraryManga: GetLibraryManga = Injekt.get(),
+    private val profilePreferences: ProfilePreferences = ProfilePreferences()
 ) : StateViewModel<UserProfileState>(UserProfileState.Loading) {
 
     init {
+        loadProfile()
+    }
+
+    private fun loadProfile() {
         viewModelScope.launchIO {
             val libraryManga = getLibraryManga.await()
             val distinctLibraryManga = libraryManga.fastDistinctBy { it.id }
@@ -40,6 +47,12 @@ class UserProfileViewModel(
 
             val totalXp = (readChapterCount * YomotsuLevelManager.XP_PER_CHAPTER_READ.toLong()) +
                           (downloadCount * YomotsuLevelManager.XP_PER_CHAPTER_DOWNLOAD.toLong())
+
+            val currentLevel = YomotsuLevelManager.calculateLevelFromXp(totalXp)
+            val unlockedTitles = YomotsuLevelManager.getUnlockedTitles(currentLevel)
+            
+            val savedTitleId = profilePreferences.getEquippedTitleId()
+            val equippedTitle = unlockedTitles.find { it.name == savedTitleId } ?: unlockedTitles.firstOrNull() ?: YomotsuLevelManager.ALL_TITLES.first()
 
             val unlocked = YomotsuAchievementManager.ALL_ACHIEVEMENTS.filter { 
                 it.isUnlocked(readChapterCount, totalMangas, downloadCount) 
@@ -54,9 +67,28 @@ class UserProfileViewModel(
                     totalChaptersRead = readChapterCount,
                     totalMangas = totalMangas,
                     unlockedAchievements = unlocked,
-                    lockedAchievements = locked
+                    lockedAchievements = locked,
+                    equippedTitle = equippedTitle,
+                    unlockedTitles = unlockedTitles,
+                    avatarUri = profilePreferences.getAvatarUri(),
+                    bannerUri = profilePreferences.getBannerUri()
                 )
             }
         }
+    }
+
+    fun setEquippedTitle(title: YomotsuTitle) {
+        profilePreferences.setEquippedTitleId(title.name)
+        loadProfile()
+    }
+
+    fun setAvatarUri(uri: String?) {
+        profilePreferences.setAvatarUri(uri)
+        loadProfile()
+    }
+
+    fun setBannerUri(uri: String?) {
+        profilePreferences.setBannerUri(uri)
+        loadProfile()
     }
 }
