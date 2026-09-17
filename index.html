@@ -72,6 +72,27 @@
     
     .reader { transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
     .reader:hover { transform: rotate(0deg) scale(1.02) translateY(-10px); }
+
+    @keyframes pulseGlow {
+      0% { transform: scale(1); box-shadow: 0 0 20px rgba(207,101,75,0.2), inset 0 0 40px rgba(207,101,75,0.1); }
+      50% { transform: scale(1.08); box-shadow: 0 0 80px rgba(207,101,75,0.7), inset 0 0 100px rgba(207,101,75,0.4); background: rgba(207,101,75,0.3); }
+      100% { transform: scale(1); box-shadow: 0 0 20px rgba(207,101,75,0.2), inset 0 0 40px rgba(207,101,75,0.1); }
+    }
+    .orb { animation: pulseGlow 5s infinite alternate ease-in-out; }
+
+    @keyframes floatLogo {
+      0% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-18px) rotate(6deg) scale(1.05); }
+      100% { transform: translateY(0px) rotate(0deg); }
+    }
+    .hero-logo { animation: floatLogo 6s infinite ease-in-out; }
+
+    @keyframes neonBorder {
+      0% { border-color: rgba(226,183,141,0.28); box-shadow: 0 38px 80px rgba(0,0,0,0.33), 0 0 10px rgba(102,186,145,0.1); }
+      50% { border-color: rgba(102,186,145,0.8); box-shadow: 0 38px 80px rgba(0,0,0,0.5), 0 0 35px rgba(102,186,145,0.6), inset 0 0 20px rgba(102,186,145,0.2); }
+      100% { border-color: rgba(226,183,141,0.28); box-shadow: 0 38px 80px rgba(0,0,0,0.33), 0 0 10px rgba(102,186,145,0.1); }
+    }
+    .reader { animation: neonBorder 4s infinite alternate ease-in-out; }
 </style>
 </head>
 <body>
