@@ -35,6 +35,6 @@ fun LogoHeader(
                 .clip(RoundedCornerShape(16.dp)),
         )
 
-        HorizontalDivider()
+
     }
 }

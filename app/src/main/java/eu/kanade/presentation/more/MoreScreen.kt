@@ -64,7 +64,7 @@ fun MoreScreen(
                 )
             }
 
-            item { HorizontalDivider() }
+
 
             item {
                 val downloadQueueState = downloadQueueStateProvider()
@@ -117,7 +117,7 @@ fun MoreScreen(
                 )
             }
 
-            item { HorizontalDivider() }
+
 
             item {
                 TextPreferenceWidget(
