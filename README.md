@@ -103,7 +103,7 @@ O Yomotsu oferece flexibilidade total para você escolher como traduzir suas lei
 
 ## ☁️ Como Usar a Nuvem Telegram
 
-O Yomotsu utiliza a infraestrutura do Telegram para fornecer backup ilimitado e seguro para seus mangás e novels:
+O Yomotsu utiliza a infraestrutura do Telegram para fornecer backup ilimitado e leitura 100% em nuvem (streaming) para seus mangás e novels:
 
 ```mermaid
 flowchart LR
@@ -125,7 +125,7 @@ flowchart LR
    * *(Opcional)* Ative **Excluir arquivos locais após upload** para poupar espaço interno!
 
 > [!TIP]
-> Com a sincronização inteligente da Nuvem Telegram, você pode manter sua biblioteca completa salva no canal e baixar apenas os capítulos que estiver lendo no momento.
+> **Leitura 100% na Nuvem (Streaming):** Você não precisa baixar os capítulos de volta para o celular para ler! O Yomotsu possui uma Fonte nativa do Telegram que permite ler mangás e novels diretamente da nuvem, poupando 100% do seu armazenamento interno.
 
 ---
 
