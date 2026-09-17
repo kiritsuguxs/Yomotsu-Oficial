@@ -21,11 +21,12 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 @Composable
 fun BadgeGroup(
     modifier: Modifier = Modifier,
-    shape: Shape = MaterialTheme.shapes.extraSmall,
+    shape: Shape = RoundedCornerShape(8.dp),
     content: @Composable RowScope.() -> Unit,
 ) {
     Row(modifier = modifier.clip(shape)) {

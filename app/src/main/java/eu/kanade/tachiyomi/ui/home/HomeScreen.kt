@@ -201,7 +201,7 @@ object HomeScreen : Screen() {
                     overflow = TextOverflow.Ellipsis,
                 )
             },
-            alwaysShowLabel = true,
+            alwaysShowLabel = false,
         )
     }
 
@@ -229,7 +229,7 @@ object HomeScreen : Screen() {
                     overflow = TextOverflow.Ellipsis,
                 )
             },
-            alwaysShowLabel = true,
+            alwaysShowLabel = false,
         )
     }
 
