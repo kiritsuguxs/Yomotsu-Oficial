@@ -38,27 +38,6 @@ object YomotsuLevelManager {
         YomotsuTitle(180, "Imortal", Color(0xFF311B92), Color(0xFF4527A0)), // Roxo imperial escuro
         YomotsuTitle(190, "Deus Marcial", Color(0xFFBF360C), Color(0xFFD84315)), // Fogo profundo (laranja escuro)
         YomotsuTitle(200, "Izanagi do Submundo", Color(0xFF000000), Color(0xFF1A1A1A)) // O Vazio Absoluto (Preto)
-    ), Color(0xFFFFFFFF)),
-        YomotsuTitle(10, "Desperto", Color(0xFFB0BEC5), Color(0xFFE0E0E0)),
-        YomotsuTitle(20, "Caçador Novato", Color(0xFF81C784), Color(0xFFAED581)),
-        YomotsuTitle(30, "Discípulo Externo", Color(0xFF4FC3F7), Color(0xFF81D4FA)),
-        YomotsuTitle(40, "Explorador do Abismo", Color(0xFF263238), Color(0xFF546E7A)), // Abismo (Escuro)
-        YomotsuTitle(50, "Caçador Rank C", Color(0xFF64B5F6), Color(0xFF90CAF9)),
-        YomotsuTitle(60, "Especialista Marcial", Color(0xFFFF8A65), Color(0xFFFFAB91)), // Marcial (Laranja/Terra)
-        YomotsuTitle(70, "Caçador Rank B", Color(0xFF9575CD), Color(0xFFB39DDB)),
-        YomotsuTitle(80, "Mestre das Sombras", Color(0xFF000000), Color(0xFF616161)), // Sombras (Preto/Cinza)
-        YomotsuTitle(90, "Caçador Rank A", Color(0xFFF06292), Color(0xFFF48FB1)),
-        YomotsuTitle(100, "Formação do Núcleo", Color(0xFFD500F9), Color(0xFFFF1744)), // Energia (Rosa/Vermelho)
-        YomotsuTitle(110, "Senhor de Domínio", Color(0xFFFFD54F), Color(0xFFFFF176)), // Rei (Dourado/Amarelo)
-        YomotsuTitle(120, "Caçador Rank S", Color(0xFFD50000), Color(0xFFFF5252)), // Rank S (Vermelho Forte)
-        YomotsuTitle(130, "Caçador Nacional", Color(0xFF1A237E), Color(0xFF3949AB)), // Nacional (Azul Marinho/Nobre)
-        YomotsuTitle(140, "Alma Nascente", Color(0xFF00BFA5), Color(0xFF64FFDA)), // Alma (Ciano/Etéreo)
-        YomotsuTitle(150, "Soberano", Color(0xFFFFC400), Color(0xFFFFEA00)), // Ouro Brilhante
-        YomotsuTitle(160, "Monarca", Color(0xFF607D8B), Color(0xFFCFD8DC)), // Prata Nobre
-        YomotsuTitle(170, "Shinigami", Color(0xFF212121), Color(0xFFB71C1C)), // Preto a Carmesim
-        YomotsuTitle(180, "Imortal", Color(0xFFE040FB), Color(0xFF7C4DFF)), // Roxo Magia Mística
-        YomotsuTitle(190, "Deus Marcial", Color(0xFFBF360C), Color(0xFFFF6D00)), // Fogo Dourado Divino
-        YomotsuTitle(200, "Izanagi do Submundo", Color(0xFF000000), Color(0xFF1DE9B6)) // Cósmico: Preto ao Ciano Neon
     )
 
     /**
