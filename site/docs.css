@@ -1,11 +1,11 @@
 :root {
-  --deep: #0a2022;
+  --deep: #000000;
   --panel: #102f31;
-  --coral: #cf654b;
-  --sand: #e2b78d;
-  --paper: #f4ecdf;
-  --muted: #adc0bd;
-  --line: rgba(226, 183, 141, .2);
+  --coral: #ff00ff;
+  --sand: #00f0ff;
+  --paper: #ffffff;
+  --muted: #a397b9;
+  --line: rgba(255, 0, 255, 0.2);
 }
 
 * { box-sizing: border-box; }
