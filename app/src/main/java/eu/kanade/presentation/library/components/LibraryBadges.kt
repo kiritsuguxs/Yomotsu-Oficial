@@ -106,7 +106,7 @@ internal fun LanguageBadge(
                 if (flag.isNotEmpty()) {
                     Text(
                         text = flag,
-                        fontSize = 12.sp,
+                        fontSize = 16.sp,
                     )
                 }
             }
@@ -115,7 +115,7 @@ internal fun LanguageBadge(
             if (flag.isNotEmpty()) {
                 Text(
                     text = flag,
-                    fontSize = 12.sp,
+                    fontSize = 16.sp,
                     modifier = Modifier.padding(2.dp)
                 )
             }
