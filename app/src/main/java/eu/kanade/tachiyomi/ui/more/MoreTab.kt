@@ -67,7 +67,7 @@ data object MoreTab : Tab {
             onIncognitoModeChange = { viewModel.incognitoMode = it },
             onClickDownloadQueue = { navigator.push(DownloadQueueScreen) },
             onClickCategories = { navigator.push(CategoryScreen()) },
-            onClickStats = { navigator.push(StatsScreen()) },
+            onClickStats = { navigator.push(eu.kanade.tachiyomi.ui.profile.YomotsuProfileScreen()) },
             onClickDataAndStorage = { navigator.push(SettingsScreen(SettingsScreen.Destination.DataAndStorage)) },
             onClickSettings = { navigator.push(SettingsScreen()) },
             onClickAbout = { navigator.push(SettingsScreen(SettingsScreen.Destination.About)) },

@@ -104,7 +104,7 @@ fun MoreScreen(
             }
             item {
                 TextPreferenceWidget(
-                    title = stringResource(MR.strings.label_stats),
+                    title = "Perfil Yomotsu",
                     icon = Icons.Outlined.QueryStats,
                     onPreferenceClick = onClickStats,
                 )
