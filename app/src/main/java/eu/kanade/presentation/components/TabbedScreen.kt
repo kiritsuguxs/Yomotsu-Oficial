@@ -63,31 +63,45 @@ fun TabbedScreen(
             ),
         ) {
             if (tabs.size > 3) {
-                PrimaryScrollableTabRow(
+                androidx.compose.material3.ScrollableTabRow(
                     selectedTabIndex = state.currentPage,
                     modifier = Modifier.zIndex(1f),
                     edgePadding = 0.dp,
+                    indicator = {},
+                    divider = {},
                 ) {
                     tabs.forEachIndexed { index, tab ->
                         Tab(
                             selected = state.currentPage == index,
                             onClick = { scope.launch { state.animateScrollToPage(index) } },
-                            text = { TabText(text = stringResource(tab.titleRes), badgeCount = tab.badgeNumber) },
+                            selectedContentColor = MaterialTheme.colorScheme.onPrimary,
                             unselectedContentColor = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .padding(horizontal = 4.dp, vertical = 8.dp)
+                                .androidx.compose.ui.draw.clip(androidx.compose.foundation.shape.CircleShape)
+                                .androidx.compose.foundation.background(if (state.currentPage == index) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent),
+                            text = { TabText(text = stringResource(tab.titleRes), badgeCount = tab.badgeNumber) },
                         )
                     }
                 }
             } else {
-                PrimaryTabRow(
+                androidx.compose.material3.TabRow(
                     selectedTabIndex = state.currentPage,
                     modifier = Modifier.zIndex(1f),
+                    indicator = {},
+                    divider = {},
                 ) {
                     tabs.forEachIndexed { index, tab ->
                         Tab(
                             selected = state.currentPage == index,
                             onClick = { scope.launch { state.animateScrollToPage(index) } },
-                            text = { TabText(text = stringResource(tab.titleRes), badgeCount = tab.badgeNumber) },
+                            selectedContentColor = MaterialTheme.colorScheme.onPrimary,
                             unselectedContentColor = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .padding(horizontal = 4.dp, vertical = 8.dp)
+                                .androidx.compose.ui.draw.clip(androidx.compose.foundation.shape.CircleShape)
+                                .androidx.compose.foundation.background(if (state.currentPage == index) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent),
+                            text = { TabText(text = stringResource(tab.titleRes), badgeCount = tab.badgeNumber) },
                         )
                     }
                 }
