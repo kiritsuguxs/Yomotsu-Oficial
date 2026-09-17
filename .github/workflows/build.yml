@@ -6,6 +6,7 @@ on:
       - feature/telegram-library
       - feature/yomotsu-profile
       - main
+      - ui-minimalista
     paths:
       - '**'
       - '!**.md'
