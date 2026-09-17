@@ -150,6 +150,13 @@ O workflow de lançamento lê automaticamente a seção correspondente à versã
 - Segunda novidade.
 -->
 
+## 0.20.4-Y31
+- **Sistema de Progressão:** Adicionado um Perfil interativo com Sistema de Níveis e XP (ganho ao ler e baixar capítulos).
+- **Conquistas e Troféus:** 100 conquistas únicas categorizadas em Bronze, Prata, Ouro e Rubi baseadas no histórico do leitor.
+- **Títulos Equipáveis:** Desbloqueie títulos sombrios e equipe-os no seu perfil conforme sobe de nível.
+- **Identidade e Imagens:** Troque seu Nickname, escolha um Avatar e edite o Banner do perfil com cache permanente no app.
+- **Notificações:** Alertas e notificações nativas do Android ao desbloquear conquistas durante leituras ou em segundo plano.
+
 ## 0.20.4-Y30
 - **Nova Funcionalidade:** Introdução da **Biblioteca Telegram**, permitindo que o Yomotsu use a Nuvem do Telegram como fonte ilimitada, privada e gratuita para armazenamento e leitura de obras, integrando com o Leitor Contínuo.
 - **Melhoria:** Correção da navegação inter-capítulos da Nuvem Telegram, separando o cache de descompressão utilizando hashes individuais, resolvendo bugs de mesclagem de páginas e imagens.
