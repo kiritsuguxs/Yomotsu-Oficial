@@ -79,7 +79,7 @@ import uy.kohesive.injekt.api.get
 object SettingsDataScreen : SearchableSettings {
 
     val restorePreferenceKeyString = MR.strings.label_backup
-    const val HELP_URL = "https://kiritsuguxs.github.io/Yomotsu/help.html#storage"
+    const val HELP_URL = "https://kiritsuguxs.github.io/Yomotsu-Oficial/help.html#storage"
 
     @ReadOnlyComposable
     @Composable

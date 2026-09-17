@@ -148,7 +148,7 @@ object AboutScreen : Screen() {
                     TextPreferenceWidget(
                         title = stringResource(MR.strings.privacy_policy),
                         onPreferenceClick = {
-                            uriHandler.openUri("https://kiritsuguxs.github.io/Yomotsu/privacy.html")
+                            uriHandler.openUri("https://kiritsuguxs.github.io/Yomotsu-Oficial/privacy.html")
                         },
                     )
                 }

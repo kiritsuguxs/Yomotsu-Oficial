@@ -56,7 +56,7 @@ internal class GuidesStep(
     }
 }
 
-const val GETTING_STARTED_URL = "https://kiritsuguxs.github.io/Yomotsu/help.html#getting-started"
+const val GETTING_STARTED_URL = "https://kiritsuguxs.github.io/Yomotsu-Oficial/help.html#getting-started"
 
 @PreviewLightDark
 @Composable
