@@ -95,7 +95,11 @@ class UserProfileViewModel(
 
     fun setAvatarUri(uriString: String?) {
         viewModelScope.launchIO {
-            val localPath = copyUriToLocal(uriString, "avatar.jpg")
+            val oldUri = profilePreferences.getAvatarUri()
+            if (oldUri != null && oldUri.contains("profile_images")) {
+                try { File(oldUri).delete() } catch (e: Exception) {}
+            }
+            val localPath = copyUriToLocal(uriString, "avatar_${System.currentTimeMillis()}.jpg")
             profilePreferences.setAvatarUri(localPath ?: uriString)
             loadProfile()
         }
@@ -108,7 +112,11 @@ class UserProfileViewModel(
 
     fun setBannerUri(uriString: String?) {
         viewModelScope.launchIO {
-            val localPath = copyUriToLocal(uriString, "banner.jpg")
+            val oldUri = profilePreferences.getBannerUri()
+            if (oldUri != null && oldUri.contains("profile_images")) {
+                try { File(oldUri).delete() } catch (e: Exception) {}
+            }
+            val localPath = copyUriToLocal(uriString, "banner_${System.currentTimeMillis()}.jpg")
             profilePreferences.setBannerUri(localPath ?: uriString)
             loadProfile()
         }
