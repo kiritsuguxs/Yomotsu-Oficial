@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.ui.profile
 
+import android.app.Application
+import android.net.Uri
 import androidx.compose.ui.util.fastDistinctBy
 import androidx.lifecycle.viewModelScope
 import eu.kanade.tachiyomi.data.download.DownloadManager
@@ -8,6 +10,8 @@ import eu.kanade.tachiyomi.data.profile.YomotsuAchievement
 import eu.kanade.tachiyomi.data.profile.YomotsuAchievementManager
 import eu.kanade.tachiyomi.data.profile.YomotsuLevelManager
 import eu.kanade.tachiyomi.data.profile.YomotsuTitle
+import java.io.File
+import java.io.FileOutputStream
 import kotlinx.coroutines.flow.update
 import mihon.core.viewmodel.StateViewModel
 import tachiyomi.core.common.util.lang.launchIO
@@ -34,7 +38,8 @@ sealed interface UserProfileState {
 class UserProfileViewModel(
     private val downloadManager: DownloadManager = Injekt.get(),
     private val getLibraryManga: GetLibraryManga = Injekt.get(),
-    private val profilePreferences: ProfilePreferences = ProfilePreferences()
+    private val profilePreferences: ProfilePreferences = ProfilePreferences(),
+    private val context: Application = Injekt.get()
 ) : StateViewModel<UserProfileState>(UserProfileState.Loading) {
 
     init {
@@ -88,9 +93,12 @@ class UserProfileViewModel(
         loadProfile()
     }
 
-    fun setAvatarUri(uri: String?) {
-        profilePreferences.setAvatarUri(uri)
-        loadProfile()
+    fun setAvatarUri(uriString: String?) {
+        viewModelScope.launchIO {
+            val localPath = copyUriToLocal(uriString, "avatar.jpg")
+            profilePreferences.setAvatarUri(localPath ?: uriString)
+            loadProfile()
+        }
     }
 
     fun setUsername(name: String) {
@@ -98,8 +106,32 @@ class UserProfileViewModel(
         loadProfile()
     }
 
-    fun setBannerUri(uri: String?) {
-        profilePreferences.setBannerUri(uri)
-        loadProfile()
+    fun setBannerUri(uriString: String?) {
+        viewModelScope.launchIO {
+            val localPath = copyUriToLocal(uriString, "banner.jpg")
+            profilePreferences.setBannerUri(localPath ?: uriString)
+            loadProfile()
+        }
+    }
+
+    private fun copyUriToLocal(uriString: String?, filename: String): String? {
+        if (uriString == null) return null
+        if (!uriString.startsWith("content://")) return uriString
+
+        return try {
+            val uri = Uri.parse(uriString)
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+            val profileDir = File(context.filesDir, "profile_images")
+            if (!profileDir.exists()) profileDir.mkdirs()
+            val destFile = File(profileDir, filename)
+            
+            FileOutputStream(destFile).use { output ->
+                inputStream.copyTo(output)
+            }
+            destFile.absolutePath
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 }

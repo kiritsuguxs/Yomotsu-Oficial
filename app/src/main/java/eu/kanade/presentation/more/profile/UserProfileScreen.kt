@@ -180,9 +180,9 @@ fun UserProfileScreen(
         ) {
             // BANNER E AVATAR
             item {
-                Box(modifier = Modifier.fillMaxWidth().height(240.dp)) {
+                Box(modifier = Modifier.fillMaxWidth().height(280.dp)) {
                     // BANNER
-                    Box(modifier = Modifier.fillMaxWidth().height(160.dp).clickable { bannerLauncher.launch("image/*") }) {
+                    Box(modifier = Modifier.fillMaxWidth().height(200.dp).clickable { bannerLauncher.launch("image/*") }) {
                         if (bannerUri != null) {
                             AsyncImage(
                                 model = ImageRequest.Builder(context).data(Uri.parse(bannerUri)).crossfade(true).build(),
