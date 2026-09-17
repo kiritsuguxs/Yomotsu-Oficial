@@ -63,7 +63,7 @@ fun UserProfileScreen(
     val currentLevel = YomotsuLevelManager.calculateLevelFromXp(totalXp)
     val currentLevelXp = YomotsuLevelManager.getXpRequiredForLevel(currentLevel)
     val nextLevelXp = YomotsuLevelManager.getXpRequiredForLevel(currentLevel + 1)
-    
+
     val progress = if (nextLevelXp > currentLevelXp) {
         (totalXp - currentLevelXp).toFloat() / (nextLevelXp - currentLevelXp).toFloat()
     } else {
@@ -146,7 +146,7 @@ fun UserProfileScreen(
                             Icon(Icons.Outlined.Edit, contentDescription = "Editar Banner", tint = Color.White.copy(alpha = 0.7f))
                         }
                     }
-                    
+
                     // AVATAR
                     Box(
                         modifier = Modifier
@@ -266,7 +266,7 @@ fun AchievementItem(achievement: YomotsuAchievement, isUnlocked: Boolean) {
     val icon = if (isUnlocked) achievement.category.icon else Icons.Outlined.Lock
 
     val modifier = Modifier.fillMaxWidth()
-    
+
     if (isUnlocked && achievement.tier.isGradient) {
         // Conquistas Hardcore (Tier Rubi) com borda gradiente neon!
         val gradient = Brush.horizontalGradient(listOf(achievement.tier.color, achievement.tier.colorEnd))

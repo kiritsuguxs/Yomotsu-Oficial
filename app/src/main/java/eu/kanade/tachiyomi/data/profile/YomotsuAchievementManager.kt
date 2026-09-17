@@ -34,7 +34,7 @@ data class YomotsuAchievement(
 )
 
 object YomotsuAchievementManager {
-    
+
     val ALL_ACHIEVEMENTS = listOf(
         YomotsuAchievement("read_1", "Leitor Nível 1", "Leia 1 capítulos.", AchievementCategory.READING, Tier.BRONZE) { r, _, _ -> r >= 1 },
         YomotsuAchievement("read_10", "Leitor Nível 2", "Leia 10 capítulos.", AchievementCategory.READING, Tier.BRONZE) { r, _, _ -> r >= 10 },

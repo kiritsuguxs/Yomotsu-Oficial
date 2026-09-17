@@ -33,12 +33,12 @@ object ProfileChecker {
         if (newlyUnlocked.isNotEmpty()) {
             val notifier = ProfileNotifier(context)
             val updatedSet = notifiedSet.toMutableSet()
-            
+
             for (achievement in newlyUnlocked) {
                 notifier.showAchievementUnlocked(achievement)
                 updatedSet.add(achievement.id)
             }
-            
+
             prefs.edit().putStringSet("notified_achievements", updatedSet).apply()
         }
     }

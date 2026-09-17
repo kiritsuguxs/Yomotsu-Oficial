@@ -50,15 +50,15 @@ class UserProfileViewModel(
 
             val currentLevel = YomotsuLevelManager.calculateLevelFromXp(totalXp)
             val unlockedTitles = YomotsuLevelManager.getUnlockedTitles(currentLevel)
-            
+
             val savedTitleId = profilePreferences.getEquippedTitleId()
             val equippedTitle = unlockedTitles.find { it.name == savedTitleId } ?: unlockedTitles.firstOrNull() ?: YomotsuLevelManager.ALL_TITLES.first()
 
-            val unlocked = YomotsuAchievementManager.ALL_ACHIEVEMENTS.filter { 
-                it.isUnlocked(readChapterCount, totalMangas, downloadCount) 
+            val unlocked = YomotsuAchievementManager.ALL_ACHIEVEMENTS.filter {
+                it.isUnlocked(readChapterCount, totalMangas, downloadCount)
             }
-            val locked = YomotsuAchievementManager.ALL_ACHIEVEMENTS.filterNot { 
-                it.isUnlocked(readChapterCount, totalMangas, downloadCount) 
+            val locked = YomotsuAchievementManager.ALL_ACHIEVEMENTS.filterNot {
+                it.isUnlocked(readChapterCount, totalMangas, downloadCount)
             }
 
             mutableState.update {
