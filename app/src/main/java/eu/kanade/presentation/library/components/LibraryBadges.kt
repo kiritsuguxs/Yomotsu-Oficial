@@ -1,6 +1,17 @@
 package eu.kanade.presentation.library.components
 
 import androidx.compose.foundation.layout.Column
+
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +45,31 @@ internal fun UnreadBadge(count: Long) {
     }
 }
 
+
+private fun getFlagEmoji(language: String): String {
+    return when (language.lowercase()) {
+        "pt-br", "pt" -> "🇧🇷"
+        "en" -> "🇺🇸"
+        "es", "es-es" -> "🇪🇸"
+        "es-la" -> "🇲🇽"
+        "ja" -> "🇯🇵"
+        "ko" -> "🇰🇷"
+        "zh", "zh-hans", "zh-hant" -> "🇨🇳"
+        "fr" -> "🇫🇷"
+        "de" -> "🇩🇪"
+        "it" -> "🇮🇹"
+        "ru" -> "🇷🇺"
+        "id" -> "🇮🇩"
+        "vi" -> "🇻🇳"
+        "th" -> "🇹🇭"
+        "ar" -> "🇸🇦"
+        "tr" -> "🇹🇷"
+        "pl" -> "🇵🇱"
+        "ro" -> "🇷🇴"
+        else -> ""
+    }
+}
+
 @Composable
 internal fun LanguageBadge(
     isLocal: Boolean,
@@ -55,12 +91,25 @@ internal fun LanguageBadge(
         }
         
         if (icon != null) {
-            Badge(
-                imageBitmap = icon,
-                text = sourceLanguage.uppercase(),
-                color = MaterialTheme.colorScheme.tertiary,
-                textColor = MaterialTheme.colorScheme.onTertiary,
-            )
+            val flag = getFlagEmoji(sourceLanguage)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(2.dp)
+            ) {
+                Image(
+                    bitmap = icon,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                )
+                if (flag.isNotEmpty()) {
+                    Text(
+                        text = flag,
+                        fontSize = 12.sp,
+                    )
+                }
+            }
         } else {
             Badge(
                 text = sourceLanguage.uppercase(),
