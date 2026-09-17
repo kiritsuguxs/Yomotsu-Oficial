@@ -2,11 +2,7 @@ name: Build & Test
 on:
   push:
     branches:
-      - feature/novels
-      - feature/telegram-library
-      - feature/yomotsu-profile
-      - main
-      - ui-minimalista
+      - '**'
     paths:
       - '**'
       - '!**.md'
