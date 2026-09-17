@@ -150,6 +150,10 @@ O workflow de lançamento lê automaticamente a seção correspondente à versã
 - Segunda novidade.
 -->
 
+## 0.20.4-Y32
+- **Correção de Links:** Corrigido o erro 404 ao tentar abrir a Política de Privacidade e a Ajuda de dentro do aplicativo (links agora apontam para o novo repositório Yomotsu-Oficial).
+- **Sistema de Progressão:** (Herdado da Y31) Adicionado Perfil interativo com Sistema de Níveis, XP (ganho ao ler e baixar capítulos), 100 conquistas únicas, títulos equipáveis e cache permanente para Avatares e Banners.
+
 ## 0.20.4-Y31
 - **Sistema de Progressão:** Adicionado um Perfil interativo com Sistema de Níveis e XP (ganho ao ler e baixar capítulos).
 - **Conquistas e Troféus:** 100 conquistas únicas categorizadas em Bronze, Prata, Ouro e Rubi baseadas no histórico do leitor.
