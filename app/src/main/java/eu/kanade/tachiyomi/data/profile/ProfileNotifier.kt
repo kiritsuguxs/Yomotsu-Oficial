@@ -14,6 +14,7 @@ import eu.kanade.tachiyomi.ui.main.MainActivity
 
 class ProfileNotifier(private val context: Context) {
 
+    @android.annotation.SuppressLint("MissingPermission")
     fun showAchievementUnlocked(achievement: YomotsuAchievement) {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             return

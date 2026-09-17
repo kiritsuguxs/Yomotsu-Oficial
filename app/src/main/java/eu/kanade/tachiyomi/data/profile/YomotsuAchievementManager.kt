@@ -1,13 +1,13 @@
 package eu.kanade.tachiyomi.data.profile
 
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.LibraryBooks
-import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 
 enum class AchievementCategory(val icon: ImageVector) {
     READING(Icons.Outlined.MenuBook),
