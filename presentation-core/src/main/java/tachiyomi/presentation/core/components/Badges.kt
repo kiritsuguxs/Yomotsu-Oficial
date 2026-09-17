@@ -99,3 +99,39 @@ fun Badge(
         style = MaterialTheme.typography.bodySmall,
     )
 }
+
+@Composable
+fun Badge(
+    imageBitmap: androidx.compose.ui.graphics.ImageBitmap?,
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.secondary,
+    textColor: Color = MaterialTheme.colorScheme.onSecondary,
+    shape: Shape = RectangleShape,
+) {
+    Row(
+        modifier = modifier
+            .clip(shape)
+            .background(color)
+            .padding(horizontal = 3.dp, vertical = 1.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        if (imageBitmap != null) {
+            androidx.compose.foundation.Image(
+                bitmap = imageBitmap,
+                contentDescription = null,
+                modifier = Modifier
+                    .padding(end = 2.dp)
+                    .androidx.compose.foundation.layout.size(12.dp)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
+            )
+        }
+        Text(
+            text = text,
+            color = textColor,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+}

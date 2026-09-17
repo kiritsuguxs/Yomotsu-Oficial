@@ -25,6 +25,11 @@ import eu.kanade.presentation.theme.colorscheme.TidalWaveColorScheme
 import eu.kanade.presentation.theme.colorscheme.TokyoNightColorScheme
 import eu.kanade.presentation.theme.colorscheme.YinYangColorScheme
 import eu.kanade.presentation.theme.colorscheme.YotsubaColorScheme
+import eu.kanade.presentation.theme.colorscheme.OnyxColorScheme
+import eu.kanade.presentation.theme.colorscheme.NeonColorScheme
+import eu.kanade.presentation.theme.colorscheme.TwilightColorScheme
+import eu.kanade.presentation.theme.colorscheme.OrchidColorScheme
+import eu.kanade.presentation.theme.colorscheme.AutumnColorScheme
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -103,4 +108,9 @@ private val colorSchemes: Map<AppTheme, BaseColorScheme> = mapOf(
     AppTheme.TIDAL_WAVE to TidalWaveColorScheme,
     AppTheme.YINYANG to YinYangColorScheme,
     AppTheme.YOTSUBA to YotsubaColorScheme,
+    AppTheme.ONYX to OnyxColorScheme,
+    AppTheme.NEON to NeonColorScheme,
+    AppTheme.TWILIGHT to TwilightColorScheme,
+    AppTheme.ORCHID to OrchidColorScheme,
+    AppTheme.AUTUMN to AutumnColorScheme,
 )

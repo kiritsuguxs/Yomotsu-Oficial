@@ -31,6 +31,7 @@ internal fun UnreadBadge(count: Long) {
 internal fun LanguageBadge(
     isLocal: Boolean,
     sourceLanguage: String,
+    sourceId: Long? = null,
 ) {
     if (isLocal) {
         Badge(
@@ -39,11 +40,24 @@ internal fun LanguageBadge(
             iconColor = MaterialTheme.colorScheme.onTertiary,
         )
     } else if (sourceLanguage.isNotEmpty()) {
-        Badge(
-            text = sourceLanguage.uppercase(),
-            color = MaterialTheme.colorScheme.tertiary,
-            textColor = MaterialTheme.colorScheme.onTertiary,
-        )
+        val sourceManager = uy.kohesive.injekt.Injekt.get<tachiyomi.domain.source.service.SourceManager>()
+        val source = sourceId?.let { sourceManager.getOrStub(it) }
+        val icon = source?.let { eu.kanade.domain.source.model.icon(it) }
+        
+        if (icon != null) {
+            Badge(
+                imageBitmap = icon,
+                text = sourceLanguage.uppercase(),
+                color = MaterialTheme.colorScheme.tertiary,
+                textColor = MaterialTheme.colorScheme.onTertiary,
+            )
+        } else {
+            Badge(
+                text = sourceLanguage.uppercase(),
+                color = MaterialTheme.colorScheme.tertiary,
+                textColor = MaterialTheme.colorScheme.onTertiary,
+            )
+        }
     }
 }
 

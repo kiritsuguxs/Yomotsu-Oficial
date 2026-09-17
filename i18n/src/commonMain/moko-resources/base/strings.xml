@@ -251,6 +251,11 @@
     <string name="theme_tealturquoise">Teal &amp; Turquoise</string>
     <string name="theme_yinyang">Yin &amp; Yang</string>
     <string name="theme_yotsuba">Yotsuba</string>
+    <string name="theme_onyx">Ônix</string>
+    <string name="theme_neon">Neon</string>
+    <string name="theme_twilight">Crepúsculo</string>
+    <string name="theme_orchid">Orquídea</string>
+    <string name="theme_autumn">Outono</string>
     <string name="theme_tidalwave">Tidal Wave</string>
     <string name="pref_dark_theme_pure_black">Pure black dark mode</string>
     <string name="pref_relative_format">Relative timestamps</string>
