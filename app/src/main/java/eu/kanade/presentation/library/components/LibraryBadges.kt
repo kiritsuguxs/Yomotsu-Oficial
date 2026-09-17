@@ -8,7 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import eu.kanade.presentation.theme.TachiyomiPreviewTheme
 import tachiyomi.presentation.core.components.Badge
-import eu.kanade.domain.source.model.icon
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
+import eu.kanade.tachiyomi.extension.ExtensionManager
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -45,9 +47,12 @@ internal fun LanguageBadge(
             iconColor = MaterialTheme.colorScheme.onTertiary,
         )
     } else if (sourceLanguage.isNotEmpty()) {
-        val sourceManager = uy.kohesive.injekt.Injekt.get<tachiyomi.domain.source.service.SourceManager>()
-        val source = sourceId?.let { sourceManager.getOrStub(it) }
-        val icon = source?.icon
+        val icon = try {
+            val extensionManager = Injekt.get<ExtensionManager>()
+            sourceId?.let { extensionManager.getAppIconForSource(it)?.toBitmap()?.asImageBitmap() }
+        } catch (e: Throwable) {
+            null
+        }
         
         if (icon != null) {
             Badge(
