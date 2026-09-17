@@ -17,7 +17,28 @@ object YomotsuLevelManager {
 
     // Lista de Títulos baseada na evolução do Nível 1 ao 200
     val ALL_TITLES = listOf(
-        YomotsuTitle(1, "Mortal Comum", Color(0xFF9E9E9E), Color(0xFFFFFFFF)),
+        YomotsuTitle(1, "Mortal Comum", Color(0xFF9E9E9E), Color(0xFFBDBDBD)), // Cinza suave
+        YomotsuTitle(10, "Desperto", Color(0xFF8D6E63), Color(0xFFA1887F)), // Marrom/Terra minimalista
+        YomotsuTitle(20, "Caçador Novato", Color(0xFF78909C), Color(0xFF90A4AE)), // Azul metálico suave
+        YomotsuTitle(30, "Discípulo Externo", Color(0xFF5D4037), Color(0xFF795548)), // Madeira/Bronze escuro
+        YomotsuTitle(40, "Explorador do Abismo", Color(0xFF263238), Color(0xFF37474F)), // Abismo (Quase preto para chumbo)
+        YomotsuTitle(50, "Caçador Rank C", Color(0xFF455A64), Color(0xFF546E7A)), // Aço escuro
+        YomotsuTitle(60, "Especialista Marcial", Color(0xFF827717), Color(0xFF9E9D24)), // Musgo/Verde envelhecido
+        YomotsuTitle(70, "Caçador Rank B", Color(0xFF006064), Color(0xFF00838F)), // Petróleo escuro
+        YomotsuTitle(80, "Mestre das Sombras", Color(0xFF121212), Color(0xFF424242)), // Sombras (Preto absoluto para grafite)
+        YomotsuTitle(90, "Caçador Rank A", Color(0xFF880E4F), Color(0xFFAD1457)), // Vinho/Bordô elegante
+        YomotsuTitle(100, "Formação do Núcleo", Color(0xFFB71C1C), Color(0xFFC62828)), // Vermelho sangue puro e fechado (Zero neon)
+        YomotsuTitle(110, "Senhor de Domínio", Color(0xFFF57F17), Color(0xFFF9A825)), // Ouro envelhecido
+        YomotsuTitle(120, "Caçador Rank S", Color(0xFF1A237E), Color(0xFF283593)), // Azul Marinho Profundo
+        YomotsuTitle(130, "Caçador Nacional", Color(0xFF004D40), Color(0xFF00695C)), // Verde Esmeralda escuro
+        YomotsuTitle(140, "Alma Nascente", Color(0xFFE0E0E0), Color(0xFFFFFFFF)), // Branco etéreo limpo
+        YomotsuTitle(150, "Soberano", Color(0xFFFFD54F), Color(0xFFFFE082)), // Ouro pálido e nobre
+        YomotsuTitle(160, "Monarca", Color(0xFFCFD8DC), Color(0xFFECEFF1)), // Prata polida clara
+        YomotsuTitle(170, "Shinigami", Color(0xFF212121), Color(0xFF616161)), // Escuridão e névoa
+        YomotsuTitle(180, "Imortal", Color(0xFF311B92), Color(0xFF4527A0)), // Roxo imperial escuro
+        YomotsuTitle(190, "Deus Marcial", Color(0xFFBF360C), Color(0xFFD84315)), // Fogo profundo (laranja escuro)
+        YomotsuTitle(200, "Izanagi do Submundo", Color(0xFF000000), Color(0xFF1A1A1A)) // O Vazio Absoluto (Preto)
+    ), Color(0xFFFFFFFF)),
         YomotsuTitle(10, "Desperto", Color(0xFFB0BEC5), Color(0xFFE0E0E0)),
         YomotsuTitle(20, "Caçador Novato", Color(0xFF81C784), Color(0xFFAED581)),
         YomotsuTitle(30, "Discípulo Externo", Color(0xFF4FC3F7), Color(0xFF81D4FA)),
