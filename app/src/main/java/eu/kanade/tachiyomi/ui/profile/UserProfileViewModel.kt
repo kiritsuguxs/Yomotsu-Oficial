@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.update
 import mihon.core.viewmodel.StateViewModel
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.domain.manga.interactor.GetLibraryManga
-import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.Injekt
 
 sealed interface UserProfileState {
     data object Loading : UserProfileState

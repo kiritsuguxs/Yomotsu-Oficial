@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.compose.ui.util.fastDistinctBy
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import tachiyomi.domain.manga.interactor.GetLibraryManga
-import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.Injekt
 
 object ProfileChecker {
 

@@ -3,8 +3,8 @@ package eu.kanade.tachiyomi.data.profile
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
-import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.Injekt
 
 class ProfilePreferences(context: Application = Injekt.get()) {
     private val prefs: SharedPreferences = context.getSharedPreferences("yomotsu_profile_prefs", Context.MODE_PRIVATE)
