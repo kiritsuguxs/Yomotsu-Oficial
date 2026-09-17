@@ -350,7 +350,7 @@ class Downloader(
             // Se puxou com sucesso da nuvem, finge que acabou de baixar e encerra o fluxo!
             cache.addChapter(chapterDirname, mangaDir, download.manga)
             download.status = Download.State.DOWNLOADED
-            kotlinx.coroutines.GlobalScope.launch { eu.kanade.tachiyomi.data.profile.ProfileChecker.checkAchievements(context) }
+            scope.launch { eu.kanade.tachiyomi.data.profile.ProfileChecker.checkAchievements(context) }
             return
         }
 
@@ -439,8 +439,8 @@ class Downloader(
             DiskUtil.createNoMediaFile(tmpDir, context)
 
             download.status = Download.State.DOWNLOADED
-            kotlinx.coroutines.GlobalScope.launch { eu.kanade.tachiyomi.data.profile.ProfileChecker.checkAchievements(context) }
-            
+            scope.launch { eu.kanade.tachiyomi.data.profile.ProfileChecker.checkAchievements(context) }
+
             val chapterFile = mangaDir.findFile("$chapterDirname.cbz") ?: mangaDir.findFile(chapterDirname)
             if (chapterFile != null) {
                 scope.launch {
