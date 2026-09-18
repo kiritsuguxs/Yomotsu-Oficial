@@ -1,5 +1,7 @@
 <div align="center">
 
+🇧🇷 Português | [🇺🇸 English](README_EN.md) | [🇪🇸 Español](README_ES.md)
+
 <img src="./app/src/main/res/drawable-nodpi/ic_yomotsu_logo.png" alt="Logo do Yomotsu" width="130"/>
 
 # Yomotsu
@@ -149,6 +151,12 @@ A versão oficial mais recente pronta para instalação está sempre disponível
 * **Sistema Operacional:** Android 8.0 (Oreo) ou superior.
 * **Permissões:** Acesso a notificações (para status de downloads e backups) e armazenamento.
 * **Conexão:** Para os tradutores de IA na nuvem (DeepL, Gemini, OpenRouter) e para a Nuvem Telegram, é necessária conexão com a internet.
+
+---
+
+## ⚖️ Aviso Legal
+
+O Yomotsu é um software de código aberto e sem fins lucrativos, desenvolvido exclusivamente como um leitor de arquivos locais e cliente de integração pessoal de nuvem. **O Yomotsu não hospeda, não distribui e não possui afiliação com serviços que fornecem materiais protegidos por direitos autorais.** O aplicativo não inclui extensões ou catálogos de obras. O usuário é o único responsável por todo o conteúdo que insere, traduz ou faz backup usando esta ferramenta.
 
 ---
 
