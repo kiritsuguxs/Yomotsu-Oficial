@@ -3,6 +3,17 @@
 Este arquivo contém somente as mudanças importantes para quem usa o aplicativo.
 O workflow de lançamento lê automaticamente a seção correspondente à versão publicada.
 
+## 0.20.4-Y36
+**🚀 Mega Atualização de Performance e Tradução:**
+- **PaddleOCR Turbinado e Sem Fechamentos (Otimização de RAM):** O motor de leitura agora consome METADE da memória RAM! Ler páginas longas de Webtoons não vai mais fazer o aplicativo fechar sozinho "do nada". O PaddleOCR é oficialmente o Leitor definitivo do app.
+- **Leitura Lisa como Manteiga (Otimização de Zoom):** Transferimos a renderização dos balões traduzidos para a Placa de Vídeo (GPU) do celular. Agora você pode dar zoom-in, rolar e navegar nas páginas sem o aplicativo dar aquelas engasgadas chatas.
+- **Fim das Rebarbas em Inglês:** A máscara (borracha) de limpeza do app ficou mais inteligente. Ela agora usa dilatação dinâmica para "engolir" completamente as sujeirinhas e bordas do texto original que antes ficavam vazando por trás da tradução.
+- **Diagnóstico Transparente:** Antes, se a IA se recusasse a traduzir por causa de linguagem pesada, o app apenas dizia "Resposta Inválida". Agora nós escancaramos o erro mostrando o texto exato do bloqueio, revelando a verdadeira causa da falha.
+- **Reconexão Automática Blindada:** A internet oscilou ou o servidor engasgou? O Yomotsu agora possui um sistema de *Retrys* que tenta reconectar sozinho, garantindo que nenhum balão fique para trás.
+
+**💡 Dica da Comunidade:**
+- Para aproveitar o PaddleOCR ao máximo e ler conteúdos com ação pesada ou conteúdo sensível (+18) sem tomar bloqueio do Google, recomendamos alterar o Motor de Tradução para o **OpenRouter** e usar IAs sem filtros (como Llama 3.3 ou Qwen 2.5)!
+
 ## 0.20.4-Y35
 **✨ Novos Recursos:**
 - **Sistema de Insígnias Transparente:** Substituição dos antigos rótulos de texto opacos por insígnias minimalistas com fundo transparente. O design foi redesenhado para garantir total destaque às capas dos mangás.
