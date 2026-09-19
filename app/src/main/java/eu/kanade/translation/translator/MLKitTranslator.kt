@@ -94,14 +94,14 @@ class MLKitTranslator(
                 parsedTranslations.forEach { (index, value) -> translations[index] = value }
             } else {
                 chunk.forEach { item ->
-                    translations[item.index] = translator.translate(item.value.await())
+                    translations[item.index] = translator.translate(item.value).await()
                 }
             }
         }
 
         findSuspiciousDuplicateTranslationIndices(normalizedTexts, translations).forEach { index ->
             val individualTranslation = runCatching {
-                translator.translate(normalizedTexts[index].await())
+                translator.translate(normalizedTexts[index]).await()
             }.getOrNull()
             if (!individualTranslation.isNullOrBlank()) {
                 translations[index] = individualTranslation
