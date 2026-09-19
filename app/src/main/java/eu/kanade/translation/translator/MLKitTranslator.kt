@@ -70,7 +70,7 @@ class MLKitTranslator(
         }
     }
 
-    private fun translateBlocksWithContext(
+    private suspend fun translateBlocksWithContext(
         texts: List<String>,
         sourceTextsForPostEdit: List<String> = texts,
     ): List<String> {
