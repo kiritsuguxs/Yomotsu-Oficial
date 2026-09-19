@@ -84,7 +84,7 @@ class MLKitTranslator(
 
         chunks.forEach { chunk ->
             val contextualResult = runCatching {
-                translator.translate(buildMarkedMachineTranslationText(chunk.await()))
+                translator.translate(buildMarkedMachineTranslationText(chunk)).await()
             }.getOrNull()
             val parsedTranslations = contextualResult?.let {
                 parseMarkedMachineTranslations(it, chunk)
