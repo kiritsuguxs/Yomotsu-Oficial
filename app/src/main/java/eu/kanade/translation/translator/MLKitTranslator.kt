@@ -1,6 +1,6 @@
 package eu.kanade.translation.translator
 
-import com.google.android.gms.tasks.Tasks
+import kotlinx.coroutines.tasks.await
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.nl.translate.TranslateLanguage
 import com.google.mlkit.nl.translate.Translation
@@ -40,7 +40,7 @@ class MLKitTranslator(
         val translations = if (cached.all { it != null }) {
             cached.map { it.orEmpty() }
         } else {
-            Tasks.await(translator.downloadModelIfNeeded(conditions))
+            translator.downloadModelIfNeeded(conditions).await()
             translateBlocksWithContext(
                 texts = preparedTexts.map { it.textForTranslation },
                 sourceTextsForPostEdit = normalizedTexts,
@@ -70,7 +70,7 @@ class MLKitTranslator(
         }
     }
 
-    private fun translateBlocksWithContext(
+    private suspend fun translateBlocksWithContext(
         texts: List<String>,
         sourceTextsForPostEdit: List<String> = texts,
     ): List<String> {
@@ -84,7 +84,7 @@ class MLKitTranslator(
 
         chunks.forEach { chunk ->
             val contextualResult = runCatching {
-                Tasks.await(translator.translate(buildMarkedMachineTranslationText(chunk)))
+                translator.translate(buildMarkedMachineTranslationText(chunk)).await()
             }.getOrNull()
             val parsedTranslations = contextualResult?.let {
                 parseMarkedMachineTranslations(it, chunk)
@@ -94,14 +94,14 @@ class MLKitTranslator(
                 parsedTranslations.forEach { (index, value) -> translations[index] = value }
             } else {
                 chunk.forEach { item ->
-                    translations[item.index] = Tasks.await(translator.translate(item.value))
+                    translations[item.index] = translator.translate(item.value).await()
                 }
             }
         }
 
         findSuspiciousDuplicateTranslationIndices(normalizedTexts, translations).forEach { index ->
             val individualTranslation = runCatching {
-                Tasks.await(translator.translate(normalizedTexts[index]))
+                translator.translate(normalizedTexts[index]).await()
             }.getOrNull()
             if (!individualTranslation.isNullOrBlank()) {
                 translations[index] = individualTranslation

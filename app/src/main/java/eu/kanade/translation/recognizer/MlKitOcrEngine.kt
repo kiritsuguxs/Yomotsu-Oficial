@@ -1,7 +1,7 @@
 package eu.kanade.translation.recognizer
 
 import android.content.Context
-import com.google.android.gms.tasks.Tasks
+import kotlinx.coroutines.tasks.await
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
@@ -37,7 +37,7 @@ class MlKitOcrEngine(
         try {
             val inputImage = InputImage.fromFilePath(appContext, image.uri)
             val ocrStart = System.nanoTime()
-            val result = Tasks.await(recognizer.process(inputImage))
+            val result = recognizer.process(inputImage).await()
             val ocrTimeMs = elapsedMs(ocrStart)
             val blocks = result.textBlocks.mapNotNull { block ->
                 val bounds = block.boundingBox ?: return@mapNotNull null

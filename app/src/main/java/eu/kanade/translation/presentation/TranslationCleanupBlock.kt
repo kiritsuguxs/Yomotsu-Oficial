@@ -30,6 +30,11 @@ fun TranslationCleanupBlock(
     when (val cleanup = block.resolveCleanup(pageWidth, pageHeight, experimentalMaskPageValid)) {
         is LegacyCleanup -> cleanup.patches.forEach { patch ->
             val region = patch.region
+            val padding = (pageWidth * 0.003f).coerceAtLeast(2f)
+            val adjustedX = region.x - padding
+            val adjustedY = region.y - padding
+            val adjustedWidth = region.width + padding * 2
+            val adjustedHeight = region.height + padding * 2
             val color = block.backgroundColor?.let { Color(it) } ?: Color.White
             val cleanupShape = if (block.balloonDetected || (!block.balloonDetected && block.backgroundColor == null)) {
                 // Manual fallback blocks deliberately avoid reopening the page bitmap.
@@ -43,10 +48,10 @@ fun TranslationCleanupBlock(
             }
             Box(
                 modifier = Modifier
-                    .offset((region.x * scaleFactor).pxToDp(), (region.y * scaleFactor).pxToDp())
+                    .offset((adjustedX * scaleFactor).pxToDp(), (adjustedY * scaleFactor).pxToDp())
                     .requiredSize(
-                        (region.width * scaleFactor).pxToDp(),
-                        (region.height * scaleFactor).pxToDp(),
+                        (adjustedWidth * scaleFactor).pxToDp(),
+                        (adjustedHeight * scaleFactor).pxToDp(),
                     )
                     // OCR bounds are axis-aligned. Rotating the eraser exposed their corners
                     // in Y8, so cleanup intentionally stays axis-aligned in Y9.
@@ -60,6 +65,7 @@ fun TranslationCleanupBlock(
                 color = block.backgroundColor?.let { Color(it) } ?: Color.White
                 isAntiAlias = false
             }
+            val padding = (width * 0.003f).coerceAtLeast(2f)
             Canvas(
                 modifier = Modifier
                     .wrapContentSize(Alignment.TopStart, unbounded = true)
@@ -70,10 +76,10 @@ fun TranslationCleanupBlock(
             ) {
                 cleanup.mask.forEachRun(width, height) { y, x, length ->
                     drawContext.canvas.drawRect(
-                        x * scaleFactor,
-                        y * scaleFactor,
-                        (x + length) * scaleFactor,
-                        (y + 1) * scaleFactor,
+                        (x - padding) * scaleFactor,
+                        (y - padding) * scaleFactor,
+                        (x + length + padding) * scaleFactor,
+                        (y + 1 + padding) * scaleFactor,
                         paint,
                     )
                 }

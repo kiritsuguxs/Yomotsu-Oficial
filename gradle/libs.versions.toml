@@ -155,6 +155,7 @@ kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref =
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
@@ -223,7 +224,7 @@ sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
 [bundles]
 androidx-lifecycle = ["androidx-lifecycle-common", "androidx-lifecycle-process", "androidx-lifecycle-runtime", "androidx-lifecycle-viewmodel", "androidx-lifecycle-viewmodelCompose"]
 coil = ["coil-core", "coil-gif", "coil-compose", "coil-network-okhttp"]
-kotlinx-coroutines = ["kotlinx-coroutines-core", "kotlinx-coroutines-android", "kotlinx-coroutines-guava"]
+kotlinx-coroutines = ["kotlinx-coroutines-core", "kotlinx-coroutines-android", "kotlinx-coroutines-guava", "kotlinx-coroutines-play-services"]
 markdown = ["markdown-core", "markdown-coil"]
 okhttp = ["okhttp-core", "okhttp-logging", "okhttp-brotli", "okhttp-dnsOverHttps", "okhttp-zstd"]
 serialization = ["kotlinx-serialization-json", "kotlinx-serialization-jsonOkio", "kotlinx-serialization-protobuf", "xmlutil-core", "xmlutil-serialization"]

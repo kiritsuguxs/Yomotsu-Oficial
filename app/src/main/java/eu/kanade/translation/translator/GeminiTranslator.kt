@@ -33,12 +33,7 @@ class GeminiTranslator(
     val temp: Float,
 ) : TextTranslator {
 
-    private val okHttpClient by lazy {
-        Injekt.get<NetworkHelper>().client.newBuilder()
-            .readTimeout(GEMINI_REQUEST_TIMEOUT_SECONDS.seconds.toJavaDuration())
-            .callTimeout(GEMINI_REQUEST_TIMEOUT_SECONDS.seconds.toJavaDuration())
-            .build()
-    }
+    private val okHttpClient = TranslationNetworkHelper.sharedClient
     private val continuity = TranslationContext()
 
     override suspend fun translate(
@@ -101,14 +96,31 @@ class GeminiTranslator(
             val responseText = buildString {
                 if (parts != null) for (index in 0 until parts.length()) append(parts.optJSONObject(index)?.optString("text").orEmpty())
             }
+            
             if (responseText.isBlank()) {
-                throw TranslationProviderFailureMapper.malformedResponse(
+                val finishReason = responseJson.optJSONArray("candidates")?.optJSONObject(0)?.optString("finishReason") ?: "UNKNOWN"
+                throw TranslationProviderException(
                     TranslationProviderId.GEMINI,
-                    IllegalStateException("Gemini response contained no text"),
+                    TranslationFailureCategory.UNKNOWN,
+                    false,
+                    "Gemini blocked the translation. Reason: $finishReason"
                 )
             }
 
-            val resJson = parseComicTranslationResponse(responseText)
+
+            
+            val resJson = try {
+                parseComicTranslationResponse(responseText)
+            } catch (e: Exception) {
+                val snippet = responseText.take(50).replace("\n", " ")
+                throw TranslationProviderException(
+                    TranslationProviderId.GEMINI,
+                    TranslationFailureCategory.UNKNOWN,
+                    false,
+                    "Gemini JSON error: $snippet"
+                )
+            }
+
             var globalIndex = 0
             for ((k, v) in pages) {
                 v.blocks.forEachIndexed { i, b ->
@@ -152,6 +164,12 @@ internal fun buildGeminiRestRequestBody(systemInstruction: String, requestText: 
     put("systemInstruction", buildJsonObject { put("parts", buildJsonArray { add(buildJsonObject { put("text", systemInstruction) }) }) })
     put("contents", buildJsonArray { add(buildJsonObject { put("role", "user"); put("parts", buildJsonArray { add(buildJsonObject { put("text", requestText) }) }) }) })
     put("generationConfig", buildJsonObject { put("maxOutputTokens", maxOutputTokens) })
+    put("safetySettings", buildJsonArray {
+        add(buildJsonObject { put("category", "HARM_CATEGORY_HARASSMENT"); put("threshold", "BLOCK_NONE") })
+        add(buildJsonObject { put("category", "HARM_CATEGORY_HATE_SPEECH"); put("threshold", "BLOCK_NONE") })
+        add(buildJsonObject { put("category", "HARM_CATEGORY_SEXUALLY_EXPLICIT"); put("threshold", "BLOCK_NONE") })
+        add(buildJsonObject { put("category", "HARM_CATEGORY_DANGEROUS_CONTENT"); put("threshold", "BLOCK_NONE") })
+    })
 }.toString()
 
 internal fun buildGeminiRestUrl(modelName: String): String {

@@ -32,6 +32,7 @@ class SpeechBubbleAnalyzer(
 ) {
     private val scaleX = bitmap.width / pageWidth.coerceAtLeast(1).toFloat()
     private val scaleY = bitmap.height / pageHeight.coerceAtLeast(1).toFloat()
+    private val pixels = IntArray(bitmap.width * bitmap.height).apply { bitmap.getPixels(this, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height) }
     // Original OCR footprints, before grouping. A neighboring line of lettering
     // is not a balloon outline, but the space between the footprints still is
     // inspected normally so separate balloons cannot join through this mask.
@@ -182,7 +183,7 @@ class SpeechBubbleAnalyzer(
             if (originalBounds.any { x in it[0]..it[2] && y in it[1]..it[3] }) return true
             if (!containSource && isTextPixel(x, y, color)) return true
             // The candidate bounds above already clamp every coordinate.
-            val pixel = bitmap.getPixel(x, y)
+            val pixel = pixels[y * bitmap.width + x]
             val r = pixel ushr 16 and 0xff
             val g = pixel ushr 8 and 0xff
             val b = pixel and 0xff
@@ -292,7 +293,7 @@ class SpeechBubbleAnalyzer(
         // Adjacent OCR lines can share that collar. Validate them together, and
         // recheck dependencies after rejecting a box which crosses a contour.
         fun clear(x: Int, y: Int) = candidates.any { x in it[0]..it[2] && y in it[1]..it[3] } ||
-            colorsMatch(bitmap.getPixel(x, y), color)
+            colorsMatch(pixels[y * bitmap.width + x], color)
         for (margin in 1..2) {
             val left = bounds[0] - margin
             val top = bounds[1] - margin
@@ -309,12 +310,12 @@ class SpeechBubbleAnalyzer(
     private fun colorDistanceSquared(first:Int, second:Int):Int { val r=Color.red(first)-Color.red(second); val g=Color.green(first)-Color.green(second); val b=Color.blue(first)-Color.blue(second); return r*r+g*g+b*b }
     private fun addPixel(target: MutableList<Int>, x: Int, y: Int): Int? {
         if (x !in 0 until bitmap.width || y !in 0 until bitmap.height || isTextPixel(x, y)) return null
-        val pixel = bitmap.getPixel(x, y)
+        val pixel = pixels[y * bitmap.width + x]
         if (Color.alpha(pixel) < MIN_ALPHA) return null
         target += pixel
         return pixel
     }
-    private fun getPixel(x:Int,y:Int)=bitmap.getPixel(x.coerceIn(0,bitmap.width-1),y.coerceIn(0,bitmap.height-1))
+    private fun getPixel(x:Int,y:Int)=pixels[y.coerceIn(0,bitmap.height-1) * bitmap.width + x.coerceIn(0,bitmap.width-1)]
     private fun toBitmapX(value:Float)=(value*scaleX).roundToInt().coerceIn(0,bitmap.width-1); private fun toBitmapY(value:Float)=(value*scaleY).roundToInt().coerceIn(0,bitmap.height-1)
     private fun fromBitmapX(value:Int)=value/scaleX.coerceAtLeast(0.0001f); private fun fromBitmapY(value:Int)=value/scaleY.coerceAtLeast(0.0001f)
     private fun luminance(color:Int)=(Color.red(color)*0.299f+Color.green(color)*0.587f+Color.blue(color)*0.114f).roundToInt()
