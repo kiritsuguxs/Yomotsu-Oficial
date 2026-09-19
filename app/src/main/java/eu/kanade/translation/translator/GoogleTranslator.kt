@@ -17,7 +17,7 @@ class GoogleTranslator(
     override val toLang: TextTranslatorLanguage,
 ) : TextTranslator {
     private val client1 = "gtx"
-    private val okHttpClient = OkHttpClient()
+    private val okHttpClient = TranslationNetworkHelper.sharedClient
 
     override suspend fun translate(
         pages: MutableMap<String, PageTranslation>,

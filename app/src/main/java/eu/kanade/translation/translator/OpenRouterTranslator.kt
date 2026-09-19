@@ -27,7 +27,7 @@ class OpenRouterTranslator(
     val maxOutputToken: Int,
     val temp: Float,
 ) : TextTranslator {
-    private val okHttpClient = OkHttpClient()
+    private val okHttpClient = TranslationNetworkHelper.sharedClient
     private val continuity = TranslationContext()
 
     override suspend fun translate(

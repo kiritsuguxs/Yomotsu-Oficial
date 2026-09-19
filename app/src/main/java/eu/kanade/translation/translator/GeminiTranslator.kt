@@ -33,12 +33,7 @@ class GeminiTranslator(
     val temp: Float,
 ) : TextTranslator {
 
-    private val okHttpClient by lazy {
-        Injekt.get<NetworkHelper>().client.newBuilder()
-            .readTimeout(GEMINI_REQUEST_TIMEOUT_SECONDS.seconds.toJavaDuration())
-            .callTimeout(GEMINI_REQUEST_TIMEOUT_SECONDS.seconds.toJavaDuration())
-            .build()
-    }
+    private val okHttpClient = TranslationNetworkHelper.sharedClient
     private val continuity = TranslationContext()
 
     override suspend fun translate(

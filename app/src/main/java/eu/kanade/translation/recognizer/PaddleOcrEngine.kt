@@ -26,7 +26,7 @@ class PaddleOcrEngine(
         val pageStart = System.nanoTime()
         var initializationTimeMs = 0L
         try {
-            val imageBytes = image.openInputStream().use { it.readBytes() }
+            val bitmap = image.openInputStream().use { android.graphics.BitmapFactory.decodeStream(it) } ?: throw IllegalStateException("Unable to decode image for OCR")
             val engine = paddleOcr ?: run {
                 val initializationStart = System.nanoTime()
                 PaddleOcrRuntime.requireOpenCv { OpenCVUtils.init(appContext) }
@@ -35,7 +35,7 @@ class PaddleOcrEngine(
                     initializationTimeMs = elapsedMs(initializationStart)
                 }
             }
-            val result = engine.recognize(imageBytes)
+            val result = try { engine.recognize(bitmap) } finally { bitmap.recycle() }
             require(result.imageWidth > 0 && result.imageHeight > 0) { "Unable to decode OCR image dimensions" }
             val blocks = result.results.mapNotNull { block ->
                 PaddleTextBlockMapper.map(

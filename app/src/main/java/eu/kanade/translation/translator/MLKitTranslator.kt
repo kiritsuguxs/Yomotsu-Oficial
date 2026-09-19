@@ -1,6 +1,6 @@
 package eu.kanade.translation.translator
 
-import com.google.android.gms.tasks.Tasks
+import kotlinx.coroutines.tasks.await
 import com.google.mlkit.common.model.DownloadConditions
 import com.google.mlkit.nl.translate.TranslateLanguage
 import com.google.mlkit.nl.translate.Translation
@@ -40,7 +40,7 @@ class MLKitTranslator(
         val translations = if (cached.all { it != null }) {
             cached.map { it.orEmpty() }
         } else {
-            Tasks.await(translator.downloadModelIfNeeded(conditions))
+            translator.downloadModelIfNeeded(conditions).await()
             translateBlocksWithContext(
                 texts = preparedTexts.map { it.textForTranslation },
                 sourceTextsForPostEdit = normalizedTexts,

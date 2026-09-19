@@ -45,8 +45,8 @@ fun SmartTranslationBlock(
     val region = block.resolvedLayoutRegion(pageWidth, pageHeight)
     val xPx = region.x * scaleFactor
     val yPx = region.y * scaleFactor
-    val width = (region.width * scaleFactor).pxToDp()
-    val height = (region.height * scaleFactor).pxToDp()
+    val width = region.width.pxToDp()
+    val height = region.height.pxToDp()
     val rotation = block.angle.takeIf { abs(it) in 12f..78f } ?: 0f
     val cleanText = normalizeTranslationText(block.translation)
     val textMeasurer = rememberTextMeasurer()
@@ -57,6 +57,11 @@ fun SmartTranslationBlock(
                 modifier = modifier
                     .offset(xPx.pxToDp(), yPx.pxToDp())
                     .requiredSize(width, height)
+            .graphicsLayer {
+                scaleX = scaleFactor
+                scaleY = scaleFactor
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
+            }
                     .combinedClickable(
                         onClick = {},
                         onLongClick = onLongClick,
@@ -70,6 +75,11 @@ fun SmartTranslationBlock(
         modifier = modifier
             .offset(xPx.pxToDp(), yPx.pxToDp())
             .requiredSize(width, height)
+            .graphicsLayer {
+                scaleX = scaleFactor
+                scaleY = scaleFactor
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0f)
+            }
             .clipToBounds()
             .then(
                 if (onLongClick != null) {
@@ -87,7 +97,7 @@ fun SmartTranslationBlock(
         SubcomposeLayout { _ ->
             val outerWidthPx = with(density) { width.roundToPx() }
             val outerHeightPx = with(density) { height.roundToPx() }
-            val sourceSymbolHeightSp = block.withReliableSourceMetrics().symHeight * scaleFactor /
+            val sourceSymbolHeightSp = block.withReliableSourceMetrics().symHeight /
                 (density.density * density.fontScale).coerceAtLeast(0.0001f)
             val sourceFontSizeCeiling = (sourceSymbolHeightSp * SOURCE_FONT_SIZE_MULTIPLIER)
                 .roundToInt()
