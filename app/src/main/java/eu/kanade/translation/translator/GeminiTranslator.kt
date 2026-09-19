@@ -96,14 +96,32 @@ class GeminiTranslator(
             val responseText = buildString {
                 if (parts != null) for (index in 0 until parts.length()) append(parts.optJSONObject(index)?.optString("text").orEmpty())
             }
+            
             if (responseText.isBlank()) {
-                throw TranslationProviderFailureMapper.malformedResponse(
+                val finishReason = responseJson.optJSONArray("candidates")?.optJSONObject(0)?.optString("finishReason") ?: "UNKNOWN"
+                throw TranslationProviderException(
                     TranslationProviderId.GEMINI,
-                    IllegalStateException("Gemini response contained no text"),
+                    TranslationFailureCategory.UNKNOWN,
+                    false,
+                    "Gemini blocked the translation. Reason: $finishReason"
                 )
             }
 
-            val resJson = parseComicTranslationResponse(responseText)
+
+            
+            val resJson = try {
+                parseComicTranslationResponse(responseText)
+            } catch (e: Exception) {
+                val snippet = responseText.take(50).replace("
+", " ")
+                throw TranslationProviderException(
+                    TranslationProviderId.GEMINI,
+                    TranslationFailureCategory.UNKNOWN,
+                    false,
+                    "Gemini JSON error: $snippet"
+                )
+            }
+
             var globalIndex = 0
             for ((k, v) in pages) {
                 v.blocks.forEachIndexed { i, b ->
