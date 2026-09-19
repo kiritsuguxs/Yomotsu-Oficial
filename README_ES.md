@@ -13,6 +13,8 @@
 <br/>
 
 [![Descargar APK](https://img.shields.io/badge/Descargar-APK%20Oficial-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases/latest)
+[![Telegram](https://img.shields.io/badge/Comunidad-Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/+_tJHoWnEZaY1ZWFh)
+
 
 [![Versión](https://img.shields.io/github/v/release/kiritsuguxs/Yomotsu-Oficial?label=versi%C3%B3n&labelColor=27303D&color=0877d2)](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases/latest)
 [![Descargas](https://img.shields.io/github/downloads/kiritsuguxs/Yomotsu-Oficial/total?label=descargas&labelColor=27303D&color=0D1117&logo=github&logoColor=white)](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases)
