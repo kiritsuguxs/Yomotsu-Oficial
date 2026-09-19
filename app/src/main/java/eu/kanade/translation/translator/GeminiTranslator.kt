@@ -112,8 +112,7 @@ class GeminiTranslator(
             val resJson = try {
                 parseComicTranslationResponse(responseText)
             } catch (e: Exception) {
-                val snippet = responseText.take(50).replace("
-", " ")
+                val snippet = responseText.take(50).replace("\n", " ")
                 throw TranslationProviderException(
                     TranslationProviderId.GEMINI,
                     TranslationFailureCategory.UNKNOWN,
