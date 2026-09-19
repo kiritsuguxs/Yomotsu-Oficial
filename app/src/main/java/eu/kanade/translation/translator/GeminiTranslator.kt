@@ -147,6 +147,12 @@ internal fun buildGeminiRestRequestBody(systemInstruction: String, requestText: 
     put("systemInstruction", buildJsonObject { put("parts", buildJsonArray { add(buildJsonObject { put("text", systemInstruction) }) }) })
     put("contents", buildJsonArray { add(buildJsonObject { put("role", "user"); put("parts", buildJsonArray { add(buildJsonObject { put("text", requestText) }) }) }) })
     put("generationConfig", buildJsonObject { put("maxOutputTokens", maxOutputTokens) })
+    put("safetySettings", buildJsonArray {
+        add(buildJsonObject { put("category", "HARM_CATEGORY_HARASSMENT"); put("threshold", "BLOCK_NONE") })
+        add(buildJsonObject { put("category", "HARM_CATEGORY_HATE_SPEECH"); put("threshold", "BLOCK_NONE") })
+        add(buildJsonObject { put("category", "HARM_CATEGORY_SEXUALLY_EXPLICIT"); put("threshold", "BLOCK_NONE") })
+        add(buildJsonObject { put("category", "HARM_CATEGORY_DANGEROUS_CONTENT"); put("threshold", "BLOCK_NONE") })
+    })
 }.toString()
 
 internal fun buildGeminiRestUrl(modelName: String): String {
