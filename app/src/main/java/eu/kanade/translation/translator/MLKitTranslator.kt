@@ -84,7 +84,7 @@ class MLKitTranslator(
 
         chunks.forEach { chunk ->
             val contextualResult = runCatching {
-                Tasks.await(translator.translate(buildMarkedMachineTranslationText(chunk)))
+                translator.translate(buildMarkedMachineTranslationText(chunk.await()))
             }.getOrNull()
             val parsedTranslations = contextualResult?.let {
                 parseMarkedMachineTranslations(it, chunk)
@@ -94,14 +94,14 @@ class MLKitTranslator(
                 parsedTranslations.forEach { (index, value) -> translations[index] = value }
             } else {
                 chunk.forEach { item ->
-                    translations[item.index] = Tasks.await(translator.translate(item.value))
+                    translations[item.index] = translator.translate(item.value.await())
                 }
             }
         }
 
         findSuspiciousDuplicateTranslationIndices(normalizedTexts, translations).forEach { index ->
             val individualTranslation = runCatching {
-                Tasks.await(translator.translate(normalizedTexts[index]))
+                translator.translate(normalizedTexts[index].await())
             }.getOrNull()
             if (!individualTranslation.isNullOrBlank()) {
                 translations[index] = individualTranslation
