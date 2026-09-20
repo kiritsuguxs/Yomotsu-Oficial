@@ -12,12 +12,14 @@
 
 <br/>
 
-[![Descargar APK](https://img.shields.io/badge/Descargar-APK%20Oficial-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases/latest)
+[![Descargar APK](https://img.shields.io/badge/Descargar-APK%20Oficial-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/kiritsuguxs/yomotsu/releases/latest)
 [![Telegram](https://img.shields.io/badge/Comunidad-Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/+_tJHoWnEZaY1ZWFh)
+[![Get it on Orion Store](https://raw.githubusercontent.com/RookieEnough/Orion-Store/refs/heads/main/assets/orion-badge.png)](https://rookieenough.github.io/Orion-Data/redirect.html?id=yomotsu)
 
 
-[![Versión](https://img.shields.io/github/v/release/kiritsuguxs/Yomotsu-Oficial?label=versi%C3%B3n&labelColor=27303D&color=0877d2)](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases/latest)
-[![Descargas](https://img.shields.io/github/downloads/kiritsuguxs/Yomotsu-Oficial/total?label=descargas&labelColor=27303D&color=0D1117&logo=github&logoColor=white)](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases)
+
+[![Versión](https://img.shields.io/github/v/release/kiritsuguxs/yomotsu?label=versi%C3%B3n&labelColor=27303D&color=0877d2)](https://github.com/kiritsuguxs/yomotsu/releases/latest)
+[![Descargas](https://img.shields.io/github/downloads/kiritsuguxs/yomotsu/total?label=descargas&labelColor=27303D&color=0D1117&logo=github&logoColor=white)](https://github.com/kiritsuguxs/yomotsu/releases)
 [![Android 8+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](#requisitos)
 [![Licencia Apache 2.0](https://img.shields.io/badge/licencia-Apache%202.0-0877d2)](./LICENSE)
 
@@ -139,7 +141,7 @@ La versión oficial más reciente lista para instalar está siempre disponible e
 
 <div align="center">
 
-### [👉 Descargar la Última Versión de Yomotsu (APK)](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases/latest)
+### [👉 Descargar la Última Versión de Yomotsu (APK)](https://github.com/kiritsuguxs/yomotsu/releases/latest)
 
 </div>
 

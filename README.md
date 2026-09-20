@@ -12,12 +12,14 @@
 
 <br/>
 
-[![Baixar APK](https://img.shields.io/badge/Baixar-APK%20Oficial-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases/latest)
+[![Baixar APK](https://img.shields.io/badge/Baixar-APK%20Oficial-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/kiritsuguxs/yomotsu/releases/latest)
 [![Telegram](https://img.shields.io/badge/Comunidade-Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/+_tJHoWnEZaY1ZWFh)
+[![Get it on Orion Store](https://raw.githubusercontent.com/RookieEnough/Orion-Store/refs/heads/main/assets/orion-badge.png)](https://rookieenough.github.io/Orion-Data/redirect.html?id=yomotsu)
 
 
-[![Versão](https://img.shields.io/github/v/release/kiritsuguxs/Yomotsu-Oficial?label=versão&labelColor=27303D&color=0877d2)](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/kiritsuguxs/Yomotsu-Oficial/total?label=downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=white)](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases)
+
+[![Versão](https://img.shields.io/github/v/release/kiritsuguxs/yomotsu?label=versão&labelColor=27303D&color=0877d2)](https://github.com/kiritsuguxs/yomotsu/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/kiritsuguxs/yomotsu/total?label=downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=white)](https://github.com/kiritsuguxs/yomotsu/releases)
 [![Android 8+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](#requisitos)
 [![Licença Apache 2.0](https://img.shields.io/badge/licença-Apache%202.0-0877d2)](./LICENSE)
 
@@ -139,7 +141,7 @@ A versão oficial mais recente pronta para instalação está sempre disponível
 
 <div align="center">
 
-### [👉 Baixar a Última Versão do Yomotsu (APK)](https://github.com/kiritsuguxs/Yomotsu-Oficial/releases/latest)
+### [👉 Baixar a Última Versão do Yomotsu (APK)](https://github.com/kiritsuguxs/yomotsu/releases/latest)
 
 </div>
 
