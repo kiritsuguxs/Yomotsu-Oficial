@@ -29,7 +29,7 @@ class AppUpdateChecker {
 
 // Stable and preview builds must never query Mihon's release channels. Test builds
 // may not have a matching tag, but they will stay inside the Yomotsu repository.
-const val GITHUB_REPO = "kiritsuguxs/Yomotsu-Oficial"
+const val GITHUB_REPO = "kiritsuguxs/yomotsu"
 
 val RELEASE_TAG: String by lazy {
     "v${BuildConfig.VERSION_NAME}"

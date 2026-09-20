@@ -7,6 +7,6 @@ class AppUpdateRepositoryTest {
 
     @Test
     fun `updates are fetched from the official repository`() {
-        assertEquals("kiritsuguxs/Yomotsu-Oficial", GITHUB_REPO)
+        assertEquals("kiritsuguxs/yomotsu", GITHUB_REPO)
     }
 }
