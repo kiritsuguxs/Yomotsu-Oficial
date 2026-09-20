@@ -1,6 +1,6 @@
 <div align="center">
 
-[🇧🇷 Português](README_PT.md) | [🇺🇸 English](README.md) | 🇪🇸 Español
+[🇧🇷 Português](README.md) | [🇺🇸 English](README_EN.md) | 🇪🇸 Español
 
 <img src="./app/src/main/res/drawable-nodpi/ic_yomotsu_logo.png" alt="Logo de Yomotsu" width="130"/>
 
