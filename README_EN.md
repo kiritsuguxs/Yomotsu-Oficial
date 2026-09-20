@@ -14,7 +14,7 @@
 
 [![Download APK](https://img.shields.io/badge/Download-Official%20APK-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/kiritsuguxs/yomotsu/releases/latest)
 [![Telegram](https://img.shields.io/badge/Community-Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/+_tJHoWnEZaY1ZWFh)
-<a href="https://rookieenough.github.io/Orion-Data/redirect.html?id=yomotsu"><img src="https://raw.githubusercontent.com/RookieEnough/Orion-Store/refs/heads/main/assets/orion-badge.png" alt="Get it on Orion Store" height="32"/></a>
+<a href="https://rookieenough.github.io/Orion-Data/redirect.html?id=yomotsu"><img src="https://raw.githubusercontent.com/RookieEnough/Orion-Store/refs/heads/main/assets/orion-badge.png" alt="Get it on Orion Store" height="28"/></a>
 
 
 
