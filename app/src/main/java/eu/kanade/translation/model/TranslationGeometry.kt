@@ -38,8 +38,9 @@ fun TranslationBlock.defaultCleanupRegion(
     pageWidth: Float = Float.MAX_VALUE,
     pageHeight: Float = Float.MAX_VALUE,
 ): TranslationRegion {
-    val horizontalPadding = max(symWidth * 3.2f, width * 0.16f)
-    val verticalPadding = max(symHeight * 2.0f, height * 0.16f)
+    // Meio-termo seguro: 20% (antes era 16%). Limpa os resquícios sem morder a borda do balão pequeno.
+    val horizontalPadding = max(symWidth * 3.6f, width * 0.20f)
+    val verticalPadding = max(symHeight * 2.4f, height * 0.20f)
     return sourceRegion().expanded(horizontalPadding, verticalPadding, pageWidth, pageHeight)
 }
 
@@ -51,8 +52,8 @@ fun TranslationBlock.defaultLayoutRegion(
     pageWidth: Float = Float.MAX_VALUE,
     pageHeight: Float = Float.MAX_VALUE,
 ): TranslationRegion {
-    val horizontalPadding = max(symWidth * 3.6f, width * 0.18f)
-    val verticalPadding = max(symHeight * 2.4f, height * 0.20f)
+    val horizontalPadding = max(symWidth * 4.0f, width * 0.22f)
+    val verticalPadding = max(symHeight * 2.8f, height * 0.22f)
     return sourceRegion().expanded(horizontalPadding, verticalPadding, pageWidth, pageHeight)
 }
 
