@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   get_tag:
-    if: github.repository == 'kiritsuguxs/Yomotsu-Oficial'
+    if: github.repository == 'kiritsuguxs/yomotsu'
     name: Extrair versão
     runs-on: ubuntu-24.04
     outputs:
@@ -45,7 +45,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   build:
-    if: github.repository == 'kiritsuguxs/Yomotsu-Oficial'
+    if: github.repository == 'kiritsuguxs/yomotsu'
     name: Compilar Yomotsu
     runs-on: ubuntu-24.04
     needs: get_tag
@@ -91,7 +91,7 @@ jobs:
           path: Yomotsu-*.apk
 
   release:
-    if: github.repository == 'kiritsuguxs/Yomotsu-Oficial'
+    if: github.repository == 'kiritsuguxs/yomotsu'
     name: Criar Release oficial
     runs-on: ubuntu-24.04
     needs: [get_tag, build]
