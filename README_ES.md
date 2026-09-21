@@ -30,11 +30,21 @@
 
 ---
 
+<div align="center">
+  <h3>✨ Traducción en Tiempo Real en las Burbujas ✨</h3>
+  <img src="./assets/manga_en.jpg" width="45%" alt="Manga Original (Inglés)"/>
+  <img src="./assets/manga_pt.jpg" width="45%" alt="Manga Traducido (Portugués)"/>
+  <br/>
+  <p><i>(Ejemplo: Inglés a Portugués. <b>Nota: ¡Yomotsu traduce desde CUALQUIER idioma (RAWs de Japonés, Coreano, etc.) a CUALQUIER idioma de destino que elijas!</b>)</i></p>
+</div>
+
+---
+
 ## 💡 Sobre Yomotsu
 
 **Yomotsu** es una aplicación de lectura para Android muy completa que elimina la barrera del idioma. Reúne en un solo lugar la lectura de **mangas, manhwas, webtoons, cómics y Novelas Ligeras**, combinando tecnologías de **Visión Computacional (OCR)** e **Inteligencia Artificial** para traducir diálogos y textos directamente en la pantalla, sin necesidad de cambiar de aplicación o usar traductores externos.
 
-El proyecto fue construido sobre la reconocida base de **Mihon (Tachiyomi)**, manteniendo toda su velocidad, organización y catálogo de fuentes, pero sumando innovaciones exclusivas como traducción en tiempo real, un lector de texto fluido para novelas y el innovador sistema de **copia de seguridad en la Nube de Telegram**.
+El proyecto fue construido sobre la reconocida base de **Mihon (Tachiyomi)**, manteniendo toda su velocidad, organización y catálogo de fuentes, pero sumando innovaciones exclusivas como traducción en tiempo real, un lector de texto fluido para novelas y el innovador sistema de **copia de seguridad en la Nube de Telegram**. Aunque nuestra comunidad tiene fuertes raíces brasileñas, **la aplicación es una herramienta global que traduce cualquier manga RAW al idioma de tu preferencia.**
 
 ---
 
@@ -76,6 +86,14 @@ El proyecto fue construido sobre la reconocida base de **Mihon (Tachiyomi)**, ma
 * **Interfaz Moderna:** Soporte completo para temas claro, oscuro y dinámico (Material You).
 
 ### 🌐 OCR y Traducción Automática con IA
+
+<div align="center">
+  <img src="./assets/traducoes_llm.jpg" width="32%" alt="Configuraciones de IA y LLM"/>
+  <img src="./assets/traducoes_ocr.jpg" width="32%" alt="Configuraciones de Traducción y OpenRouter"/>
+  <img src="./assets/telegram_cloud.jpg" width="32%" alt="Configuración de la Nube de Telegram"/>
+  <p><i>Paneles de personalización avanzada: soporte nativo para Qwen, OpenRouter, PaddleOCR y Telegram.</i></p>
+</div>
+
 * **Traducción sin salir del lector:** Traduce páginas enteras o capítulos completos con un solo toque.
 * **OCR de Alta Precisión:** Reconocimiento óptico de caracteres en idiomas inglés, japonés, coreano y chino.
 * **Múltiples Proveedores:** Elige entre motores locales (sin gastar datos) y proveedores de IA de última generación.
