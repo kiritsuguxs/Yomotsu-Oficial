@@ -3,6 +3,12 @@
 Este arquivo contém somente as mudanças importantes para quem usa o aplicativo.
 O workflow de lançamento lê automaticamente a seção correspondente à versão publicada.
 
+
+## 0.20.4-Y38
+**✨ Novidades e Correções:**
+- **PaddleOCR Desbloqueado para Japonês:** O mecanismo PaddleOCR (que já contava com um modelo multilíngue robusto) foi totalmente desbloqueado para reconhecer textos em Japonês, melhorando drasticamente a precisão da detecção em relação ao ML Kit.
+- **Correção de Crash Crítico:** Corrigido um erro (`NullPointerException`) que fazia o aplicativo fechar abruptamente quando o motor de OCR tentava exibir mensagens de aviso na tela.
+
 ## 0.20.4-Y36
 **🚀 Mega Atualização de Performance e Tradução:**
 - **PaddleOCR Turbinado e Sem Fechamentos (Otimização de RAM):** O motor de leitura agora consome METADE da memória RAM! Ler páginas longas de Webtoons não vai mais fazer o aplicativo fechar sozinho "do nada". O PaddleOCR é oficialmente o Leitor definitivo do app.

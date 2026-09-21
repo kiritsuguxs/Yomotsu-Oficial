@@ -7,8 +7,7 @@ enum class OcrEngineType(val preferenceValue: Int) {
     PADDLE_OCR(1),
     ;
 
-    fun supports(language: TextRecognizerLanguage): Boolean =
-        this == ML_KIT || language == TextRecognizerLanguage.ENGLISH
+    fun supports(language: TextRecognizerLanguage): Boolean = true
 
     companion object {
         fun fromPreferenceValue(value: Int): OcrEngineType =

@@ -52,6 +52,7 @@ import kotlinx.serialization.json.encodeToStream
 import logcat.LogPriority
 import mihon.core.archive.archiveReader
 import tachiyomi.core.common.util.lang.launchIO
+import tachiyomi.core.common.util.lang.launchUI
 import tachiyomi.core.common.util.system.ImageUtil
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.chapter.model.Chapter
@@ -231,10 +232,10 @@ class ChapterTranslator(
         val fromLang = TextRecognizerLanguage.fromPref(translationPreferences.translateFromLanguage())
         val toLang = TextTranslatorLanguage.fromPref(translationPreferences.translateToLanguage())
         val ocrType = OcrEngineType.fromPref(translationPreferences.ocrEngine())
-        if (!ocrType.supports(fromLang)) { context.toast(ATMR.strings.error_paddle_ocr_english_only); return }
+        if (!ocrType.supports(fromLang)) { launchUI { context.toast(ATMR.strings.error_paddle_ocr_english_only) }; return }
         val engine = TextTranslators.fromPref(translationPreferences.translationEngine())
         if (engine == TextTranslators.MLKIT && !TextTranslatorLanguage.mlkitSupportedLanguages().contains(toLang)) {
-            context.toast(ATMR.strings.error_mlkit_language_unsupported); return
+            launchUI { context.toast(ATMR.strings.error_mlkit_language_unsupported) }; return
         }
         addToQueue(Translation(source, manga, chapter, fromLang, toLang))
     }
