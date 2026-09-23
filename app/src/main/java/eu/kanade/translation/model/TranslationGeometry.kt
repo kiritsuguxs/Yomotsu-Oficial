@@ -2,7 +2,7 @@ package eu.kanade.translation.model
 
 import kotlin.math.max
 
-const val CURRENT_TRANSLATION_GEOMETRY_VERSION = 3
+const val CURRENT_TRANSLATION_GEOMETRY_VERSION = 4
 
 /** Directional coverage; invalid or empty rectangles carry no geometric evidence. */
 fun TranslationRegion.overlapFraction(other: TranslationRegion): Float {
@@ -73,8 +73,10 @@ fun TranslationBlock.defaultLayoutRegion(
     val minPadX = symWidth * 1.5f
     val minPadY = symHeight * 1.5f
 
-    val finalWidth = maxOf(blendedWidth, w + minPadX)
-    val finalHeight = maxOf(blendedHeight, h + minPadY)
+    // We must allow the final width to be smaller than the original width
+    // so that long horizontal lines are wrapped into a square shape!
+    val finalWidth = maxOf(blendedWidth, minPadX * 3f)
+    val finalHeight = maxOf(blendedHeight, minPadY * 3f)
 
     return TranslationRegion(
         x = cx - finalWidth / 2f,
