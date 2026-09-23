@@ -2,7 +2,7 @@ package eu.kanade.translation.model
 
 import kotlin.math.max
 
-const val CURRENT_TRANSLATION_GEOMETRY_VERSION = 4
+const val CURRENT_TRANSLATION_GEOMETRY_VERSION = 5
 
 /** Directional coverage; invalid or empty rectangles carry no geometric evidence. */
 fun TranslationRegion.overlapFraction(other: TranslationRegion): Float {
@@ -65,16 +65,23 @@ fun TranslationBlock.defaultLayoutRegion(
     val targetSide = kotlin.math.sqrt(targetArea)
 
     // Blend the original shape with the ideal square shape.
-    // This allows text to wrap into a bubble shape instead of a single long line.
-    val blendedWidth = w * 0.4f + targetSide * 0.6f
-    val blendedHeight = h * 0.4f + targetSide * 0.6f
+    var blendedWidth = w * 0.4f + targetSide * 0.6f
+    var blendedHeight = h * 0.4f + targetSide * 0.6f
+
+    // ENFORCE ASPECT RATIO LIMITS!
+    // Text in a comic bubble should never be an extreme rectangle.
+    // A typesetter almost always formats text to be somewhat square.
+    if (blendedWidth > blendedHeight * 1.4f) {
+        blendedWidth = blendedHeight * 1.4f
+    }
+    if (blendedHeight > blendedWidth * 1.4f) {
+        blendedHeight = blendedWidth * 1.4f
+    }
 
     // Add sensible minimal padding so small words don't get choked
     val minPadX = symWidth * 1.5f
     val minPadY = symHeight * 1.5f
 
-    // We must allow the final width to be smaller than the original width
-    // so that long horizontal lines are wrapped into a square shape!
     val finalWidth = maxOf(blendedWidth, minPadX * 3f)
     val finalHeight = maxOf(blendedHeight, minPadY * 3f)
 
@@ -90,11 +97,38 @@ fun TranslationBlock.defaultLayoutRegion(
  * Geometry saved by the first Y9 build was too generous. Falling back to the
  * OCR bounds upgrades those existing chapter files without deleting them.
  */
-fun TranslationBlock.resolvedLayoutRegion(pageWidth: Float, pageHeight: Float): TranslationRegion =
-    layoutRegion
-        ?.takeIf { geometryVersion >= CURRENT_TRANSLATION_GEOMETRY_VERSION }
-        ?.clamped(pageWidth, pageHeight)
-        ?: defaultLayoutRegion(pageWidth, pageHeight)
+fun TranslationBlock.resolvedLayoutRegion(pageWidth: Float, pageHeight: Float): TranslationRegion {
+    val defaultReg = defaultLayoutRegion(pageWidth, pageHeight)
+    val balloonReg = layoutRegion?.takeIf { geometryVersion >= CURRENT_TRANSLATION_GEOMETRY_VERSION }
+    
+    if (balloonReg != null && balloonDetected) {
+        // The detected balloon provides the perfect visual center.
+        // However, compound balloons (intersecting circles) cause flood-fill to create a massive bounding box,
+        // which forces the text to stretch into a thin, unreadable horizontal strip.
+        // To fix this, we use the balloon's center, but constrain the size to our aspect-ratio-corrected default layout.
+        // Wait! If the balloon is a compound figure-8, the balloon's center is the empty intersection!
+        // The original text's center (defaultReg) is MUCH safer and perfectly placed in the correct lobe.
+        // So we ONLY use the balloon's layout if it's NOT massively larger than our default text region!
+        val areaRatio = balloonReg.width * balloonReg.height / (defaultReg.width * defaultReg.height).coerceAtLeast(1f)
+        if (areaRatio < 4.0f) {
+            // Balloon is reasonably sized, use its center but constrain its width so text doesn't stretch.
+            val cx = balloonReg.x + balloonReg.width / 2f
+            val cy = balloonReg.y + balloonReg.height / 2f
+            val finalWidth = minOf(balloonReg.width, defaultReg.width * 1.25f)
+            val finalHeight = minOf(balloonReg.height, defaultReg.height * 1.25f)
+            return TranslationRegion(
+                x = cx - finalWidth / 2f,
+                y = cy - finalHeight / 2f,
+                width = finalWidth,
+                height = finalHeight
+            ).clamped(pageWidth, pageHeight)
+        }
+    }
+    
+    // If balloon detection failed, OR the balloon is a massive compound bubble (areaRatio >= 4),
+    // rely entirely on the perfectly aspect-ratio-corrected OCR bounds.
+    return defaultReg
+}
 
 fun TranslationBlock.sourceRegion(): TranslationRegion = TranslationRegion(
     x = x,
