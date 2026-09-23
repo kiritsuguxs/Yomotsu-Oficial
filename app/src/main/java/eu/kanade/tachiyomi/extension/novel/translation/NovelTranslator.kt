@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.novel.translation
 
+import android.app.Application
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.translation.translator.TextTranslators
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +16,7 @@ import tachiyomi.domain.translation.TranslationLlmProvider
 import tachiyomi.domain.translation.TranslationPreferences
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.File
 import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
 
@@ -23,8 +25,19 @@ object NovelTranslator {
     private val client: OkHttpClient by lazy { Injekt.get<NetworkHelper>().client }
     private val translationCache = ConcurrentHashMap<Long, String>()
     private val translationPreferences: TranslationPreferences by lazy { Injekt.get() }
+    private val context: Application by lazy { Injekt.get() }
+    private val cacheDir by lazy { File(context.cacheDir, "novel_translations").apply { mkdirs() } }
 
-    fun getCached(chapterId: Long): String? = translationCache[chapterId]
+    fun getCached(chapterId: Long): String? {
+        translationCache[chapterId]?.let { return it }
+        val file = File(cacheDir, "$chapterId.txt")
+        if (file.exists()) {
+            val text = file.readText()
+            translationCache[chapterId] = text
+            return text
+        }
+        return null
+    }
 
     suspend fun translate(
         chapterId: Long,
@@ -34,29 +47,44 @@ object NovelTranslator {
     ): String = withContext(Dispatchers.IO) {
         if (text.isBlank()) return@withContext text
 
-        translationCache[chapterId]?.let { return@withContext it }
+        getCached(chapterId)?.let { return@withContext it }
 
         val engineIndex = runCatching { translationPreferences.novelTranslationEngine().get() }.getOrDefault(1)
         val selectedEngine = TextTranslators.entries.getOrNull(engineIndex) ?: TextTranslators.GOOGLE
 
-        val paragraphs = text.split("\n\n")
-        val translatedParagraphs = paragraphs.map { paragraph ->
-            val trimmed = paragraph.trim()
-            if (trimmed.isEmpty()) {
-                ""
-            } else if (trimmed.length > 1500) {
-                // If a paragraph is too long, split by sentences or single newlines
-                trimmed.split("\n").joinToString("\n") { line ->
-                    if (line.isBlank()) "" else translateChunk(line.trim(), sourceLang, targetLang, selectedEngine)
-                }
-            } else {
-                translateChunk(trimmed, sourceLang, targetLang, selectedEngine)
+        val result = if (selectedEngine == TextTranslators.GEMINI) {
+            // O Gemini aguenta textos gigantescos de uma só vez
+            translateChunk(text, sourceLang, targetLang, selectedEngine)
+        } else {
+            // O Google Tradutor precisa agrupar parágrafos em blocos grandes para ser rápido e não ser banido
+            val chunks = chunkText(text, 3000)
+            val translatedChunks = chunks.map { chunk ->
+                if (chunk.isBlank()) "" else translateChunk(chunk, sourceLang, targetLang, selectedEngine)
             }
+            translatedChunks.joinToString("\n\n")
         }
 
-        val result = translatedParagraphs.joinToString("\n\n")
         translationCache[chapterId] = result
+        File(cacheDir, "$chapterId.txt").writeText(result)
         result
+    }
+
+    private fun chunkText(text: String, maxLength: Int): List<String> {
+        val paragraphs = text.split("\n\n")
+        val chunks = mutableListOf<String>()
+        var currentChunk = StringBuilder()
+
+        for (p in paragraphs) {
+            if (currentChunk.length + p.length > maxLength && currentChunk.isNotEmpty()) {
+                chunks.add(currentChunk.toString().trim())
+                currentChunk = StringBuilder()
+            }
+            currentChunk.append(p).append("\n\n")
+        }
+        if (currentChunk.isNotEmpty()) {
+            chunks.add(currentChunk.toString().trim())
+        }
+        return chunks
     }
 
     private fun translateChunk(

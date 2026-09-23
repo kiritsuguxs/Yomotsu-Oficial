@@ -99,6 +99,11 @@ import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.translation.TranslationPreferences
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import tachiyomi.domain.history.interactor.UpsertHistory
+import tachiyomi.domain.history.model.HistoryUpdate
+import eu.kanade.domain.track.interactor.TrackChapter
+import java.util.Date
+import android.app.Application
 
 class NovelReaderActivity : ComponentActivity() {
 
@@ -184,6 +189,9 @@ class NovelReaderActivity : ComponentActivity() {
         val updateChapter: UpdateChapter = Injekt.get()
         val sourceManager: SourceManager = Injekt.get()
         val translationPreferences: TranslationPreferences = Injekt.get()
+        val upsertHistory: UpsertHistory = Injekt.get()
+        val trackChapter: TrackChapter = Injekt.get()
+        val appContext: Application = Injekt.get()
 
         val prefs = getSharedPreferences("novel_reader_prefs", Context.MODE_PRIVATE)
 
@@ -315,18 +323,23 @@ class NovelReaderActivity : ComponentActivity() {
             // Automatic mark as read when user scrolls through a chapter
             LaunchedEffect(lazyListState) {
                 snapshotFlow {
-                    lazyListState.layoutInfo.visibleItemsInfo.map { it.index }
+                    lazyListState.firstVisibleItemIndex
                 }
                 .distinctUntilChanged()
-                .collect { visibleIndices ->
-                    visibleIndices.forEach { index ->
-                        if (index in loadedChapters.indices) {
-                            val item = loadedChapters[index]
-                            if (!item.chapter.read) {
-                                withContext(Dispatchers.IO) {
-                                    updateChapter.await(ChapterUpdate(id = item.chapter.id, read = true))
-                                }
-                                item.chapter = item.chapter.copy(read = true)
+                .collect { firstVisibleIndex ->
+                    if (firstVisibleIndex in loadedChapters.indices) {
+                        val item = loadedChapters[firstVisibleIndex]
+                        if (!item.chapter.read) {
+                            withContext(Dispatchers.IO) {
+                                updateChapter.await(ChapterUpdate(id = item.chapter.id, read = true))
+                                upsertHistory.await(HistoryUpdate(item.chapter.id, Date(), 0L))
+                                trackChapter.await(appContext, mangaId, item.chapter.chapterNumber.toDouble())
+                            }
+                            item.chapter = item.chapter.copy(read = true)
+                        } else {
+                            // Even if already read, update history when user views it again
+                            withContext(Dispatchers.IO) {
+                                upsertHistory.await(HistoryUpdate(item.chapter.id, Date(), 0L))
                             }
                         }
                     }
