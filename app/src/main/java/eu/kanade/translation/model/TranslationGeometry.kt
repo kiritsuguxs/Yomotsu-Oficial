@@ -2,7 +2,7 @@ package eu.kanade.translation.model
 
 import kotlin.math.max
 
-const val CURRENT_TRANSLATION_GEOMETRY_VERSION = 5
+const val CURRENT_TRANSLATION_GEOMETRY_VERSION = 6
 
 /** Directional coverage; invalid or empty rectangles carry no geometric evidence. */
 fun TranslationRegion.overlapFraction(other: TranslationRegion): Float {
@@ -79,11 +79,10 @@ fun TranslationBlock.defaultLayoutRegion(
     }
 
     // Add sensible minimal padding so small words don't get choked
-    val minPadX = symWidth * 1.5f
-    val minPadY = symHeight * 1.5f
-
-    val finalWidth = maxOf(blendedWidth, minPadX * 3f)
-    val finalHeight = maxOf(blendedHeight, minPadY * 3f)
+    // We only use 1.5x symWidth as absolute minimum to avoid collapsing, 
+    // NOT 4.5x (minPadX * 3) which was destroying the aspect ratio.
+    val finalWidth = maxOf(blendedWidth, symWidth * 1.5f)
+    val finalHeight = maxOf(blendedHeight, symHeight * 1.5f)
 
     return TranslationRegion(
         x = cx - finalWidth / 2f,
@@ -102,25 +101,23 @@ fun TranslationBlock.resolvedLayoutRegion(pageWidth: Float, pageHeight: Float): 
     val balloonReg = layoutRegion?.takeIf { geometryVersion >= CURRENT_TRANSLATION_GEOMETRY_VERSION }
     
     if (balloonReg != null && balloonDetected) {
-        // The detected balloon provides the perfect visual center.
-        // However, compound balloons (intersecting circles) cause flood-fill to create a massive bounding box,
-        // which forces the text to stretch into a thin, unreadable horizontal strip.
-        // To fix this, we use the balloon's center, but constrain the size to our aspect-ratio-corrected default layout.
-        // Wait! If the balloon is a compound figure-8, the balloon's center is the empty intersection!
-        // The original text's center (defaultReg) is MUCH safer and perfectly placed in the correct lobe.
-        // So we ONLY use the balloon's layout if it's NOT massively larger than our default text region!
+        // If we found a balloon, its center is usually better than OCR center.
+        // BUT compound balloons (figure-8) have their center in the empty intersection.
+        // If the balloon area is MASSIVELY larger than the text area (areaRatio >= 4), 
+        // it's almost certainly a compound balloon, so we fallback to OCR center.
         val areaRatio = balloonReg.width * balloonReg.height / (defaultReg.width * defaultReg.height).coerceAtLeast(1f)
         if (areaRatio < 4.0f) {
-            // Balloon is reasonably sized, use its center but constrain its width so text doesn't stretch.
+            // Balloon is reasonably sized. Use its center!
+            // Crucially, we MUST NOT let the layout region width expand to fill the balloon,
+            // because Compose Text is greedy and will stretch the text into a thin line.
+            // We force the layout region to use the perfectly-squared defaultReg dimensions!
             val cx = balloonReg.x + balloonReg.width / 2f
             val cy = balloonReg.y + balloonReg.height / 2f
-            val finalWidth = minOf(balloonReg.width, defaultReg.width * 1.25f)
-            val finalHeight = minOf(balloonReg.height, defaultReg.height * 1.25f)
             return TranslationRegion(
-                x = cx - finalWidth / 2f,
-                y = cy - finalHeight / 2f,
-                width = finalWidth,
-                height = finalHeight
+                x = cx - defaultReg.width / 2f,
+                y = cy - defaultReg.height / 2f,
+                width = defaultReg.width,
+                height = defaultReg.height
             ).clamped(pageWidth, pageHeight)
         }
     }
