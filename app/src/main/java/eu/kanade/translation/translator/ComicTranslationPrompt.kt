@@ -67,6 +67,7 @@ internal fun buildComicTranslationPrompt(
         - Produce fluent comic dialogue that sounds written by a human editor, never a literal sequence of dictionary substitutions.
         - Preserve meaning, emotion, politeness level, jokes, names, honorifics, and recurring terminology consistently.
         - Do not invent information that is absent from the source.
+        - Be highly concise. Prefer shorter words and direct phrasing. The translated text must fit inside small comic speech bubbles.
         - Internally perform a second editing pass and rewrite any stiff, contradictory, or unnatural sentence before returning it.
 
         $brazilianPortugueseRules
