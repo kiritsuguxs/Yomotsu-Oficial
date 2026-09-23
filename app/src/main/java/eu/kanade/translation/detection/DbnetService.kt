@@ -129,9 +129,9 @@ class DbnetService : Service() {
                 DbnetWorkerShape(
                     inputWidth = prepared.plan.inputWidth,
                     inputHeight = prepared.plan.inputHeight,
-                    dbWidth = shape[2],
+                    dbWidth = shape[0],
                     dbHeight = shape[1],
-                    maskWidth = shape[5],
+                    maskWidth = shape[3],
                     maskHeight = shape[4],
                 ),
             )
