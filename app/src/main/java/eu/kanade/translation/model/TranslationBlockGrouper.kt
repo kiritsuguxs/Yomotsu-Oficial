@@ -10,6 +10,7 @@ object TranslationBlockGrouper {
         val grouped = mutableListOf<TranslationBlock>()
         while (pending.isNotEmpty()) {
             var group = pending.removeAt(0)
+            val currentGroupBlocks = mutableListOf(group)
             var changed: Boolean
             do {
                 changed = false
@@ -17,12 +18,16 @@ object TranslationBlockGrouper {
                 while (iterator.hasNext()) {
                     val candidate = iterator.next()
                     if (shouldMerge(group, candidate, strict)) {
+                        currentGroupBlocks.add(candidate)
                         group = merge(group, candidate)
                         iterator.remove()
                         changed = true
                     }
                 }
             } while (changed)
+            val orderedBlocks = currentGroupBlocks.sortedWith(readingOrder)
+            group.text = orderedBlocks.joinToString(" ") { it.text.trim() }
+            group.translation = orderedBlocks.map { it.translation.trim() }.filter(String::isNotEmpty).joinToString(" ")
             grouped += group
         }
         return grouped.sortedWith(readingOrder).toMutableList()
@@ -143,7 +148,18 @@ object TranslationBlockGrouper {
         val source = enclosing(a.sourceRegion(), b.sourceRegion())
         val anyDetectedBalloon = a.balloonDetected || b.balloonDetected
         val mergedLayout = when {
-            a.balloonDetected && b.balloonDetected -> enclosingNullable(a.layoutRegion, b.layoutRegion)
+            a.balloonDetected && b.balloonDetected -> {
+                val first = a.layoutRegion
+                val second = b.layoutRegion
+                if (first != null && second != null) {
+                    val sharedArea = intersectionArea(first, second)
+                    val smallerArea = minOf(first.area(), second.area()).coerceAtLeast(1f)
+                    if (sharedArea / smallerArea >= MIN_SHARED_BALLOON_RATIO) enclosing(first, second)
+                    else if (first.area() >= second.area()) first else second
+                } else {
+                    enclosingNullable(first, second)
+                }
+            }
             a.balloonDetected -> a.layoutRegion
             b.balloonDetected -> b.layoutRegion
             else -> null
