@@ -52,9 +52,36 @@ fun TranslationBlock.defaultLayoutRegion(
     pageWidth: Float = Float.MAX_VALUE,
     pageHeight: Float = Float.MAX_VALUE,
 ): TranslationRegion {
-    val horizontalPadding = max(symWidth * 4.0f, width * 0.22f)
-    val verticalPadding = max(symHeight * 2.8f, height * 0.22f)
-    return sourceRegion().expanded(horizontalPadding, verticalPadding, pageWidth, pageHeight)
+    val w = width.coerceAtLeast(1f)
+    val h = height.coerceAtLeast(1f)
+    val cx = x + w / 2f
+    val cy = y + h / 2f
+
+    // Text inside manga bubbles looks best in a square or 1.2:1 ratio.
+    // PaddleOCR often returns long/thin lines that distort the layout.
+    // We reshape the region towards a square based on the text area.
+    val area = w * h
+    val targetArea = area * 1.8f // Portuguese is longer
+    val targetSide = kotlin.math.sqrt(targetArea)
+
+    // Blend the original shape with the ideal square shape.
+    // This allows text to wrap into a bubble shape instead of a single long line.
+    val blendedWidth = w * 0.4f + targetSide * 0.6f
+    val blendedHeight = h * 0.4f + targetSide * 0.6f
+
+    // Add sensible minimal padding so small words don't get choked
+    val minPadX = symWidth * 1.5f
+    val minPadY = symHeight * 1.5f
+
+    val finalWidth = maxOf(blendedWidth, w + minPadX)
+    val finalHeight = maxOf(blendedHeight, h + minPadY)
+
+    return TranslationRegion(
+        x = cx - finalWidth / 2f,
+        y = cy - finalHeight / 2f,
+        width = finalWidth,
+        height = finalHeight
+    ).clamped(pageWidth, pageHeight)
 }
 
 /**
