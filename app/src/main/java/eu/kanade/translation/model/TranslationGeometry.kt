@@ -2,7 +2,7 @@ package eu.kanade.translation.model
 
 import kotlin.math.max
 
-const val CURRENT_TRANSLATION_GEOMETRY_VERSION = 2
+const val CURRENT_TRANSLATION_GEOMETRY_VERSION = 3
 
 /** Directional coverage; invalid or empty rectangles carry no geometric evidence. */
 fun TranslationRegion.overlapFraction(other: TranslationRegion): Float {
