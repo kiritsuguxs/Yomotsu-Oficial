@@ -51,6 +51,16 @@ class OpenRouterTranslator(
         pages: MutableMap<String, PageTranslation>,
         context: ComicTranslationContext,
     ) {
+        val chunkedPages = pages.toList().chunked(10).map { it.toMap().toMutableMap() }
+        for (chunk in chunkedPages) {
+            translateChunkInternal(chunk, context)
+        }
+    }
+
+    private suspend fun translateChunkInternal(
+        pages: MutableMap<String, PageTranslation>,
+        context: ComicTranslationContext,
+    ) {
         try {
             continuity.enter(context)
             val blocks = pages.values.flatMap { it.blocks }
@@ -114,9 +124,15 @@ class OpenRouterTranslator(
                 rawBody
             }
             val json = JSONObject(responseBody)
+            
+            val choices = json.optJSONArray("choices")
+            if (choices == null) {
+                val errorMsg = json.optJSONObject("error")?.optString("message") ?: "Unknown OpenRouter Error"
+                throw Exception("OpenRouter returned error: $errorMsg")
+            }
+            
             val resJson = parseComicTranslationResponse(
-                json.getJSONArray("choices")
-                    .getJSONObject(0)
+                choices.getJSONObject(0)
                     .getJSONObject("message")
                     .getString("content"),
             )

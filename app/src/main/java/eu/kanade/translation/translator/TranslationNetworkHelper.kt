@@ -26,8 +26,8 @@ internal object TranslationNetworkHelper {
     val sharedClient: OkHttpClient by lazy {
         Injekt.get<NetworkHelper>().client.newBuilder()
             .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(60, TimeUnit.SECONDS)
-            .writeTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(300, TimeUnit.SECONDS)
+            .writeTimeout(300, TimeUnit.SECONDS)
             .addInterceptor(retryInterceptor)
             .build()
     }
