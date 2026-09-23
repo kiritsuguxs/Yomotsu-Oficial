@@ -5,13 +5,24 @@ O workflow de lançamento lê automaticamente a seção correspondente à versã
 
 
 ## 0.20.4-Y39
-**✨ Novidades e Correções:**
-- **Leitor de Novels Turbo:** A tradução das Novels (via Google Translate) agora agrupa e envia blocos grandes de texto de uma só vez em vez de linha por linha. A tradução ficou muito mais rápida e não engasga a rede.
-- **Tradução de Novels em Cache:** As traduções de novels agora são salvas no armazenamento do celular. Fechar o app e abrir depois não exigirá traduzir tudo do zero de novo; o carregamento será instantâneo e offline.
-- **Novels agora geram Histórico e Tracking:** O Leitor de Novels agora finalmente salva a data no "Histórico/Continuar Lendo" do Yomotsu e sincroniza o seu progresso automaticamente com o MyAnimeList/Anilist!
-- **Leitor de Novel Preciso (Mark as Read):** Corrigido o bug do Scroll Infinito que marcava o próximo capítulo da novel como lido antes da hora. Ele só será marcado como lido quando o título chegar no topo da tela.
-- **Limpeza de Balões Definitiva:** Aumentamos milimetricamente a margem (padding) da borracha de limpeza (Legacy e DBNet). Agora o aplicativo engole as últimas sombras/rebarbas do inglês sem morder as bordas dos balões.
-- **Correção de Crash Crítico:** Corrigido um erro (`NullPointerException`) que fazia o aplicativo fechar abruptamente quando o motor de OCR tentava exibir mensagens de aviso na tela.
+
+🇧🇷 **Novidades e Correções (Português):**
+- **Tradução em Lotes Inteligentes (OpenRouter):** Para evitar congelamentos e erros de tempo limite (timeout) em capítulos gigantes, o OpenRouter agora processa o capítulo traduzindo em lotes rápidos de 10 páginas.
+- **Encaixe Perfeito de Texto:** A hifenização automática (quebra de sílabas) foi ativada e a IA recebeu regras rígidas de concisão. Textos longos agora cabem melhor nos balões e usam fontes muito maiores e agradáveis de ler.
+- **Limpeza de Balões Definitiva:** Aumentamos milimetricamente a margem da borracha de limpeza. Agora o aplicativo engole as últimas sombras do inglês sem morder as bordas dos balões.
+- **Fim da Mescla de Balões Separados:** O agrupador do PaddleOCR foi ajustado para parar de "colar" textos de balões diferentes. As frases não vão mais aparecer vazando no espaço vazio entre dois balões.
+- **Leitor de Novels Turbo & Cache:** A tradução das Novels (via Google Translate) agora agrupa blocos de 3.000 letras por vez (eliminando lentidão) e salva offline no celular! Fechar e abrir o app depois terá carregamento instantâneo.
+- **Novels agora geram Histórico e Tracking:** O Leitor de Novels agora salva a leitura no "Continuar Lendo" e sincroniza o seu progresso automaticamente com o MyAnimeList/Anilist!
+- **Leitor de Novel Preciso:** Corrigido o bug do Scroll Infinito. O capítulo seguinte só será marcado como lido quando seu título realmente chegar no topo da tela.
+
+🇺🇸 **New Features & Fixes (English):**
+- **Smart Batch Translation (OpenRouter):** To prevent freezing and timeout errors on massive chapters, OpenRouter now translates chapters in lightning-fast 10-page batches.
+- **Perfect Text Fitting:** Auto-hyphenation is now enabled, and the AI was strictly prompted for conciseness. Long translated texts now fit beautifully into speech bubbles using much larger, readable fonts.
+- **Definitive Bubble Cleanup:** We slightly increased the eraser's padding margin. The app now swallows those last lingering shadows of original English text without chewing into the bubble borders.
+- **No More Merged Bubbles:** The PaddleOCR grouper was tweaked so it no longer wrongly glues text from separate bubbles. Translated dialogue will no longer float weirdly in the empty space between bubbles.
+- **Turbo Novel Reader & Offline Caching:** Novel translation (via Google Translate) now processes massive 3,000-character chunks at once (fixing sluggishness) and saves them to local storage! Reopening the app later will load the novel instantly offline.
+- **Novel History & Tracking Integration:** The Novel Reader finally registers read chapters in your History tab and automatically syncs your progress with MyAnimeList/Anilist!
+- **Precise Mark-as-Read for Novels:** Fixed the Infinite Scroll bug. The next chapter will only be marked as read when its title actually touches the top of the screen.
 
 ## 0.20.4-Y36
 **🚀 Mega Atualização de Performance e Tradução:**
