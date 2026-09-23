@@ -78,15 +78,14 @@ class OpenRouterTranslator(
             val mediaType = "application/json; charset=utf-8".toMediaType()
             val jsonObject = buildJsonObject {
                 put("model", modelName)
-                putJsonObject("response_format") { put("type", "json_object") }
                 put("top_p", 0.5f)
                 put("top_k", 30)
                 put("temperature", temp)
-                put("max_tokens", maxOutputToken)
+                put("max_tokens", maxOutputToken.coerceAtMost(4096))
                 putJsonArray("messages") {
                     addJsonObject {
                         put("role", "system")
-                        put("content", buildComicTranslationPrompt(fromLang, toLang))
+                        put("content", buildComicTranslationPrompt(fromLang, toLang) + "\nIMPORTANT: Return ONLY a valid JSON object. No explanations, no markdown formatting.")
                     }
                     addJsonObject {
                         put("role", "user")
