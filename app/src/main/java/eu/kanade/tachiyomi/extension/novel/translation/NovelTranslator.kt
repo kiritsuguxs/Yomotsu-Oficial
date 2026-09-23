@@ -65,7 +65,11 @@ object NovelTranslator {
         }
 
         translationCache[chapterId] = result
-        File(cacheDir, "$chapterId.txt").writeText(result)
+        try {
+            File(cacheDir, "$chapterId.txt").writeText(result)
+        } catch (e: Exception) {
+            logcat(throwable = e) { "Failed to write translation cache" }
+        }
         result
     }
 
@@ -101,10 +105,14 @@ object NovelTranslator {
 
     private fun translateWithGoogle(text: String, sl: String, tl: String): String {
         return try {
-            val encoded = URLEncoder.encode(text, "UTF-8")
-            val url = "https://translate.google.com/translate_a/single?client=gtx&sl=$sl&tl=$tl&dt=t&q=$encoded"
+            val url = "https://translate.google.com/translate_a/single?client=gtx&sl=$sl&tl=$tl&dt=t"
+            val formBody = okhttp3.FormBody.Builder()
+                .add("q", text)
+                .build()
+            
             val request = Request.Builder()
                 .url(url)
+                .post(formBody)
                 .header("User-Agent", "Mozilla/5.0 (Android; Mobile)")
                 .build()
 
