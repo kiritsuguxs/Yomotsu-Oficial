@@ -6,6 +6,11 @@ O workflow de lançamento lê automaticamente a seção correspondente à versã
 
 ## 0.20.4-Y39
 **✨ Novidades e Correções:**
+- **Leitor de Novels Turbo:** A tradução das Novels (via Google Translate) agora agrupa e envia blocos grandes de texto de uma só vez em vez de linha por linha. A tradução ficou muito mais rápida e não engasga a rede.
+- **Tradução de Novels em Cache:** As traduções de novels agora são salvas no armazenamento do celular. Fechar o app e abrir depois não exigirá traduzir tudo do zero de novo; o carregamento será instantâneo e offline.
+- **Novels agora geram Histórico e Tracking:** O Leitor de Novels agora finalmente salva a data no "Histórico/Continuar Lendo" do Yomotsu e sincroniza o seu progresso automaticamente com o MyAnimeList/Anilist!
+- **Leitor de Novel Preciso (Mark as Read):** Corrigido o bug do Scroll Infinito que marcava o próximo capítulo da novel como lido antes da hora. Ele só será marcado como lido quando o título chegar no topo da tela.
+- **Limpeza de Balões Definitiva:** Aumentamos milimetricamente a margem (padding) da borracha de limpeza (Legacy e DBNet). Agora o aplicativo engole as últimas sombras/rebarbas do inglês sem morder as bordas dos balões.
 - **Correção de Crash Crítico:** Corrigido um erro (`NullPointerException`) que fazia o aplicativo fechar abruptamente quando o motor de OCR tentava exibir mensagens de aviso na tela.
 
 ## 0.20.4-Y36
