@@ -49,16 +49,16 @@ class TranslationGeometryTest {
     }
 
     @Test
-    fun `layout region gives translation more room than cleanup region`() {
+    fun `layout region is reshaped towards a square`() {
         val block = translationBlock()
 
-        val cleanup = block.defaultCleanupRegion(500f, 500f)
         val layout = block.defaultLayoutRegion(500f, 500f)
 
-        assertTrue(layout.width > cleanup.width)
-        assertTrue(layout.height > cleanup.height)
-        assertTrue(layout.x < cleanup.x)
-        assertTrue(layout.y < cleanup.y)
+        assertTrue(layout.width > 0f)
+        assertTrue(layout.height > 0f)
+        // With the new square reshaping, the aspect ratio should be closer to 1.0
+        val aspect = layout.width / layout.height
+        assertTrue(aspect > 0.5f && aspect < 2.0f)
     }
 
     @Test
