@@ -38,6 +38,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
+import eu.kanade.tachiyomi.util.system.toast
 import java.util.Locale
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -181,40 +183,119 @@ class NovelReaderActivity : ComponentActivity() {
 
     private var textToSpeech: TextToSpeech? = null
     private var isTtsInitialized = false
+    private var onTtsPlaybackComplete: (() -> Unit)? = null
 
-    private fun initTts(onReady: () -> Unit) {
+    private fun initTts(onReady: (() -> Unit)? = null) {
         if (textToSpeech != null && isTtsInitialized) {
-            onReady()
+            onReady?.invoke()
             return
         }
-        textToSpeech = TextToSpeech(applicationContext) { status ->
+        textToSpeech = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 isTtsInitialized = true
-                onReady()
+                textToSpeech?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) {}
+                    override fun onDone(utteranceId: String?) {
+                        if (utteranceId?.endsWith("_last") == true) {
+                            runOnUiThread { onTtsPlaybackComplete?.invoke() }
+                        }
+                    }
+                    override fun onError(utteranceId: String?) {
+                        runOnUiThread { onTtsPlaybackComplete?.invoke() }
+                    }
+                })
+                onReady?.invoke()
+            } else {
+                isTtsInitialized = false
+                runOnUiThread {
+                    toast("Voz (TTS) indisponível. Verifique as configurações de conversão de voz do Android.")
+                }
             }
         }
     }
 
-    private fun speakNovelText(text: String, isPortuguese: Boolean) {
+    private fun splitIntoSpeakableChunks(text: String, maxChunkSize: Int = 1000): List<String> {
+        val lines = text.split(Regex("\\r?\\n+")).map { it.trim() }.filter { it.isNotEmpty() }
+        val chunks = mutableListOf<String>()
+        val current = StringBuilder()
+        for (line in lines) {
+            if (current.length + line.length + 1 > maxChunkSize) {
+                if (current.isNotEmpty()) {
+                    chunks.add(current.toString())
+                    current.clear()
+                }
+                if (line.length > maxChunkSize) {
+                    var remaining = line
+                    while (remaining.length > maxChunkSize) {
+                        val splitIdx = remaining.take(maxChunkSize).lastIndexOfAny(charArrayOf('.', '!', '?', ';', ',', ' '))
+                            .takeIf { it > 100 } ?: maxChunkSize
+                        chunks.add(remaining.substring(0, splitIdx).trim())
+                        remaining = remaining.substring(splitIdx).trim()
+                    }
+                    if (remaining.isNotEmpty()) current.append(remaining)
+                } else {
+                    current.append(line)
+                }
+            } else {
+                if (current.isNotEmpty()) current.append(" ")
+                current.append(line)
+            }
+        }
+        if (current.isNotEmpty()) {
+            chunks.add(current.toString())
+        }
+        return chunks
+    }
+
+    private fun speakNovelText(text: String, isPortuguese: Boolean, onComplete: () -> Unit) {
+        onTtsPlaybackComplete = onComplete
         initTts {
-            val tts = textToSpeech ?: return@initTts
-            val locale = if (isPortuguese) Locale("pt", "BR") else Locale.getDefault()
-            tts.language = locale
+            val tts = textToSpeech
+            if (tts == null || !isTtsInitialized) {
+                runOnUiThread {
+                    toast("Inicializando serviço de voz do Android...")
+                    onComplete()
+                }
+                return@initTts
+            }
+            val targetLocale = if (isPortuguese) Locale("pt", "BR") else Locale.getDefault()
+            var langResult = tts.setLanguage(targetLocale)
+            if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                langResult = tts.setLanguage(Locale("pt"))
+            }
+            if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                tts.language = Locale.getDefault()
+            }
             tts.stop()
-            val paragraphs = text.split("\n\n").filter { it.isNotBlank() }
-            paragraphs.forEachIndexed { index, paragraph ->
+            val chunks = splitIntoSpeakableChunks(text)
+            if (chunks.isEmpty()) {
+                runOnUiThread {
+                    toast("Nenhum texto disponível para leitura.")
+                    onComplete()
+                }
+                return@initTts
+            }
+            chunks.forEachIndexed { index, chunk ->
                 val queueMode = if (index == 0) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD
-                tts.speak(paragraph, queueMode, null, "novel_p_$index")
+                val isLast = index == chunks.lastIndex
+                val utteranceId = if (isLast) "novel_p_${index}_last" else "novel_p_$index"
+                tts.speak(chunk, queueMode, null, utteranceId)
             }
         }
     }
 
     private fun stopNovelTts() {
         textToSpeech?.stop()
+        onTtsPlaybackComplete = null
+    }
+
+    override fun onPause() {
+        stopNovelTts()
+        super.onPause()
     }
 
     override fun onDestroy() {
-        textToSpeech?.stop()
+        stopNovelTts()
         textToSpeech?.shutdown()
         textToSpeech = null
         super.onDestroy()
@@ -224,6 +305,8 @@ class NovelReaderActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        initTts()
+
 
         val mangaId = intent.getLongExtra("manga_id", -1L)
         val initialChapterId = intent.getLongExtra("chapter_id", -1L)
@@ -636,10 +719,18 @@ class NovelReaderActivity : ComponentActivity() {
                                 } else {
                                     val currentIdx = lazyListState.firstVisibleItemIndex.coerceIn(0, (loadedChapters.size - 1).coerceAtLeast(0))
                                     val activeChapter = loadedChapters.getOrNull(currentIdx) ?: loadedChapters.firstOrNull()
-                                    val textToSpeak = if (isTranslated) activeChapter?.translatedText ?: activeChapter?.originalText else activeChapter?.originalText
+                                    val textToSpeak = if (isTranslated && !activeChapter?.translatedText.isNullOrBlank()) {
+                                        activeChapter?.translatedText
+                                    } else {
+                                        activeChapter?.originalText
+                                    }
                                     if (!textToSpeak.isNullOrBlank()) {
-                                        speakNovelText(textToSpeak, isTranslated)
                                         isTtsPlaying = true
+                                        speakNovelText(textToSpeak, isTranslated) {
+                                            isTtsPlaying = false
+                                        }
+                                    } else {
+                                        toast("Aguarde o carregamento do capítulo para ouvir.")
                                     }
                                 }
                             }) {
