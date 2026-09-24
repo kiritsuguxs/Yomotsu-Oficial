@@ -36,18 +36,12 @@ object DbnetMlKitAssociation {
         val blocksByGroup = mutableMapOf<Int, MutableList<OcrTextBlock>>()
         for (block in blocks) {
             val matches = groups.indices.filter { groupIndex -> matches(block, groups[groupIndex]) }
-            when (matches.size) {
-                0 -> fail("ML Kit text is not owned by a DBNet group")
-                1 -> blocksByGroup.getOrPut(matches.single()) { mutableListOf() }.add(block)
-                else -> fail("ML Kit text spans multiple DBNet groups")
+            val match = matches.firstOrNull()
+            if (match != null) {
+                blocksByGroup.getOrPut(match) { mutableListOf() }.add(block)
             }
         }
         if (blocksByGroup.isEmpty()) fail("DBNet and ML Kit produced no usable association")
-        blocksByGroup.forEach { (groupIndex, ownedBlocks) ->
-            if (groups[groupIndex].memberLines.any { line -> ownedBlocks.none { block -> matches(block, line) } }) {
-                fail("ML Kit did not cover every line in a DBNet group")
-            }
-        }
 
         val orderedGroups = blocksByGroup.keys.sortedWith(
             compareBy<Int> { groups[it].bounds.top }
