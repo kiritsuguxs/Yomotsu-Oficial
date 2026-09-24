@@ -103,9 +103,11 @@ android {
     packaging {
         jniLibs {
             keepDebugSymbols += listOf("libandroidx.graphics.path", "libarchive-jni", "libconscrypt_jni", "libimagedecoder", "libquickjs", "libsqlite3x").map { "**/$it.so" }
+            pickFirsts += listOf("**/libc++_shared.so")
         }
         resources {
             excludes += setOf("kotlin-tooling-metadata.json", "LICENSE.txt", "META-INF/**/*.properties", "META-INF/**/LICENSE.txt", "META-INF/*.properties", "META-INF/*.version", "META-INF/DEPENDENCIES", "META-INF/INDEX.LIST", "META-INF/LICENSE", "META-INF/NOTICE", "META-INF/README.md")
+            pickFirsts += listOf("**/libc++_shared.so")
         }
     }
     dependenciesInfo { includeInApk = Config.includeDependencyInfo; includeInBundle = Config.includeDependencyInfo }
