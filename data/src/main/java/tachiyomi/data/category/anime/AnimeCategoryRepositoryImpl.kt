@@ -79,7 +79,7 @@ class AnimeCategoryRepositoryImpl(
         }
     }
 
-    private fun AnimeDatabase.updatePartialBlocking(update: CategoryUpdate) {
+    private suspend fun AnimeDatabase.updatePartialBlocking(update: CategoryUpdate) {
         categoriesQueries.update(
             name = update.name,
             order = update.order,
