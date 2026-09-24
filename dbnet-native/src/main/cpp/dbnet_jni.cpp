@@ -85,3 +85,42 @@ Java_eu_kanade_translation_detection_DbnetNativeBackend_inferNative(
     env->SetIntArrayRegion(dimensions, 0, 6, shape);
     return env->ExceptionCheck() ? -4 : 0;
 }
+
+extern "C" JNIEXPORT jint JNICALL
+Java_eu_kanade_translation_detection_DbnetNativeBackend_inpaintAotNative(
+        JNIEnv* env, jobject, jlong handle, jfloatArray img, jfloatArray mask, jint s, jfloatArray out_arr) {
+    std::lock_guard<std::mutex> guard(runtime_mutex);
+    auto model = models.find(handle);
+    if (model == models.end()) return -1;
+    if (!img || !mask || !out_arr || s <= 0) return -2;
+    const std::size_t area = static_cast<std::size_t>(s) * s;
+    if (static_cast<std::size_t>(env->GetArrayLength(img)) != 3 * area ||
+        static_cast<std::size_t>(env->GetArrayLength(mask)) != area ||
+        static_cast<std::size_t>(env->GetArrayLength(out_arr)) != 3 * area) return -2;
+
+    ncnn::Mat img_mat(s, s, 3);
+    if (img_mat.empty()) return -3;
+    for (int c = 0; c < 3; ++c) {
+        env->GetFloatArrayRegion(img, static_cast<jsize>(c * area), static_cast<jsize>(area), img_mat.channel(c));
+        if (env->ExceptionCheck()) return -4;
+    }
+
+    ncnn::Mat mask_mat(s, s, 1);
+    if (mask_mat.empty()) return -3;
+    env->GetFloatArrayRegion(mask, 0, static_cast<jsize>(area), mask_mat.channel(0));
+    if (env->ExceptionCheck()) return -4;
+
+    ncnn::Extractor extractor = model->second->create_extractor();
+    if (extractor.input("in0", img_mat) != 0) return -5;
+    if (extractor.input("in1", mask_mat) != 0) return -5;
+
+    ncnn::Mat out;
+    if (extractor.extract("out0", out) != 0) return -5;
+    if (out.empty() || out.w != s || out.h != s || out.c != 3) return -6;
+
+    for (int c = 0; c < 3; ++c) {
+        env->SetFloatArrayRegion(out_arr, static_cast<jsize>(c * area), static_cast<jsize>(area), out.channel(c));
+        if (env->ExceptionCheck()) return -4;
+    }
+    return 0;
+}

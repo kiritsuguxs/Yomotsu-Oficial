@@ -17,6 +17,13 @@ internal object DbnetNativeBackend : DbnetBackend {
         mask: FloatArray,
         dimensions: IntArray,
     ): Int
+    private external fun inpaintAotNative(
+        handle: Long,
+        img: FloatArray,
+        mask: FloatArray,
+        s: Int,
+        outArr: FloatArray,
+    ): Int
 
     override fun create(param: String, bin: String) = createNative(param, bin)
     override fun release(handle: Long) = releaseNative(handle)
@@ -30,4 +37,12 @@ internal object DbnetNativeBackend : DbnetBackend {
         dimensions: IntArray,
     ) =
         inferNative(handle, input, width, height, db, mask, dimensions)
+
+    override fun inpaintAot(
+        handle: Long,
+        img: FloatArray,
+        mask: FloatArray,
+        s: Int,
+        out: FloatArray,
+    ) = inpaintAotNative(handle, img, mask, s, out)
 }

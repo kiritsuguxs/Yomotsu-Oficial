@@ -6,15 +6,15 @@ PineappleTwilight/houri-engine revision:
 https://github.com/PineappleTwilight/houri-engine/tree/85351aa3822fe2611f68cfd092972e6ac573f203
 Houri reference: dc2b4af3ed3c4374849cbd9b7964db051a464a25.
 
-Adapted detector-only files: Detector.kt (DbnetPostprocessor), ImageOps.kt
-(DbnetPixels / DbnetService resize), Geometry.kt (DbnetGeometry),
+Adapted detector and inpainter files: Detector.kt (DbnetPostprocessor), ImageOps.kt
+(DbnetPixels / DbnetService resize), Geometry.kt (DbnetGeometry), Inpainter.kt (Inpainter),
 NcnnBackend.kt and ncnn_jni.cpp (DbnetSession / DbnetNativeBackend / dbnet_jni.cpp),
 and NCNN build configuration. Original author/project credits are retained here
 and in source headers. Upstream detector code is GPL-3.0; full text is included
 in GPL-3.0.txt. This experiment includes modifications made for Yomotsu in 2026:
 bounded immutable geometry, shape/handle validation, neutral coordinates,
-stream-verified external models and a separate Android process. It does not
-include upstream OCR, translation, renderer, inpainting or storage pipeline.
+stream-verified external models, AOT-GAN neural inpainting, and a separate Android process.
+It does not include upstream OCR, translation, renderer, or storage pipeline.
 
 Corresponding Yomotsu source and build scripts for this experimental binary:
 https://github.com/kiritsuguxs/Yomotsu/tree/agent/y19-yakuyomi-dbnet-test1
@@ -25,9 +25,10 @@ requirements. Existing Yomotsu/Mihon/Tachiyomi and other component notices and
 licenses are not removed or relicensed by this notice.
 
 Models are NOT in this APK. The optional download uses dbnet_detect.ncnn.param
-and dbnet_detect.ncnn.bin from joyeli/yakuyomi-engine models-v3, declared GPL-3.0
-and attributed to zyddnys/manga-image-translator. Model ancestor:
-detect-20241225.ckpt, manga-image-translator beta-0.3. The pinned exporter cites
+and dbnet_detect.ncnn.bin (detector, models-v3) and mit_aot_fixed512.ncnn.param
+and mit_aot_fixed512.ncnn.bin (inpainter, models-v2) from joyeli/yakuyomi-engine, declared GPL-3.0
+and attributed to zyddnys/manga-image-translator. Model ancestors:
+detect-20241225.ckpt and inpainting.ckpt, manga-image-translator beta-0.3. The pinned exporter cites
 d5a3eee. Exact byte counts, SHA-256 pins, source/export provenance and unresolved
 upstream revision discrepancies are documented in docs/yakuyomi-dbnet-upstream.md.
 

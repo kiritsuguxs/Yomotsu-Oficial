@@ -120,4 +120,19 @@ class DbnetModelStoreTest {
             DbnetModelStore.ASSETS.last().sha256,
         )
     }
+
+    @Test fun `pinned inpainter pair matches reviewed manifest`() {
+        assertEquals(2, DbnetModelStore.INPAINTER_ASSETS.size)
+        assertEquals(33_810L + 11_366_088L, DbnetModelStore.INPAINTER_ASSETS.sumOf { it.size })
+        assertEquals("mit_aot_fixed512.ncnn.param", DbnetModelStore.INPAINTER_ASSETS.first().name)
+        assertEquals(
+            "f21ef860d21a6cdf60dfb1742c08d1c0d98837bceeb2ee3fe9c2dbbeee7d32b5",
+            DbnetModelStore.INPAINTER_ASSETS.first().sha256,
+        )
+        assertEquals("mit_aot_fixed512.ncnn.bin", DbnetModelStore.INPAINTER_ASSETS.last().name)
+        assertEquals(
+            "a52db45eafc1dd2aa4ce9a339c711917fa98fefb31ce4506d4c95e8b5e3560b6",
+            DbnetModelStore.INPAINTER_ASSETS.last().sha256,
+        )
+    }
 }

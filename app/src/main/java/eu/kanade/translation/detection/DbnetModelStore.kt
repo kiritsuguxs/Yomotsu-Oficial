@@ -112,5 +112,19 @@ class DbnetModelStore(
                 "f57bdbede7764a534c56e88be0269602259a7fcd47e54e8b7d954fd0fcc55c3d",
             ),
         )
+        val INPAINTER_ASSETS = listOf(
+            DbnetModelAsset(
+                "mit_aot_fixed512.ncnn.param",
+                "https://github.com/joyeli/yakuyomi-engine/releases/download/models-v2/mit_aot_fixed512.ncnn.param",
+                33_810L,
+                "f21ef860d21a6cdf60dfb1742c08d1c0d98837bceeb2ee3fe9c2dbbeee7d32b5",
+            ),
+            DbnetModelAsset(
+                "mit_aot_fixed512.ncnn.bin",
+                "https://github.com/joyeli/yakuyomi-engine/releases/download/models-v2/mit_aot_fixed512.ncnn.bin",
+                11_366_088L,
+                "a52db45eafc1dd2aa4ce9a339c711917fa98fefb31ce4506d4c95e8b5e3560b6",
+            ),
+        )
     }
 }

@@ -11,8 +11,16 @@ interface DbnetBackend {
         mask: FloatArray,
         dimensions: IntArray,
     ): Int
+    fun inpaintAot(
+        handle: Long,
+        img: FloatArray,
+        mask: FloatArray,
+        s: Int,
+        out: FloatArray,
+    ): Int = -1
     fun release(handle: Long)
 }
+
 data class DbnetTensors(val db: FloatArray, val mask: FloatArray, val dimensions: IntArray)
 class DbnetSession(private val backend: DbnetBackend, param: String, bin: String) : AutoCloseable {
     private var handle: Long = backend.create(param, bin).also { check(it != 0L) { "Falha ao carregar modelo NCNN" } }
