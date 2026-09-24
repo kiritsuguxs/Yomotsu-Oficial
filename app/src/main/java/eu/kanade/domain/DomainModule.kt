@@ -207,5 +207,50 @@ class DomainModule : InjektModule {
         addFactory { GetIncognitoState(get(), get(), get()) }
 
         addFactory { UpdateMangaFromRemote(get(), get(), get(), get(), get(), get(), get()) }
+
+        // Anime Repositories & Interactors
+        addSingletonFactory<tachiyomi.domain.entries.anime.repository.AnimeRepository> {
+            tachiyomi.data.entries.anime.AnimeRepositoryImpl(get())
+        }
+        addFactory { tachiyomi.domain.entries.anime.interactor.GetAnime(get()) }
+        addFactory { tachiyomi.domain.entries.anime.interactor.GetLibraryAnime(get()) }
+        addFactory { tachiyomi.domain.entries.anime.interactor.GetAnimeFavorites(get()) }
+        addFactory { tachiyomi.domain.entries.anime.interactor.GetDuplicateLibraryAnime(get()) }
+        addFactory { tachiyomi.domain.entries.anime.interactor.GetAnimeByUrlAndSourceId(get()) }
+        addFactory { tachiyomi.domain.entries.anime.interactor.ResetAnimeViewerFlags(get()) }
+        addFactory { tachiyomi.domain.entries.anime.interactor.SetAnimeEpisodeFlags(get()) }
+        addFactory { tachiyomi.domain.entries.anime.interactor.AnimeFetchInterval(get()) }
+        addFactory { tachiyomi.domain.entries.anime.interactor.SetAnimeDefaultEpisodeFlags(get(), get(), get()) }
+        addFactory { tachiyomi.domain.entries.anime.interactor.SetAnimeViewerFlags(get()) }
+        addFactory { tachiyomi.domain.entries.anime.interactor.NetworkToLocalAnime(get(), get()) }
+        addFactory { tachiyomi.domain.entries.anime.interactor.UpdateAnime(get(), get()) }
+        addFactory { tachiyomi.domain.entries.anime.interactor.SetAnimeCategories(get()) }
+
+        addSingletonFactory<tachiyomi.domain.items.episode.repository.EpisodeRepository> {
+            tachiyomi.data.items.episode.EpisodeRepositoryImpl(get())
+        }
+        addFactory { tachiyomi.domain.items.episode.interactor.GetEpisode(get()) }
+        addFactory { tachiyomi.domain.items.episode.interactor.GetEpisodesByAnimeId(get()) }
+        addFactory { tachiyomi.domain.items.episode.interactor.GetEpisodeByUrlAndAnimeId(get()) }
+        addFactory { tachiyomi.domain.items.episode.interactor.UpdateEpisode(get()) }
+
+        addSingletonFactory<tachiyomi.domain.source.anime.repository.AnimeSourceRepository> {
+            tachiyomi.data.source.anime.AnimeSourceRepositoryImpl(get(), get())
+        }
+        addSingletonFactory<tachiyomi.domain.source.anime.repository.AnimeStubSourceRepository> {
+            tachiyomi.data.source.anime.AnimeStubSourceRepositoryImpl(get())
+        }
+        addFactory { eu.kanade.domain.source.anime.interactor.GetAnimeSourcesWithFavoriteCount(get(), get()) }
+        addFactory { tachiyomi.domain.source.anime.interactor.GetAnimeSourcesWithNonLibraryAnime(get()) }
+        addFactory { eu.kanade.domain.source.anime.interactor.ToggleAnimeSource(get()) }
+        addFactory { eu.kanade.domain.source.anime.interactor.ToggleAnimeSourcePin(get()) }
+
+        addSingletonFactory<mihon.domain.extension.anime.repository.AnimeExtensionStoreRepository> {
+            mihon.data.extension.anime.repository.AnimeExtensionStoreRepositoryImpl(get(), get())
+        }
+        addFactory { mihon.domain.extension.anime.interactor.GetAnimeExtensionStores(get()) }
+        addFactory { mihon.domain.extension.anime.interactor.UpdateAnimeExtensionStores(get(), get()) }
+        addFactory { eu.kanade.domain.extension.anime.interactor.GetAnimeExtensionsByType(get(), get()) }
+        addFactory { eu.kanade.domain.extension.anime.interactor.TrustAnimeExtension(get(), get()) }
     }
 }

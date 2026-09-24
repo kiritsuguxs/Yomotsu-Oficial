@@ -62,11 +62,18 @@ data object BrowseTab : Tab {
         val extensionsViewModel = viewModel<ExtensionsViewModel>()
         val extensionsState by extensionsViewModel.state.collectAsState()
 
+        val animeExtensionsScreenModel = cafe.adriel.voyager.core.model.rememberScreenModel {
+            eu.kanade.tachiyomi.ui.browse.anime.extension.AnimeExtensionsScreenModel()
+        }
+        val animeExtensionsState by animeExtensionsScreenModel.state.collectAsState()
+
         val novelsViewModel = viewModel<eu.kanade.tachiyomi.ui.browse.novel.NovelsViewModel>()
 
         val tabs = listOf(
             sourcesTab(),
             extensionsTab(extensionsViewModel),
+            eu.kanade.tachiyomi.ui.browse.anime.source.animeSourcesTab(),
+            eu.kanade.tachiyomi.ui.browse.anime.extension.animeExtensionsTab(animeExtensionsScreenModel),
             novelSourcesTab(),
             novelsTab(novelsViewModel),
             migrateSourceTab(),
@@ -81,13 +88,15 @@ data object BrowseTab : Tab {
             state = state,
             searchQuery = when (state.currentPage) {
                 1 -> extensionsState.searchQuery
-                3 -> novelSearchQuery
+                3 -> animeExtensionsState.searchQuery
+                5 -> novelSearchQuery
                 else -> null
             },
             onChangeSearchQuery = { query ->
                 when (state.currentPage) {
                     1 -> extensionsViewModel.search(query)
-                    3 -> novelsViewModel.search(query)
+                    3 -> animeExtensionsScreenModel.search(query)
+                    5 -> novelsViewModel.search(query)
                 }
             },
         )

@@ -90,6 +90,42 @@ class AppModule(val app: Application) : InjektModule {
             )
         }
 
+        val sqlDriverAnime = AndroidxSqliteDriver(
+            driver = BundledSQLiteDriver(),
+            databaseType = AndroidxSqliteDatabaseType.FileProvider(app, "yomotsu.anime.db"),
+            schema = tachiyomi.mi.data.AnimeDatabase.Schema,
+            configuration = AndroidxSqliteConfiguration(
+                isForeignKeyConstraintsEnabled = true,
+            ),
+        )
+
+        addSingletonFactory {
+            tachiyomi.mi.data.AnimeDatabase(
+                driver = sqlDriverAnime,
+                animehistoryAdapter = dataanime.Animehistory.Adapter(
+                    last_seenAdapter = DateColumnAdapter,
+                ),
+                animesAdapter = dataanime.Animes.Adapter(
+                    genreAdapter = StringListColumnAdapter,
+                    update_strategyAdapter = tachiyomi.data.AnimeUpdateStrategyColumnAdapter,
+                    fetch_typeAdapter = tachiyomi.data.FetchTypeColumnAdapter,
+                    memoAdapter = MemoColumnAdapter,
+                ),
+                episodesAdapter = dataanime.Episodes.Adapter(
+                    memoAdapter = MemoColumnAdapter,
+                ),
+            )
+        }
+
+        addSingletonFactory<tachiyomi.data.handlers.anime.AnimeDatabaseHandler> {
+            tachiyomi.data.handlers.anime.AndroidAnimeDatabaseHandler(get(), sqlDriverAnime)
+        }
+        addSingletonFactory { eu.kanade.tachiyomi.data.cache.AnimeCoverCache(app) }
+        addSingletonFactory<tachiyomi.domain.source.anime.service.AnimeSourceManager> {
+            eu.kanade.tachiyomi.source.anime.AndroidAnimeSourceManager(app, get(), get())
+        }
+        addSingletonFactory { eu.kanade.tachiyomi.extension.anime.AnimeExtensionManager(app) }
+
         addSingletonFactory {
             Json {
                 ignoreUnknownKeys = true

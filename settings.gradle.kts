@@ -13,6 +13,9 @@ dependencyResolutionManagement {
         create("mihonx") {
             from(files("gradle/mihon.versions.toml"))
         }
+        create("aniyomilibs") {
+            from(files("gradle/aniyomi.versions.toml"))
+        }
     }
 
     @Suppress("UnstableApiUsage")
@@ -39,6 +42,7 @@ include(":data")
 include(":domain")
 include(":i18n")
 include(":i18n-at")
+include(":i18n-aniyomi")
 include(":presentation-core")
 include(":presentation-widget")
 include(":ppocr-sdk")

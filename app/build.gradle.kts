@@ -136,7 +136,7 @@ baselineProfile { baselineProfileOutputDir = "baselineProfiles"; mergeIntoMain =
 
 dependencies {
     baselineProfile(projects.baselineProfile)
-    implementation(projects.i18n); implementation(projects.i18nAt); implementation(projects.core.archive); implementation(projects.core.common); implementation(projects.core.viewmodel); implementation(projects.coreMetadata); implementation(projects.sourceApi); implementation(projects.sourceLocal); implementation(projects.data); implementation(projects.domain); implementation(projects.presentationCore); implementation(projects.presentationWidget); implementation(projects.telemetry)
+    implementation(projects.i18n); implementation(projects.i18nAt); implementation(projects.i18nAniyomi); implementation(projects.core.archive); implementation(projects.core.common); implementation(projects.core.viewmodel); implementation(projects.coreMetadata); implementation(projects.sourceApi); implementation(projects.sourceLocal); implementation(projects.data); implementation(projects.domain); implementation(projects.presentationCore); implementation(projects.presentationWidget); implementation(projects.telemetry)
     implementation(projects.dbnetNative)
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
@@ -149,6 +149,15 @@ dependencies {
     implementation(libs.image.decoder); implementation(libs.material); implementation(libs.flexibleAdapter); implementation(libs.photoView)
     implementation(libs.directionalViewPager) { exclude(group = "androidx.viewpager", module = "viewpager") }
     implementation(libs.composeRichEditor); implementation(libs.aboutLibraries.compose); implementation(libs.bundles.voyager); implementation(libs.composeMaterialMotion); implementation(libs.swipe); implementation(libs.composeWebview); implementation(libs.composeGrid); implementation(libs.reorderable); implementation(libs.bundles.markdown); implementation(libs.materialKolor); implementation(libs.logcat); implementation(libs.bundles.shizuku); implementation(libs.stringSimilarity); testImplementation(libs.bundles.test); testRuntimeOnly(libs.junit.platform.launcher); implementation(libs.leakCanary.plumber); testImplementation(libs.kotlinx.coroutines.test); implementation(libs.mlkit.text.recognition); implementation(libs.mlkit.text.recognition.japanese); implementation(libs.mlkit.text.recognition.korean); implementation(libs.mlkit.text.recognition.chinese); implementation(libs.mlkit.text.translate); implementation(libs.google.generativeai)
+
+    // Anime Player & MPV
+    implementation(aniyomilibs.compose.constraintlayout)
+    implementation(aniyomilibs.mediasession)
+    implementation(aniyomilibs.aniyomi.mpv)
+    implementation(aniyomilibs.ffmpeg.kit)
+    implementation(aniyomilibs.arthenica.smartexceptions)
+    implementation(aniyomilibs.seeker)
+    implementation(aniyomilibs.truetypeparser)
 }
 
 androidComponents {
