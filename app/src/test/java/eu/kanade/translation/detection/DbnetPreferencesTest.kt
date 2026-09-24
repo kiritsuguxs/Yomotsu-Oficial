@@ -11,6 +11,8 @@ class DbnetPreferencesTest {
         val preferences = TranslationPreferences(InMemoryPreferenceStore())
         assertFalse(preferences.dbnetExperimental().get())
         assertEquals("dbnet_experimental", preferences.dbnetExperimental().key())
+        assertFalse(preferences.inpainterAot().get())
+        assertEquals("inpainter_aot", preferences.inpainterAot().key())
         assertEquals(0, preferences.ocrEngine().get())
         assertEquals("ocr_engine", preferences.ocrEngine().key())
     }

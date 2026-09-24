@@ -105,6 +105,11 @@ object SettingsTranslationScreen : SearchableSettings {
                     title = "Detector DBNet (experimental)",
                     subtitle = "Somente inglês/ARM64. Primeiro uso baixa 153 MB separados do APK. Reconhecimento ML Kit de página inteira; em falha, usa o OCR selecionado acima.",
                 ),
+                Preference.PreferenceItem.SwitchPreference(
+                    preference = translationPreferences.inpainterAot(),
+                    title = "Remoção de texto por IA (AOT-GAN)",
+                    subtitle = "Reconstrói o fundo e arte atrás dos textos usando rede neural (NCNN). Primeiro uso baixa ~11 MB. Se desativado, usa preenchimento rápido de cor.",
+                ),
             ),
         )
     }

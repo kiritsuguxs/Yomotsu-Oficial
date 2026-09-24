@@ -34,7 +34,10 @@ class TranslationPreferences(
     // Stable OCR values: 0 = ML Kit, 1 = PaddleOCR.
     fun dbnetExperimental() = preferenceStore.getBoolean("dbnet_experimental", false)
 
+    fun inpainterAot() = preferenceStore.getBoolean("inpainter_aot", false)
+
     fun ocrEngine() = preferenceStore.getInt("ocr_engine", 0)
+
 
     fun translationEngine() = preferenceStore.getInt("translation_engine", 0)
     fun translationFallbackEngine() = preferenceStore.getInt("translation_fallback_engine", 0)
