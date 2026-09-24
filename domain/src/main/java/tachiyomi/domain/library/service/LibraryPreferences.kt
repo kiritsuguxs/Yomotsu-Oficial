@@ -4,6 +4,8 @@ import tachiyomi.core.common.preference.Preference
 import tachiyomi.core.common.preference.PreferenceStore
 import tachiyomi.core.common.preference.TriState
 import tachiyomi.core.common.preference.getEnum
+import tachiyomi.domain.entries.anime.model.Anime
+import tachiyomi.domain.library.anime.model.AnimeLibrarySort
 import tachiyomi.domain.library.model.LibraryDisplayMode
 import tachiyomi.domain.library.model.LibrarySort
 import tachiyomi.domain.manga.model.Manga
@@ -26,7 +28,16 @@ class LibraryPreferences(
         LibrarySort.Serializer::deserialize,
     )
 
+    val animeSortingMode: Preference<AnimeLibrarySort> = preferenceStore.getObjectFromString(
+        "animelib_sorting_mode",
+        AnimeLibrarySort.default,
+        AnimeLibrarySort.Serializer::serialize,
+        AnimeLibrarySort.Serializer::deserialize,
+    )
+
     val randomSortSeed: Preference<Int> = preferenceStore.getInt("library_random_sort_seed", 0)
+
+    val randomAnimeSortSeed: Preference<Int> = preferenceStore.getInt("library_random_anime_sort_seed", 0)
 
     val portraitColumns: Preference<Int> = preferenceStore.getInt("pref_library_columns_portrait_key", 0)
 
@@ -124,7 +135,11 @@ class LibraryPreferences(
 
     val defaultCategory: Preference<Int> = preferenceStore.getInt(DEFAULT_CATEGORY_PREF_KEY, -1)
 
+    val defaultAnimeCategory: Preference<Int> = preferenceStore.getInt("default_anime_category", -1)
+
     val lastUsedCategory: Preference<Int> = preferenceStore.getInt(Preference.appStateKey("last_used_category"), 0)
+
+    val lastUsedAnimeCategory: Preference<Int> = preferenceStore.getInt(Preference.appStateKey("last_used_anime_category"), 0)
 
     val categoryTabs: Preference<Boolean> = preferenceStore.getBoolean("display_category_tabs", true)
 
@@ -139,6 +154,16 @@ class LibraryPreferences(
 
     val updateCategoriesExclude: Preference<Set<String>> = preferenceStore.getStringSet(
         LIBRARY_UPDATE_CATEGORIES_EXCLUDE_PREF_KEY,
+        emptySet(),
+    )
+
+    val animeUpdateCategories: Preference<Set<String>> = preferenceStore.getStringSet(
+        "animelib_update_categories",
+        emptySet(),
+    )
+
+    val animeUpdateCategoriesExclude: Preference<Set<String>> = preferenceStore.getStringSet(
+        "animelib_update_categories_exclude",
         emptySet(),
     )
 
@@ -194,6 +219,55 @@ class LibraryPreferences(
         "pref_hide_missing_chapter_indicators",
         false,
     )
+    // endregion
+
+    // region Episode
+
+    val filterEpisodeBySeen: Preference<Long> = preferenceStore.getLong(
+        "default_episode_filter_by_seen",
+        Anime.SHOW_ALL,
+    )
+
+    val filterEpisodeByDownloaded: Preference<Long> = preferenceStore.getLong(
+        "default_episode_filter_by_downloaded",
+        Anime.SHOW_ALL,
+    )
+
+    val filterEpisodeByBookmarked: Preference<Long> = preferenceStore.getLong(
+        "default_episode_filter_by_bookmarked",
+        Anime.SHOW_ALL,
+    )
+
+    val filterEpisodeByFillermarked: Preference<Long> = preferenceStore.getLong(
+        "default_episode_filter_by_fillermarked",
+        Anime.SHOW_ALL,
+    )
+
+    val sortEpisodeBySourceOrNumber: Preference<Long> = preferenceStore.getLong(
+        "default_episode_sort_by_source_or_number",
+        Anime.EPISODE_SORTING_SOURCE,
+    )
+
+    val displayEpisodeByNameOrNumber: Preference<Long> = preferenceStore.getLong(
+        "default_episode_display_by_name_or_number",
+        Anime.EPISODE_DISPLAY_NAME,
+    )
+
+    val sortEpisodeByAscendingOrDescending: Preference<Long> = preferenceStore.getLong(
+        "default_episode_sort_by_ascending_or_descending",
+        Anime.EPISODE_SORT_DESC,
+    )
+
+    val showEpisodeThumbnailPreviews: Preference<Boolean> = preferenceStore.getBoolean(
+        "default_episode_show_thumbnail_previews",
+        false,
+    )
+
+    val showEpisodeSummaries: Preference<Boolean> = preferenceStore.getBoolean(
+        "default_episode_show_summaries",
+        false,
+    )
+
     // endregion
 
     // region Swipe Actions

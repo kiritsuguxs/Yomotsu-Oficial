@@ -1,7 +1,7 @@
 package tachiyomi.domain.category.anime.interactor
 
 import tachiyomi.domain.category.anime.repository.AnimeCategoryRepository
-import tachiyomi.domain.library.model.plus
+import tachiyomi.domain.library.anime.model.plus
 import tachiyomi.domain.library.service.LibraryPreferences
 
 class ResetAnimeCategoryFlags(
@@ -10,7 +10,7 @@ class ResetAnimeCategoryFlags(
 ) {
 
     suspend fun await() {
-        val sort = preferences.animeSortingMode().get()
+        val sort = preferences.animeSortingMode.get()
         categoryRepository.updateAllAnimeCategoryFlags(sort.type + sort.direction)
     }
 }

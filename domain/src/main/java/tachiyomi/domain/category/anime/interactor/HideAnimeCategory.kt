@@ -19,7 +19,7 @@ class HideAnimeCategory(
 
         try {
             categoryRepository.updatePartialAnimeCategory(update)
-            RenameAnimeCategory.Result.Success
+            Result.Success
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e)
             Result.InternalError(e)

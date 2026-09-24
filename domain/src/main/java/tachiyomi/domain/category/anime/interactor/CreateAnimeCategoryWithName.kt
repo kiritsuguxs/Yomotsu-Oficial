@@ -5,6 +5,7 @@ import tachiyomi.core.common.util.lang.withNonCancellableContext
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.category.anime.repository.AnimeCategoryRepository
 import tachiyomi.domain.category.model.Category
+import tachiyomi.domain.library.anime.model.plus
 import tachiyomi.domain.library.service.LibraryPreferences
 
 class CreateAnimeCategoryWithName(
@@ -14,8 +15,8 @@ class CreateAnimeCategoryWithName(
 
     private val initialFlags: Long
         get() {
-            val sort = preferences.animeSortingMode().get()
-            return sort.type.flag or sort.direction.flag
+            val sort = preferences.animeSortingMode.get()
+            return sort.type + sort.direction
         }
 
     suspend fun await(name: String): Result = withNonCancellableContext {
