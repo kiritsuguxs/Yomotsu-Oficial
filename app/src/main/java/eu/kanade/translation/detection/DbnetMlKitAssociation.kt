@@ -41,9 +41,7 @@ object DbnetMlKitAssociation {
                 blocksByGroup.getOrPut(match) { mutableListOf() }.add(block)
             }
         }
-        if (blocksByGroup.isEmpty()) fail("DBNet and ML Kit produced no usable association")
-
-        val orderedGroups = blocksByGroup.keys.sortedWith(
+        val orderedGroups = groups.indices.sortedWith(
             compareBy<Int> { groups[it].bounds.top }
                 .thenBy { groups[it].bounds.left }
                 .thenBy { groups[it].bounds.bottom }
@@ -53,7 +51,7 @@ object DbnetMlKitAssociation {
         val associatedBlocks = orderedGroups.mapIndexed { blockIndex, groupIndex ->
             val group = groups[groupIndex].snapshot()
             associatedGroups += DbnetAssociatedGroup(blockIndex, group)
-            merge(group, blocksByGroup.getValue(groupIndex))
+            merge(group, blocksByGroup[groupIndex] ?: emptyList())
         }
         return mlKitPage.copy(
             blocks = associatedBlocks,
@@ -173,6 +171,19 @@ object DbnetMlKitAssociation {
         val ordered = when (group.direction) {
             DbnetTextDirection.HORIZONTAL -> source.sortedWith(compareBy<OcrTextBlock> { it.y }.thenBy { it.x })
             DbnetTextDirection.VERTICAL -> source.sortedWith(compareBy<OcrTextBlock> { it.x }.thenBy { it.y })
+        }
+        if (ordered.isEmpty()) {
+            return OcrTextBlock(
+                text = "",
+                x = group.bounds.left,
+                y = group.bounds.top,
+                width = group.bounds.right - group.bounds.left,
+                height = group.bounds.bottom - group.bounds.top,
+                symbolWidth = 1f,
+                symbolHeight = 1f,
+                angle = group.angle,
+                confidence = null,
+            )
         }
         val confidences = ordered.mapNotNull { it.confidence }
         return OcrTextBlock(

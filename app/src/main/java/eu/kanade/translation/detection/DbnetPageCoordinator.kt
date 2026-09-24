@@ -91,12 +91,11 @@ internal class DbnetFullPageMlKitOwner<I, O>(
 
     fun beginPage() = DbnetFullPageMlKitAttempt(this)
 
-    internal suspend fun recognizeForAssociation(input: I): O =
-        if (selectedIsMlKit) selected.recognize(input) else owned().recognize(input)
+    internal suspend fun recognizeForAssociation(input: I): O = selected.recognize(input)
 
     internal suspend fun recognizeSelected(input: I): O = selected.recognize(input)
 
-    internal fun associationUsesSelected(): Boolean = selectedIsMlKit
+    internal fun associationUsesSelected(): Boolean = true
 
     suspend fun releaseOwned() {
         val current = ownedMlKit
