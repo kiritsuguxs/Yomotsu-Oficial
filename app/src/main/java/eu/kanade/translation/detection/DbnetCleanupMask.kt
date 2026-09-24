@@ -314,11 +314,7 @@ class DbnetCleanupMask private constructor(
                 }
             }
             if (output.isEmpty()) fail("DBNet cleanup owner has no usable mask pixels")
-            if (permissionPixels >= MIN_DENSE_PERMISSION_PIXELS &&
-                ownerErasedPixels * 100L > permissionPixels * MAX_PERMISSION_FILL_PERCENT
-            ) {
-                fail("DBNet cleanup mask is excessively dense")
-            }
+            // Removed excessively dense mask check: thick fonts can legitimately exceed 70% density.
             return fromRuns(pageWidth, pageHeight, output.toIntArray())
         }
 
