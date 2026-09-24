@@ -422,7 +422,7 @@ class PlayerActivity : BaseActivity() {
     }
 
     private fun setupPlayerMPV() {
-        val logLevel = if (networkPreferences.verboseLogging().get()) "info" else "warn"
+        val logLevel = if (networkPreferences.verboseLogging.get()) "info" else "warn"
 
         val mpvDir = UniFile.fromFile(applicationContext.filesDir)!!.createDirectory(MPV_DIR)!!
 
@@ -1076,7 +1076,7 @@ class PlayerActivity : BaseActivity() {
                     ?: if (episode.seen && !preservePos) {
                         0L
                     } else {
-                        episode.last_second_seen
+                        episode.lastSecondSeen
                     }
                 MPVLib.command(arrayOf("set", "start", "${resumePosition / 1000F}"))
             }

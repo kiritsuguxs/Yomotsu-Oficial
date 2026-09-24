@@ -69,6 +69,22 @@ class StorageManager(
     fun getTranslationsDirectory(): UniFile? {
         return baseDir?.createDirectory(TRANSLATION_PATH)
     }
+
+    fun getScriptsDirectory(): UniFile? {
+        return baseDir?.createDirectory(SCRIPTS_PATH)
+    }
+
+    fun getScriptOptsDirectory(): UniFile? {
+        return baseDir?.createDirectory(SCRIPT_OPTS_PATH)
+    }
+
+    fun getShadersDirectory(): UniFile? {
+        return baseDir?.createDirectory(SHADERS_PATH)
+    }
+
+    fun getFontsDirectory(): UniFile? {
+        return baseDir?.createDirectory(FONTS_PATH)
+    }
 }
 
 private const val AUTOMATIC_BACKUPS_PATH = "autobackup"
@@ -77,3 +93,8 @@ private const val LOCAL_SOURCE_PATH = "local"
 
 // TachiyomiAT
 private const val TRANSLATION_PATH = "translations"
+
+private const val SCRIPTS_PATH = "scripts"
+private const val SCRIPT_OPTS_PATH = "script-opts"
+private const val SHADERS_PATH = "shaders"
+private const val FONTS_PATH = "fonts"

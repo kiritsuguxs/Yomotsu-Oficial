@@ -282,6 +282,28 @@ class LibraryPreferences(
         ChapterSwipeAction.ToggleRead,
     )
 
+    val episodeSwipeStartAction: Preference<EpisodeSwipeAction> = preferenceStore.getEnum(
+        "pref_episode_swipe_start_action",
+        EpisodeSwipeAction.ToggleBookmark,
+    )
+
+    val episodeSwipeEndAction: Preference<EpisodeSwipeAction> = preferenceStore.getEnum(
+        "pref_episode_swipe_end_action",
+        EpisodeSwipeAction.ToggleSeen,
+    )
+
+    fun swipeEpisodeStartAction() = episodeSwipeStartAction
+    fun swipeEpisodeEndAction() = episodeSwipeEndAction
+
+    val updateSeasonOnRefresh: Preference<Boolean> = preferenceStore.getBoolean("pref_update_season_on_refresh", false)
+    fun updateSeasonOnRefresh() = updateSeasonOnRefresh
+
+    val updateSeasonOnLibraryUpdate: Preference<Boolean> = preferenceStore.getBoolean("pref_update_season_on_library_update", false)
+    fun updateSeasonOnLibraryUpdate() = updateSeasonOnLibraryUpdate
+
+    val autoUpdateItemRestrictions: Preference<Set<String>> get() = autoUpdateMangaRestrictions
+    fun autoUpdateItemRestrictions() = autoUpdateItemRestrictions
+
     val updateMangaTitles: Preference<Boolean> = preferenceStore.getBoolean("pref_update_library_manga_titles", false)
 
     val disallowNonAsciiFilenames: Preference<Boolean> = preferenceStore.getBoolean(
@@ -298,6 +320,14 @@ class LibraryPreferences(
         Disabled,
     }
 
+    enum class EpisodeSwipeAction {
+        ToggleSeen,
+        ToggleBookmark,
+        ToggleFillermark,
+        Download,
+        Disabled,
+    }
+
     companion object {
         const val DEVICE_ONLY_ON_WIFI = "wifi"
         const val DEVICE_NETWORK_NOT_METERED = "network_not_metered"
@@ -307,6 +337,11 @@ class LibraryPreferences(
         const val MANGA_HAS_UNREAD = "manga_fully_read"
         const val MANGA_NON_READ = "manga_started"
         const val MANGA_OUTSIDE_RELEASE_PERIOD = "manga_outside_release_period"
+
+        const val ENTRY_NON_COMPLETED = MANGA_NON_COMPLETED
+        const val ENTRY_HAS_UNREAD = MANGA_HAS_UNREAD
+        const val ENTRY_NON_READ = MANGA_NON_READ
+        const val ENTRY_OUTSIDE_RELEASE_PERIOD = MANGA_OUTSIDE_RELEASE_PERIOD
 
         const val MARK_DUPLICATE_CHAPTER_READ_NEW = "new"
         const val MARK_DUPLICATE_CHAPTER_READ_EXISTING = "existing"

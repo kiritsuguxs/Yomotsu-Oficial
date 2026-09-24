@@ -59,6 +59,9 @@ interface Tracker {
 
     val isLoggedIn: Boolean
 
+    val animeService: AnimeTracker
+        get() = this as AnimeTracker
+
     val isLoggedInFlow: Flow<Boolean>
 
     fun getUsername(): String

@@ -7,15 +7,10 @@ import eu.kanade.tachiyomi.animesource.model.Hoster.Companion.toHosterList
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.data.download.anime.AnimeDownloadManager
 import eu.kanade.tachiyomi.ui.player.controls.components.sheets.HosterState
 import kotlinx.coroutines.CancellationException
 import tachiyomi.domain.entries.anime.model.Anime
 import tachiyomi.domain.items.episode.model.Episode
-import tachiyomi.source.local.entries.anime.LocalAnimeSource
-import tachiyomi.source.local.io.anime.LocalAnimeSourceFileSystem
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 
 /**
  * Loader used to retrieve the hosters for a given episode.
@@ -31,12 +26,10 @@ class EpisodeLoader {
          * @param source the source of the anime.
          */
         suspend fun getHosters(episode: Episode, anime: Anime, source: AnimeSource): List<Hoster> {
-            val isDownloaded = isDownload(episode, anime)
-            return when {
-                isDownloaded -> getHostersOnDownloaded(episode, anime, source)
-                source is AnimeHttpSource -> getHostersOnHttp(episode, source)
-                source is LocalAnimeSource -> getHostersOnLocal(episode)
-                else -> error("source not supported")
+            return if (source is AnimeHttpSource) {
+                getHostersOnHttp(episode, source)
+            } else {
+                emptyList()
             }
         }
 
@@ -46,16 +39,7 @@ class EpisodeLoader {
          * @param episode the episode being parsed.
          * @param anime the anime of the episode.
          */
-        fun isDownload(episode: Episode, anime: Anime): Boolean {
-            val downloadManager: AnimeDownloadManager = Injekt.get()
-            return downloadManager.isEpisodeDownloaded(
-                episode.name,
-                episode.scanlator,
-                anime.title,
-                anime.source,
-                skipCache = true,
-            )
-        }
+        fun isDownload(episode: Episode, anime: Anime): Boolean = false
 
         private fun checkHasHosters(source: AnimeHttpSource): Boolean {
             var current: Class<in AnimeHttpSource> = source.javaClass
@@ -92,53 +76,6 @@ class EpisodeLoader {
                 source.getVideoList(episode.toSEpisode())
                     .let { source.run { it.sortVideos() } }
                     .toHosterList()
-            }
-        }
-
-        /**
-         * Returns the hoster when the [episode] is downloaded.
-         *
-         * @param episode the episode being parsed.
-         * @param anime the anime of the episode.
-         * @param source the source of the anime.
-         */
-        private fun getHostersOnDownloaded(
-            episode: Episode,
-            anime: Anime,
-            source: AnimeSource,
-        ): List<Hoster> {
-            val downloadManager: AnimeDownloadManager = Injekt.get()
-            return try {
-                val video = downloadManager.buildVideo(source, anime, episode)
-                listOf(video).toHosterList()
-            } catch (e: Throwable) {
-                emptyList()
-            }
-        }
-
-        /**
-         * Returns the hoster when the [episode] is from local source.
-         *
-         * @param episode the episode being parsed.
-         */
-        private fun getHostersOnLocal(
-            episode: Episode,
-        ): List<Hoster> {
-            return try {
-                val (animeDirName, episodeName) = episode.url.split('/', limit = 2)
-                val fileSystem: LocalAnimeSourceFileSystem = Injekt.get()
-                val videoFile = fileSystem.getBaseDirectory()
-                    ?.findFile(animeDirName)
-                    ?.findFile(episodeName)
-                val videoUri = videoFile!!.uri
-
-                val video = Video(
-                    videoUri.toString(),
-                    "Local source: ${episode.url}",
-                )
-                listOf(video).toHosterList()
-            } catch (e: Exception) {
-                emptyList()
             }
         }
 

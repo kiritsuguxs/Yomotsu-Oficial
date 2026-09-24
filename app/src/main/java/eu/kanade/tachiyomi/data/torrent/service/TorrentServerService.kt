@@ -63,7 +63,7 @@ class TorrentServerService : Service() {
     private fun startServer() {
         serviceScope.launch {
             if (api.echo() == "") {
-                if (networkPreferences.verboseLogging().get()) {
+                if (networkPreferences.verboseLogging.get()) {
                     TorrServer.registerLogCallback()
                 }
 

@@ -22,6 +22,9 @@ object Notifications {
     const val CHANNEL_COMMON = "common_channel"
     const val ID_DOWNLOAD_IMAGE = 2
 
+    const val CHANNEL_TORRENT_SERVER = "torrent_server_channel"
+    const val ID_TORRENT_SERVER = -901
+
     /**
      * Notification channel and ids used by the library updater.
      */
@@ -55,6 +58,7 @@ object Notifications {
      */
     const val CHANNEL_NEW_CHAPTERS = "new_chapters_channel"
     const val ID_NEW_CHAPTERS = -301
+    const val ID_NEW_EPISODES = -302
     const val GROUP_NEW_CHAPTERS = "eu.kanade.tachiyomi.NEW_CHAPTERS"
 
     /**
@@ -187,6 +191,10 @@ object Notifications {
                 buildNotificationChannel(CHANNEL_EXTENSIONS_UPDATE, IMPORTANCE_DEFAULT) {
                     setGroup(GROUP_APK_UPDATES)
                     setName(context.stringResource(MR.strings.channel_ext_updates))
+                },
+                buildNotificationChannel(CHANNEL_TORRENT_SERVER, IMPORTANCE_LOW) {
+                    setName("Torrent Server")
+                    setShowBadge(false)
                 },
             ),
         )

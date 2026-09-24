@@ -78,6 +78,10 @@ object LocaleHelper {
         return locale!!.getDisplayName(locale).replaceFirstChar { it.uppercase(locale) }
     }
 
+    fun getSimpleLocaleDisplayName(): String {
+        return LocaleListCompat.getDefault()[0]!!.displayLanguage
+    }
+
     /**
      * Return the default languages enabled for the sources.
      */

@@ -598,6 +598,13 @@ class MainActivity : BaseActivity() {
         const val INTENT_SEARCH = "eu.kanade.tachiyomi.SEARCH"
         const val INTENT_SEARCH_QUERY = "query"
         const val INTENT_SEARCH_FILTER = "filter"
+
+        suspend fun startHttpServerService(
+            context: android.content.Context,
+            sourceId: Long,
+        ): Pair<Boolean, Int> {
+            return Pair(false, 0)
+        }
     }
 }
 

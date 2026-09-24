@@ -19,7 +19,7 @@ import tachiyomi.domain.items.episode.interactor.GetEpisodesByAnimeId
 import tachiyomi.domain.track.anime.interactor.InsertAnimeTrack
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.time.ZoneOffset
+import kotlinx.datetime.TimeZone
 
 class AddAnimeTracks(
     private val insertTrack: InsertAnimeTrack,
@@ -63,8 +63,8 @@ class AddAnimeTracks(
 
                     firstReadChapterDate?.let {
                         val startDate = firstReadChapterDate.time.convertEpochMillisZone(
-                            ZoneOffset.systemDefault(),
-                            ZoneOffset.UTC,
+                            TimeZone.currentSystemDefault(),
+                            TimeZone.UTC,
                         )
                         track = track.copy(
                             startDate = startDate,

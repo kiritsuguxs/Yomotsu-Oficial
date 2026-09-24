@@ -11,3 +11,7 @@ private val formatter = DecimalFormat(
 fun formatChapterNumber(chapterNumber: Double): String {
     return formatter.format(chapterNumber)
 }
+
+fun formatEpisodeNumber(episodeNumber: Double): String {
+    return formatter.format(episodeNumber)
+}

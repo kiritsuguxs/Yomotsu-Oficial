@@ -220,11 +220,11 @@ class DomainModule : InjektModule {
         addFactory { tachiyomi.domain.entries.anime.interactor.ResetAnimeViewerFlags(get()) }
         addFactory { tachiyomi.domain.entries.anime.interactor.SetAnimeEpisodeFlags(get()) }
         addFactory { tachiyomi.domain.entries.anime.interactor.AnimeFetchInterval(get()) }
-        addFactory { tachiyomi.domain.entries.anime.interactor.SetAnimeDefaultEpisodeFlags(get(), get(), get()) }
-        addFactory { tachiyomi.domain.entries.anime.interactor.SetAnimeViewerFlags(get()) }
+        addFactory { tachiyomi.domain.items.episode.interactor.SetAnimeDefaultEpisodeFlags(get(), get(), get()) }
+        addFactory { eu.kanade.domain.entries.anime.interactor.SetAnimeViewerFlags(get()) }
         addFactory { tachiyomi.domain.entries.anime.interactor.NetworkToLocalAnime(get(), get()) }
-        addFactory { tachiyomi.domain.entries.anime.interactor.UpdateAnime(get(), get()) }
-        addFactory { tachiyomi.domain.entries.anime.interactor.SetAnimeCategories(get()) }
+        addFactory { eu.kanade.domain.entries.anime.interactor.UpdateAnime(get(), get()) }
+        addFactory { tachiyomi.domain.category.anime.interactor.SetAnimeCategories(get()) }
 
         addSingletonFactory<tachiyomi.domain.items.episode.repository.EpisodeRepository> {
             tachiyomi.data.items.episode.EpisodeRepositoryImpl(get())
@@ -249,8 +249,12 @@ class DomainModule : InjektModule {
             mihon.data.extension.anime.repository.AnimeExtensionStoreRepositoryImpl(get(), get())
         }
         addFactory { mihon.domain.extension.anime.interactor.GetAnimeExtensionStores(get()) }
-        addFactory { mihon.domain.extension.anime.interactor.UpdateAnimeExtensionStores(get(), get()) }
+        addFactory { mihon.domain.extension.anime.interactor.UpdateAnimeExtensionStores(get()) }
         addFactory { eu.kanade.domain.extension.anime.interactor.GetAnimeExtensionsByType(get(), get()) }
         addFactory { eu.kanade.domain.extension.anime.interactor.TrustAnimeExtension(get(), get()) }
+        addSingletonFactory<tachiyomi.domain.custombuttons.repository.CustomButtonRepository> {
+            tachiyomi.data.custombutton.CustomButtonRepositoryImpl()
+        }
+        addFactory { tachiyomi.domain.custombuttons.interactor.GetCustomButtons(get()) }
     }
 }

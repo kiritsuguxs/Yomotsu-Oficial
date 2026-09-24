@@ -27,6 +27,13 @@ fun relativeDateText(
 }
 
 @Composable
+fun relativeDateTimeText(
+    dateEpochMillis: Long,
+): String {
+    return relativeDateText(dateEpochMillis)
+}
+
+@Composable
 fun relativeDateText(
     localDate: LocalDate?,
 ): String {
