@@ -157,11 +157,17 @@ object DbnetLineGrouping {
     private fun canLink(first: LineShape, second: LineShape): Boolean {
         if (first.direction != second.direction) return false
         val smallerFont = min(first.fontSize, second.fontSize)
-        if (smallerFont <= 0f || max(first.fontSize, second.fontSize) / smallerFont > 2f) return false
-        if (angularDistance(first.angle, second.angle) > 15f) return false
-        if (polygonDistance(first.points, second.points) >= smallerFont * 2f) return false
+        if (smallerFont <= 0f || max(first.fontSize, second.fontSize) / smallerFont > 2.5f) return false
+        if (angularDistance(first.angle, second.angle) > 20f) return false
+        if (polygonDistance(first.points, second.points) >= smallerFont * 2.5f) return false
         val alongAxis = abs(dot(first.center - second.center, first.axis))
-        return alongAxis < smallerFont * 3f
+        val minX1 = first.points.minOf { it.x }
+        val maxX1 = first.points.maxOf { it.x }
+        val minX2 = second.points.minOf { it.x }
+        val maxX2 = second.points.maxOf { it.x }
+        val horizontalOverlap = min(maxX1, maxX2) - max(minX1, minX2)
+        val maxSpan = max(maxX1 - minX1, maxX2 - minX2)
+        return horizontalOverlap > -smallerFont * 1.5f || alongAxis <= max(smallerFont * 3f, maxSpan * 0.75f)
     }
 
     private fun buildGroup(shapes: List<LineShape>, members: List<Int>): DbnetTextGroup {
@@ -229,12 +235,14 @@ object DbnetLineGrouping {
     private data class LineShape(val line: TextRegion) {
         val points = line.points
         val center = Vector(points.sumOf { it.x.toDouble() }.toFloat() / points.size, points.sumOf { it.y.toDouble() }.toFloat() / points.size)
+        private val topVector = points[1] - points[0]
         private val topLength = distance(points[0], points[1])
         private val sideLength = distance(points[0], points[3])
-        private val majorIsTop = topLength >= sideLength
-        val fontSize = if (majorIsTop) sideLength else topLength
+        private val topIsHorizontal = abs(topVector.x) >= abs(topVector.y)
+        private val majorIsTop = topLength >= sideLength || topIsHorizontal
+        val fontSize = if (topIsHorizontal) sideLength else if (majorIsTop) sideLength else topLength
         private val rawAxis = if (majorIsTop) points[1] - points[0] else points[3] - points[0]
-        private val rawAxisLength = hypot(rawAxis.x, rawAxis.y)
+        private val rawAxisLength = hypot(rawAxis.x, rawAxis.y).coerceAtLeast(1e-6f)
         val axis = canonicalAxis(Vector(rawAxis.x / rawAxisLength, rawAxis.y / rawAxisLength))
         val direction = if (abs(axis.x) >= abs(axis.y)) DbnetTextDirection.HORIZONTAL else DbnetTextDirection.VERTICAL
         val angle = Math.toDegrees(atan2(axis.y.toDouble(), axis.x.toDouble())).toFloat()

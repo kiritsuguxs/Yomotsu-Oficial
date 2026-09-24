@@ -65,7 +65,7 @@ fun TranslationCleanupBlock(
                 color = block.backgroundColor?.let { Color(it) } ?: Color.White
                 isAntiAlias = false
             }
-            val padding = (width * 0.0045f).coerceAtLeast(3.5f)
+            val padding = (width * 0.0055f).coerceAtLeast(4.5f)
             Canvas(
                 modifier = Modifier
                     .wrapContentSize(Alignment.TopStart, unbounded = true)

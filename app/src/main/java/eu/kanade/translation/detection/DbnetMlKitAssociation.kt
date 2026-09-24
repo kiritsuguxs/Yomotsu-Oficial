@@ -33,25 +33,84 @@ object DbnetMlKitAssociation {
         val blocks = deduplicateBlocks(mlKitPage.blocks)
         if (blocks.isEmpty()) fail("ML Kit returned no usable text")
 
+        val groupParent = IntArray(groups.size) { it }
+        fun find(i: Int): Int {
+            var root = i
+            while (groupParent[root] != root) root = groupParent[root]
+            var curr = i
+            while (groupParent[curr] != curr) {
+                val next = groupParent[curr]
+                groupParent[curr] = root
+                curr = next
+            }
+            return root
+        }
+        fun union(i: Int, j: Int) {
+            val rootI = find(i)
+            val rootJ = find(j)
+            if (rootI != rootJ) groupParent[rootJ] = rootI
+        }
+
+        for (block in blocks) {
+            val matches = groups.indices.filter { groupIndex -> matches(block, groups[groupIndex]) }
+            if (matches.size > 1) {
+                val first = matches.first()
+                for (other in matches.drop(1)) {
+                    union(first, other)
+                }
+            }
+        }
+
         val blocksByGroup = mutableMapOf<Int, MutableList<OcrTextBlock>>()
         for (block in blocks) {
             val matches = groups.indices.filter { groupIndex -> matches(block, groups[groupIndex]) }
             val match = matches.firstOrNull()
             if (match != null) {
-                blocksByGroup.getOrPut(match) { mutableListOf() }.add(block)
+                val root = find(match)
+                blocksByGroup.getOrPut(root) { mutableListOf() }.add(block)
             }
         }
-        val orderedGroups = groups.indices.sortedWith(
-            compareBy<Int> { groups[it].bounds.top }
-                .thenBy { groups[it].bounds.left }
-                .thenBy { groups[it].bounds.bottom }
-                .thenBy { groups[it].bounds.right },
+        if (blocksByGroup.isEmpty()) fail("DBNet and ML Kit produced no usable association")
+
+        val orderedRoots = blocksByGroup.keys.sortedWith(
+            compareBy<Int> { root -> groups[root].bounds.top }
+                .thenBy { root -> groups[root].bounds.left }
+                .thenBy { root -> groups[root].bounds.bottom }
+                .thenBy { root -> groups[root].bounds.right },
         )
-        val associatedGroups = ArrayList<DbnetAssociatedGroup>(orderedGroups.size)
-        val associatedBlocks = orderedGroups.mapIndexed { blockIndex, groupIndex ->
-            val group = groups[groupIndex].snapshot()
-            associatedGroups += DbnetAssociatedGroup(blockIndex, group)
-            merge(group, blocksByGroup[groupIndex] ?: emptyList())
+        val groupsByRoot = groups.indices.groupBy(::find)
+        val associatedGroups = ArrayList<DbnetAssociatedGroup>(orderedRoots.size)
+        val associatedBlocks = orderedRoots.mapIndexed { blockIndex, root ->
+            val members = groupsByRoot[root] ?: listOf(root)
+            val resolvedGroup = if (members.size == 1) {
+                groups[members.single()].snapshot()
+            } else {
+                val memberGroups = members.map { groups[it] }
+                val allLines = memberGroups.flatMap { it.memberLines }.distinct()
+                val minLeft = memberGroups.minOf { it.bounds.left }
+                val minTop = memberGroups.minOf { it.bounds.top }
+                val maxRight = memberGroups.maxOf { it.bounds.right }
+                val maxBottom = memberGroups.maxOf { it.bounds.bottom }
+                val allPoints = memberGroups.flatMap { it.orientedBounds }
+                val pLeft = allPoints.minOf { it.x }
+                val pTop = allPoints.minOf { it.y }
+                val pRight = allPoints.maxOf { it.x }
+                val pBottom = allPoints.maxOf { it.y }
+                DbnetTextGroup(
+                    memberLines = allLines,
+                    bounds = DbnetGroupBounds(minLeft, minTop, maxRight, maxBottom),
+                    orientedBounds = listOf(
+                        DetectionPoint(pLeft, pTop),
+                        DetectionPoint(pRight, pTop),
+                        DetectionPoint(pRight, pBottom),
+                        DetectionPoint(pLeft, pBottom),
+                    ),
+                    direction = DbnetTextDirection.HORIZONTAL,
+                    angle = groups[root].angle,
+                )
+            }
+            associatedGroups += DbnetAssociatedGroup(blockIndex, resolvedGroup)
+            merge(resolvedGroup, blocksByGroup.getValue(root))
         }
         return mlKitPage.copy(
             blocks = associatedBlocks,
@@ -168,10 +227,7 @@ object DbnetMlKitAssociation {
     }
 
     private fun merge(group: DbnetTextGroup, source: List<OcrTextBlock>): OcrTextBlock {
-        val ordered = when (group.direction) {
-            DbnetTextDirection.HORIZONTAL -> source.sortedWith(compareBy<OcrTextBlock> { it.y }.thenBy { it.x })
-            DbnetTextDirection.VERTICAL -> source.sortedWith(compareBy<OcrTextBlock> { it.x }.thenBy { it.y })
-        }
+        val ordered = source.sortedWith(lineReadingOrder)
         if (ordered.isEmpty()) {
             return OcrTextBlock(
                 text = "",
@@ -197,6 +253,16 @@ object DbnetMlKitAssociation {
             angle = group.angle,
             confidence = confidences.takeIf { it.isNotEmpty() }?.average()?.toFloat(),
         )
+    }
+
+    private val lineReadingOrder = Comparator<OcrTextBlock> { a, b ->
+        val yDiff = a.y - b.y
+        val lineThreshold = minOf(a.height, b.height) * 0.5f
+        if (abs(yDiff) > lineThreshold) {
+            yDiff.compareTo(0f)
+        } else {
+            a.x.compareTo(b.x)
+        }
     }
 
     private fun DbnetTextGroup.snapshot() = copy(
