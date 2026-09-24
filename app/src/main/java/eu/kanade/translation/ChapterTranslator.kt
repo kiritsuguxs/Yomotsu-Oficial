@@ -34,6 +34,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -305,15 +307,34 @@ class ChapterTranslator(
                 notifier.onTextTranslation(
                     translation.manga, translation.chapter.name, totalPageCount, chapterNumber, currentSessionTotal(),
                 )
-                translator.translate(
-                    automaticPages,
-                    ComicTranslationContext(translation.manga.title, translation.chapter.name),
-                )
-                automaticPages.values.forEach { page ->
-                    page.blocks = TranslationBlockGrouper.group(page.blocks, strict = strictOcrGrouping)
+
+                // Pipeline Overlapping: Dispatch network translation asynchronously
+                val translationDeferred = async(Dispatchers.IO) {
+                    translator.translate(
+                        automaticPages,
+                        ComicTranslationContext(translation.manga.title, translation.chapter.name),
+                    )
                 }
+
+                // While waiting for network LLM response, pre-extract and index manual candidates concurrently
+                val manualCandidatesByPage = pages.mapValues { (_, page) ->
+                    page.blocks.filterNot(::isTranslatableBlock)
+                }
+
+                // Await LLM translation network result
+                translationDeferred.await()
+
+                // Multi-core parallel post-translation grouping across pages
+                supervisorScope {
+                    automaticPages.values.map { page ->
+                        async(Dispatchers.Default) {
+                            page.blocks = TranslationBlockGrouper.group(page.blocks, strict = strictOcrGrouping)
+                        }
+                    }.awaitAll()
+                }
+
                 pages.forEach { (pageKey, page) ->
-                    val manualCandidates = page.blocks.filterNot(::isTranslatableBlock)
+                    val manualCandidates = manualCandidatesByPage[pageKey].orEmpty()
                     val translatedBlocks = automaticPages[pageKey]?.blocks.orEmpty()
                     page.blocks = (translatedBlocks + manualCandidates)
                         .sortedWith(compareBy<TranslationBlock> { it.y }.thenBy { it.x }).toMutableList()
