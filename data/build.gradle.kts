@@ -23,6 +23,7 @@ android {
                 dialect(libs.sqldelight.sqliteDialect338)
                 schemaOutputDirectory.set(project.file("./src/main/sqldelightanime"))
                 srcDirs.from(project.file("./src/main/sqldelightanime"))
+                verifyMigrations.set(false)
                 generateAsync.set(true)
             }
         }
