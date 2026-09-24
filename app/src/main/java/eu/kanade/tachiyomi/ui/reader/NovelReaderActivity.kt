@@ -37,9 +37,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
-import android.speech.tts.Voice
+import eu.kanade.tachiyomi.extension.novel.tts.NovelAudioPlayer
+import eu.kanade.tachiyomi.extension.novel.tts.NovelTtsVoice
+import androidx.lifecycle.lifecycleScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.RadioButton
+import androidx.compose.runtime.DisposableEffect
 import eu.kanade.tachiyomi.util.system.toast
 import java.util.Locale
 import androidx.compose.material.icons.filled.Pause
@@ -182,186 +186,11 @@ class NovelReaderActivity : ComponentActivity() {
             .trim()
     }
 
-    private var textToSpeech: TextToSpeech? = null
-    private var isTtsInitialized = false
-    private var onTtsPlaybackComplete: (() -> Unit)? = null
-
-    private fun initTts(onReady: (() -> Unit)? = null) {
-        if (textToSpeech != null && isTtsInitialized) {
-            onReady?.invoke()
-            return
-        }
-        textToSpeech = TextToSpeech(this) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                isTtsInitialized = true
-                textToSpeech?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                    override fun onStart(utteranceId: String?) {}
-                    override fun onDone(utteranceId: String?) {
-                        if (utteranceId?.endsWith("_last") == true) {
-                            runOnUiThread { onTtsPlaybackComplete?.invoke() }
-                        }
-                    }
-                    override fun onError(utteranceId: String?) {
-                        runOnUiThread { onTtsPlaybackComplete?.invoke() }
-                    }
-                })
-                textToSpeech?.let { configureTtsVoice(it, Locale("pt", "BR")) }
-                onReady?.invoke()
-            } else {
-                isTtsInitialized = false
-                runOnUiThread {
-                    toast("Voz (TTS) indisponível. Verifique as configurações de conversão de voz do Android.")
-                }
-            }
-        }
-    }
-
-    private fun configureTtsVoice(tts: TextToSpeech, targetLocale: Locale) {
-        try {
-            val availableVoices = tts.voices
-            if (!availableVoices.isNullOrEmpty()) {
-                val matchingVoices = availableVoices.filter { voice ->
-                    voice.locale.language.equals(targetLocale.language, ignoreCase = true)
-                }
-
-                if (matchingVoices.isNotEmpty()) {
-                    fun isFemale(voice: Voice): Boolean {
-                        val nameLower = voice.name.lowercase(Locale.ROOT)
-                        val hasFemaleFeature = voice.features?.any { feature ->
-                            val fLower = feature.lowercase(Locale.ROOT)
-                            fLower == "female" || fLower.contains("female") ||
-                                fLower.contains("mulher") || fLower.contains("feminino")
-                        } ?: false
-
-                        return hasFemaleFeature ||
-                            nameLower.contains("female") ||
-                            nameLower.contains("#female") ||
-                            nameLower.contains("-f-") ||
-                            nameLower.contains("_f_") ||
-                            nameLower.contains("feminino") ||
-                            nameLower.contains("mulher") ||
-                            nameLower.contains("-afs") ||
-                            nameLower.contains("-ptd") ||
-                            nameLower.contains("-pte")
-                    }
-
-                    // Prefer offline voices to prevent network latency, data consumption, or silence
-                    val offlineVoices = matchingVoices.filter { !it.isNetworkConnectionRequired }
-                    val pool = if (offlineVoices.isNotEmpty()) offlineVoices else matchingVoices
-
-                    val bestVoice = pool.maxWithOrNull(
-                        compareBy<Voice> { isFemale(it) }
-                            .thenBy { it.locale.country.equals(targetLocale.country, ignoreCase = true) }
-                            .thenBy { it.quality }
-                    )
-
-                    if (bestVoice != null) {
-                        tts.voice = bestVoice
-                    }
-                }
-            }
-        } catch (_: Throwable) {
-            // Graceful fallback to default engine voice
-        }
-
-        try {
-            // Subtle pitch modulation (1.08x) elevates fundamental frequency to a pleasant feminine timbre
-            // Speech rate (1.02x) eliminates the robotic sluggishness and unnatural inter-word pauses
-            tts.setPitch(1.08f)
-            tts.setSpeechRate(1.02f)
-        } catch (_: Throwable) {
-            // Ignored
-        }
-    }
-
-    private fun splitIntoSpeakableChunks(text: String, maxChunkSize: Int = 1000): List<String> {
-        val lines = text.split(Regex("\\r?\\n+")).map { it.trim() }.filter { it.isNotEmpty() }
-        val chunks = mutableListOf<String>()
-        val current = StringBuilder()
-        for (line in lines) {
-            if (current.length + line.length + 1 > maxChunkSize) {
-                if (current.isNotEmpty()) {
-                    chunks.add(current.toString())
-                    current.clear()
-                }
-                if (line.length > maxChunkSize) {
-                    var remaining = line
-                    while (remaining.length > maxChunkSize) {
-                        val splitIdx = remaining.take(maxChunkSize).lastIndexOfAny(charArrayOf('.', '!', '?', ';', ',', ' '))
-                            .takeIf { it > 100 } ?: maxChunkSize
-                        chunks.add(remaining.substring(0, splitIdx).trim())
-                        remaining = remaining.substring(splitIdx).trim()
-                    }
-                    if (remaining.isNotEmpty()) current.append(remaining)
-                } else {
-                    current.append(line)
-                }
-            } else {
-                if (current.isNotEmpty()) current.append(" ")
-                current.append(line)
-            }
-        }
-        if (current.isNotEmpty()) {
-            chunks.add(current.toString())
-        }
-        return chunks
-    }
-
-    private fun speakNovelText(text: String, isPortuguese: Boolean, onComplete: () -> Unit) {
-        onTtsPlaybackComplete = onComplete
-        initTts {
-            val tts = textToSpeech
-            if (tts == null || !isTtsInitialized) {
-                runOnUiThread {
-                    toast("Inicializando serviço de voz do Android...")
-                    onComplete()
-                }
-                return@initTts
-            }
-            val targetLocale = if (isPortuguese) Locale("pt", "BR") else Locale.getDefault()
-            var effectiveLocale = targetLocale
-            var langResult = tts.setLanguage(targetLocale)
-            if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
-                langResult = tts.setLanguage(Locale("pt"))
-                effectiveLocale = Locale("pt")
-            }
-            if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
-                tts.language = Locale.getDefault()
-                effectiveLocale = Locale.getDefault()
-            }
-            configureTtsVoice(tts, effectiveLocale)
-            tts.stop()
-            val chunks = splitIntoSpeakableChunks(text)
-            if (chunks.isEmpty()) {
-                runOnUiThread {
-                    toast("Nenhum texto disponível para leitura.")
-                    onComplete()
-                }
-                return@initTts
-            }
-            chunks.forEachIndexed { index, chunk ->
-                val queueMode = if (index == 0) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD
-                val isLast = index == chunks.lastIndex
-                val utteranceId = if (isLast) "novel_p_${index}_last" else "novel_p_$index"
-                tts.speak(chunk, queueMode, null, utteranceId)
-            }
-        }
-    }
-
-    private fun stopNovelTts() {
-        textToSpeech?.stop()
-        onTtsPlaybackComplete = null
-    }
-
-    override fun onPause() {
-        stopNovelTts()
-        super.onPause()
-    }
+    private var audioPlayer: NovelAudioPlayer? = null
 
     override fun onDestroy() {
-        stopNovelTts()
-        textToSpeech?.shutdown()
-        textToSpeech = null
+        audioPlayer?.release()
+        audioPlayer = null
         super.onDestroy()
     }
 
@@ -369,7 +198,9 @@ class NovelReaderActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        initTts()
+        audioPlayer = NovelAudioPlayer(this, lifecycleScope).apply {
+            onError = { msg -> runOnUiThread { toast(msg) } }
+        }
 
 
         val mangaId = intent.getLongExtra("manga_id", -1L)
@@ -395,6 +226,23 @@ class NovelReaderActivity : ComponentActivity() {
             var isTranslated by remember { mutableStateOf(translationPreferences.autoTranslateNovels().get()) }
             var isTtsPlaying by remember { mutableStateOf(false) }
             var showSettingsDialog by remember { mutableStateOf(false) }
+            var showAudioDialog by remember { mutableStateOf(false) }
+            var selectedVoice by remember {
+                mutableStateOf(NovelTtsVoice.fromId(prefs.getString("novel_tts_voice", NovelTtsVoice.EDGE_FRANCISCA.id)))
+            }
+            var speechSpeed by remember {
+                mutableFloatStateOf(prefs.getFloat("novel_tts_speed", 1.0f))
+            }
+
+            DisposableEffect(audioPlayer) {
+                audioPlayer?.onStateChanged = { playing ->
+                    isTtsPlaying = playing
+                }
+                onDispose {
+                    audioPlayer?.onStateChanged = null
+                }
+            }
+
             var menuVisible by remember { mutableStateOf(false) }
 
             var fontSize by remember { mutableFloatStateOf(prefs.getFloat("font_size", 17f)) }
@@ -464,6 +312,31 @@ class NovelReaderActivity : ComponentActivity() {
                     loadedChapters.add(newItem)
                     loadChapterContent(newItem)
                     scope.launch { lazyListState.scrollToItem(0) }
+                }
+            }
+
+            fun toggleTtsPlayback() {
+                val player = audioPlayer ?: return
+                if (player.isPlaying) {
+                    player.stop()
+                } else {
+                    val currentIdx = lazyListState.firstVisibleItemIndex.coerceIn(0, (loadedChapters.size - 1).coerceAtLeast(0))
+                    val activeChapter = loadedChapters.getOrNull(currentIdx) ?: loadedChapters.firstOrNull()
+                    val textToSpeak = if (isTranslated && !activeChapter?.translatedText.isNullOrBlank()) {
+                        activeChapter?.translatedText
+                    } else {
+                        activeChapter?.originalText
+                    }
+                    if (!textToSpeak.isNullOrBlank()) {
+                        player.play(
+                            text = textToSpeak,
+                            voice = selectedVoice,
+                            speed = speechSpeed,
+                            isPortuguese = isTranslated,
+                        )
+                    } else {
+                        toast("Aguarde o carregamento do capítulo para ouvir.")
+                    }
                 }
             }
 
@@ -776,28 +649,7 @@ class NovelReaderActivity : ComponentActivity() {
                             }
 
                             // Audio Narrator (TTS)
-                            IconButton(onClick = {
-                                if (isTtsPlaying) {
-                                    stopNovelTts()
-                                    isTtsPlaying = false
-                                } else {
-                                    val currentIdx = lazyListState.firstVisibleItemIndex.coerceIn(0, (loadedChapters.size - 1).coerceAtLeast(0))
-                                    val activeChapter = loadedChapters.getOrNull(currentIdx) ?: loadedChapters.firstOrNull()
-                                    val textToSpeak = if (isTranslated && !activeChapter?.translatedText.isNullOrBlank()) {
-                                        activeChapter?.translatedText
-                                    } else {
-                                        activeChapter?.originalText
-                                    }
-                                    if (!textToSpeak.isNullOrBlank()) {
-                                        isTtsPlaying = true
-                                        speakNovelText(textToSpeak, isTranslated) {
-                                            isTtsPlaying = false
-                                        }
-                                    } else {
-                                        toast("Aguarde o carregamento do capítulo para ouvir.")
-                                    }
-                                }
-                            }) {
+                            IconButton(onClick = { toggleTtsPlayback() }) {
                                 Icon(
                                     imageVector = if (isTtsPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                                     contentDescription = if (isTtsPlaying) "Pausar narração" else "Ouvir capítulo",
@@ -939,6 +791,60 @@ class NovelReaderActivity : ComponentActivity() {
                                     ),
                                 )
                             }
+
+                            HorizontalDivider(
+                                color = uiSubtextColor.copy(alpha = 0.15f),
+                                modifier = Modifier.padding(vertical = 6.dp),
+                            )
+
+                            // Novel TTS Quick Bar in Bottom Sheet
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(uiSubtextColor.copy(alpha = 0.12f))
+                                        .clickable { showAudioDialog = true }
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Settings,
+                                        contentDescription = "Configurar voz",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "${selectedVoice.title.substringBefore(" ")} • ${speechSpeed}x",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = uiTextColor,
+                                    )
+                                }
+
+                                Button(
+                                    onClick = { toggleTtsPlayback() },
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = if (isTtsPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                        contentDescription = if (isTtsPlaying) "Pausar narração" else "Ouvir capítulo",
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = if (isTtsPlaying) "Pausar" else "Ouvir",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -1037,6 +943,32 @@ class NovelReaderActivity : ComponentActivity() {
                                     }
                                 }
                             }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            HorizontalDivider(color = uiSubtextColor.copy(alpha = 0.2f))
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Text(
+                                text = "Voz e Narração",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = uiTextColor,
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                onClick = {
+                                    showSettingsDialog = false
+                                    showAudioDialog = true
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Settings,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Configurar Voz (${selectedVoice.title.substringBefore(" ")} • ${speechSpeed}x)")
+                            }
                         }
                     },
                     confirmButton = {
@@ -1045,6 +977,135 @@ class NovelReaderActivity : ComponentActivity() {
                                 text = "Fechar",
                                 color = MaterialTheme.colorScheme.primary,
                             )
+                        }
+                    },
+                )
+            }
+
+            // TTS Voice and Audio Configuration Dialog
+            if (showAudioDialog) {
+                AlertDialog(
+                    onDismissRequest = { showAudioDialog = false },
+                    containerColor = uiSurfaceColor,
+                    titleContentColor = uiTextColor,
+                    textContentColor = uiTextColor,
+                    title = {
+                        Text(
+                            text = "Narração de Voz (TTS)",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = uiTextColor,
+                        )
+                    },
+                    text = {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "Voz do Narrador",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            NovelTtsVoice.entries.forEach { voice ->
+                                val isSelected = selectedVoice == voice
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable {
+                                            selectedVoice = voice
+                                            prefs.edit().putString("novel_tts_voice", voice.id).apply()
+                                            if (isTtsPlaying) {
+                                                toggleTtsPlayback()
+                                            }
+                                        }
+                                        .padding(vertical = 4.dp, horizontal = 2.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    RadioButton(
+                                        selected = isSelected,
+                                        onClick = {
+                                            selectedVoice = voice
+                                            prefs.edit().putString("novel_tts_voice", voice.id).apply()
+                                            if (isTtsPlaying) {
+                                                toggleTtsPlayback()
+                                            }
+                                        },
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Column {
+                                        Text(
+                                            text = voice.title,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = uiTextColor,
+                                        )
+                                        Text(
+                                            text = voice.subtitle,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = uiSubtextColor,
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                            HorizontalDivider(color = uiSubtextColor.copy(alpha = 0.2f))
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Text(
+                                text = "Velocidade de Leitura: ${speechSpeed}x",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                listOf(0.8f, 1.0f, 1.2f, 1.4f, 1.6f).forEach { speedOption ->
+                                    val isSpeedSelected = kotlin.math.abs(speechSpeed - speedOption) < 0.05f
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(
+                                                if (isSpeedSelected) MaterialTheme.colorScheme.primary
+                                                else uiSubtextColor.copy(alpha = 0.12f)
+                                            )
+                                            .clickable {
+                                                speechSpeed = speedOption
+                                                prefs.edit().putFloat("novel_tts_speed", speedOption).apply()
+                                                if (isTtsPlaying) {
+                                                    toggleTtsPlayback()
+                                                }
+                                            }
+                                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text(
+                                            text = "${speedOption}x",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = if (isSpeedSelected) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (isSpeedSelected) MaterialTheme.colorScheme.onPrimary else uiTextColor,
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Text(
+                                text = "✨ A narração continuará tocando mesmo com a tela bloqueada ou em segundo plano.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = uiSubtextColor.copy(alpha = 0.8f),
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showAudioDialog = false }) {
+                            Text("Fechar", color = MaterialTheme.colorScheme.primary)
                         }
                     },
                 )
