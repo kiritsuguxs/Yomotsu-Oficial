@@ -148,11 +148,13 @@ object EdgeTtsClient {
                 }
             })
 
-            deferred.invokeOnCancellation {
-                ws.cancel()
+            try {
+                deferred.await()
+            } finally {
+                if (!deferred.isCompleted) {
+                    ws.cancel()
+                }
             }
-
-            deferred.await()
         }
     }
 }
