@@ -39,6 +39,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.speech.tts.Voice
 import eu.kanade.tachiyomi.util.system.toast
 import java.util.Locale
 import androidx.compose.material.icons.filled.Pause
@@ -204,6 +205,7 @@ class NovelReaderActivity : ComponentActivity() {
                         runOnUiThread { onTtsPlaybackComplete?.invoke() }
                     }
                 })
+                textToSpeech?.let { configureTtsVoice(it, Locale("pt", "BR")) }
                 onReady?.invoke()
             } else {
                 isTtsInitialized = false
@@ -211,6 +213,64 @@ class NovelReaderActivity : ComponentActivity() {
                     toast("Voz (TTS) indisponível. Verifique as configurações de conversão de voz do Android.")
                 }
             }
+        }
+    }
+
+    private fun configureTtsVoice(tts: TextToSpeech, targetLocale: Locale) {
+        try {
+            val availableVoices = tts.voices
+            if (!availableVoices.isNullOrEmpty()) {
+                val matchingVoices = availableVoices.filter { voice ->
+                    voice.locale.language.equals(targetLocale.language, ignoreCase = true)
+                }
+
+                if (matchingVoices.isNotEmpty()) {
+                    fun isFemale(voice: Voice): Boolean {
+                        val nameLower = voice.name.lowercase(Locale.ROOT)
+                        val hasFemaleFeature = voice.features?.any { feature ->
+                            val fLower = feature.lowercase(Locale.ROOT)
+                            fLower == "female" || fLower.contains("female") ||
+                                fLower.contains("mulher") || fLower.contains("feminino")
+                        } ?: false
+
+                        return hasFemaleFeature ||
+                            nameLower.contains("female") ||
+                            nameLower.contains("#female") ||
+                            nameLower.contains("-f-") ||
+                            nameLower.contains("_f_") ||
+                            nameLower.contains("feminino") ||
+                            nameLower.contains("mulher") ||
+                            nameLower.contains("-afs") ||
+                            nameLower.contains("-ptd") ||
+                            nameLower.contains("-pte")
+                    }
+
+                    // Prefer offline voices to prevent network latency, data consumption, or silence
+                    val offlineVoices = matchingVoices.filter { !it.isNetworkConnectionRequired }
+                    val pool = if (offlineVoices.isNotEmpty()) offlineVoices else matchingVoices
+
+                    val bestVoice = pool.maxWithOrNull(
+                        compareBy<Voice> { isFemale(it) }
+                            .thenBy { it.locale.country.equals(targetLocale.country, ignoreCase = true) }
+                            .thenBy { it.quality }
+                    )
+
+                    if (bestVoice != null) {
+                        tts.voice = bestVoice
+                    }
+                }
+            }
+        } catch (_: Throwable) {
+            // Graceful fallback to default engine voice
+        }
+
+        try {
+            // Subtle pitch modulation (1.08x) elevates fundamental frequency to a pleasant feminine timbre
+            // Speech rate (1.02x) eliminates the robotic sluggishness and unnatural inter-word pauses
+            tts.setPitch(1.08f)
+            tts.setSpeechRate(1.02f)
+        } catch (_: Throwable) {
+            // Ignored
         }
     }
 
@@ -259,13 +319,17 @@ class NovelReaderActivity : ComponentActivity() {
                 return@initTts
             }
             val targetLocale = if (isPortuguese) Locale("pt", "BR") else Locale.getDefault()
+            var effectiveLocale = targetLocale
             var langResult = tts.setLanguage(targetLocale)
             if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
                 langResult = tts.setLanguage(Locale("pt"))
+                effectiveLocale = Locale("pt")
             }
             if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
                 tts.language = Locale.getDefault()
+                effectiveLocale = Locale.getDefault()
             }
+            configureTtsVoice(tts, effectiveLocale)
             tts.stop()
             val chunks = splitIntoSpeakableChunks(text)
             if (chunks.isEmpty()) {
