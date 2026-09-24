@@ -37,6 +37,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import android.speech.tts.TextToSpeech
+import java.util.Locale
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.FormatSize
 import androidx.compose.material.icons.outlined.SkipNext
 import androidx.compose.material.icons.outlined.SkipPrevious
@@ -175,6 +179,47 @@ class NovelReaderActivity : ComponentActivity() {
             .trim()
     }
 
+    private var textToSpeech: TextToSpeech? = null
+    private var isTtsInitialized = false
+
+    private fun initTts(onReady: () -> Unit) {
+        if (textToSpeech != null && isTtsInitialized) {
+            onReady()
+            return
+        }
+        textToSpeech = TextToSpeech(applicationContext) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                isTtsInitialized = true
+                onReady()
+            }
+        }
+    }
+
+    private fun speakNovelText(text: String, isPortuguese: Boolean) {
+        initTts {
+            val tts = textToSpeech ?: return@initTts
+            val locale = if (isPortuguese) Locale("pt", "BR") else Locale.getDefault()
+            tts.language = locale
+            tts.stop()
+            val paragraphs = text.split("\n\n").filter { it.isNotBlank() }
+            paragraphs.forEachIndexed { index, paragraph ->
+                val queueMode = if (index == 0) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD
+                tts.speak(paragraph, queueMode, null, "novel_p_$index")
+            }
+        }
+    }
+
+    private fun stopNovelTts() {
+        textToSpeech?.stop()
+    }
+
+    override fun onDestroy() {
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
+        textToSpeech = null
+        super.onDestroy()
+    }
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -201,6 +246,7 @@ class NovelReaderActivity : ComponentActivity() {
             var allChapters by remember { mutableStateOf<List<Chapter>>(emptyList()) }
             val loadedChapters = remember { mutableStateListOf<ChapterItemState>() }
             var isTranslated by remember { mutableStateOf(translationPreferences.autoTranslateNovels().get()) }
+            var isTtsPlaying by remember { mutableStateOf(false) }
             var showSettingsDialog by remember { mutableStateOf(false) }
             var menuVisible by remember { mutableStateOf(false) }
 
@@ -579,6 +625,28 @@ class NovelReaderActivity : ComponentActivity() {
                                     imageVector = Icons.Outlined.FormatSize,
                                     contentDescription = "Personalizar leitura",
                                     tint = uiIconTint,
+                                )
+                            }
+
+                            // Audio Narrator (TTS)
+                            IconButton(onClick = {
+                                if (isTtsPlaying) {
+                                    stopNovelTts()
+                                    isTtsPlaying = false
+                                } else {
+                                    val currentIdx = lazyListState.firstVisibleItemIndex.coerceIn(0, (loadedChapters.size - 1).coerceAtLeast(0))
+                                    val activeChapter = loadedChapters.getOrNull(currentIdx) ?: loadedChapters.firstOrNull()
+                                    val textToSpeak = if (isTranslated) activeChapter?.translatedText ?: activeChapter?.originalText else activeChapter?.originalText
+                                    if (!textToSpeak.isNullOrBlank()) {
+                                        speakNovelText(textToSpeak, isTranslated)
+                                        isTtsPlaying = true
+                                    }
+                                }
+                            }) {
+                                Icon(
+                                    imageVector = if (isTtsPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                    contentDescription = if (isTtsPlaying) "Pausar narração" else "Ouvir capítulo",
+                                    tint = if (isTtsPlaying) MaterialTheme.colorScheme.primary else uiIconTint,
                                 )
                             }
 

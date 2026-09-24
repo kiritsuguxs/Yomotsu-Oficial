@@ -105,8 +105,51 @@ internal fun buildComicTranslationRequest(
 }
 
 internal fun parseComicTranslationResponse(response: String): JSONObject {
-    val firstBrace = response.indexOf('{')
-    val lastBrace = response.lastIndexOf('}')
-    require(firstBrace >= 0 && lastBrace > firstBrace) { "Translation response does not contain JSON" }
-    return JSONObject(response.substring(firstBrace, lastBrace + 1))
+    val clean = response.trim()
+        .removePrefix("```json")
+        .removePrefix("```JSON")
+        .removePrefix("```")
+        .removeSuffix("```")
+        .trim()
+
+    val firstBrace = clean.indexOf('{')
+    val lastBrace = clean.lastIndexOf('}')
+
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+        val candidate = clean.substring(firstBrace, lastBrace + 1)
+        val directResult = runCatching { JSONObject(candidate) }.getOrNull()
+        if (directResult != null) return directResult
+    }
+
+    // Fallback: Salvage valid pages from truncated or malformed LLM JSON stream
+    return repairTruncatedComicTranslationJson(clean)
+}
+
+internal fun repairTruncatedComicTranslationJson(raw: String): JSONObject {
+    val recovered = JSONObject()
+    val pageEntryRegex = Regex(""""([^"\\]*(?:\\.[^"\\]*)*)"\s*:\s*\[([^\]]*)(\]|\z)""", RegexOption.DOT_MATCHES_ALL)
+    val stringElementRegex = Regex(""""([^"\\]*(?:\\.[^"\\]*)*)"""")
+
+    for (match in pageEntryRegex.findAll(raw)) {
+        val rawPageKey = match.groupValues[1]
+        val arrayContent = match.groupValues[2]
+
+        val elements = stringElementRegex.findAll(arrayContent).map { strMatch ->
+            try {
+                // Decode JSON string escaping safely
+                JSONObject("""{"v":"${strMatch.groupValues[1]}"}""").getString("v")
+            } catch (_: Exception) {
+                strMatch.groupValues[1]
+            }
+        }.toList()
+
+        if (elements.isNotEmpty()) {
+            val jsonArray = org.json.JSONArray()
+            elements.forEach { jsonArray.put(it) }
+            recovered.put(rawPageKey, jsonArray)
+        }
+    }
+
+    require(recovered.length() > 0) { "Translation response does not contain recoverable JSON: ${raw.take(120)}" }
+    return recovered
 }

@@ -246,10 +246,26 @@ class TelegramCloudManager(
     // ==========================================
 
     private fun getIndexFile(): File = File(context.filesDir, "telegram_cloud_index.json")
+    private fun getBackupIndexFile(): File = File(context.filesDir, "telegram_cloud_index.json.bak")
 
     fun getCloudIndex(): List<CloudManga> {
-        val file = getIndexFile()
-        if (!file.exists()) return emptyList()
+        val primaryFile = getIndexFile()
+        val backupFile = getBackupIndexFile()
+
+        val parsed = parseIndexFile(primaryFile)
+        if (parsed != null) return parsed
+
+        if (backupFile.exists()) {
+            logcat(LogPriority.WARN) { "Índice primário inacessível ou corrompido; recuperando do backup .bak" }
+            val backupParsed = parseIndexFile(backupFile)
+            if (backupParsed != null) return backupParsed
+        }
+
+        return emptyList()
+    }
+
+    private fun parseIndexFile(file: File): List<CloudManga>? {
+        if (!file.exists() || file.length() == 0L) return null
         return try {
             val jsonString = file.readText()
             val array = JSONArray(jsonString)
@@ -266,8 +282,8 @@ class TelegramCloudManager(
                             messageId = cObj.optLong("messageId", 0L),
                             fileId = cObj.optInt("fileId", 0),
                             remoteFileId = cObj.optString("remoteFileId", ""),
-                            date = cObj.optLong("date", 0L)
-                        )
+                            date = cObj.optLong("date", 0L),
+                        ),
                     )
                 }
                 list.add(
@@ -275,14 +291,14 @@ class TelegramCloudManager(
                         title = obj.getString("title"),
                         description = obj.optString("description", ""),
                         coverUrl = obj.optString("coverUrl", ""),
-                        chapters = chapters
-                    )
+                        chapters = chapters,
+                    ),
                 )
             }
             list
         } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e) { "Erro ao ler telegram_cloud_index.json" }
-            emptyList()
+            logcat(LogPriority.ERROR, e) { "Erro ao ler arquivo de índice: ${file.name}" }
+            null
         }
     }
 
@@ -303,16 +319,33 @@ class TelegramCloudManager(
                                 put("fileId", chap.fileId)
                                 put("remoteFileId", chap.remoteFileId)
                                 put("date", chap.date)
-                            }
+                            },
                         )
                     }
                     put("chapters", cArray)
                 }
                 array.put(obj)
             }
-            getIndexFile().writeText(array.toString(2))
+
+            val targetFile = getIndexFile()
+            val backupFile = getBackupIndexFile()
+            val tempFile = File(targetFile.parentFile, "${targetFile.name}.tmp")
+
+            tempFile.writeText(array.toString(2))
+
+            if (targetFile.exists()) {
+                targetFile.copyTo(backupFile, overwrite = true)
+            }
+
+            if (!tempFile.renameTo(targetFile)) {
+                targetFile.delete()
+                if (!tempFile.renameTo(targetFile)) {
+                    tempFile.copyTo(targetFile, overwrite = true)
+                    tempFile.delete()
+                }
+            }
         } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e) { "Erro ao salvar telegram_cloud_index.json" }
+            logcat(LogPriority.ERROR, e) { "Erro ao salvar telegram_cloud_index.json atomicamente" }
         }
     }
 
