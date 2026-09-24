@@ -1,7 +1,7 @@
 package tachiyomi.domain.category.anime.interactor
 
 import tachiyomi.domain.category.anime.repository.AnimeCategoryRepository
-import tachiyomi.domain.library.anime.model.plus
+import tachiyomi.domain.library.model.plus
 import tachiyomi.domain.library.service.LibraryPreferences
 
 class ResetAnimeCategoryFlags(

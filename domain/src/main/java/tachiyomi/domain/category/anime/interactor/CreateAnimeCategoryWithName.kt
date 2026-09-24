@@ -5,7 +5,7 @@ import tachiyomi.core.common.util.lang.withNonCancellableContext
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.category.anime.repository.AnimeCategoryRepository
 import tachiyomi.domain.category.model.Category
-import tachiyomi.domain.library.anime.model.plus
+import tachiyomi.domain.library.model.plus
 import tachiyomi.domain.library.service.LibraryPreferences
 
 class CreateAnimeCategoryWithName(

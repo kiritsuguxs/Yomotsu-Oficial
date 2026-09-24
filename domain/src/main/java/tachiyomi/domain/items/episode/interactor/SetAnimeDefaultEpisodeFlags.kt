@@ -24,8 +24,8 @@ class SetAnimeDefaultEpisodeFlags(
                     sortingMode = sortEpisodeBySourceOrNumber.get(),
                     sortingDirection = sortEpisodeByAscendingOrDescending.get(),
                     displayMode = displayEpisodeByNameOrNumber.get(),
-                    showPreviews = showEpisodeThumbnailPreviews.get(),
-                    showSummaries = showEpisodeSummaries.get(),
+                    showPreviews = if (showEpisodeThumbnailPreviews.get()) Anime.EPISODE_SHOW_PREVIEWS else Anime.EPISODE_SHOW_NOT_PREVIEWS,
+                    showSummaries = if (showEpisodeSummaries.get()) Anime.EPISODE_SHOW_SUMMARIES else Anime.EPISODE_SHOW_NOT_SUMMARIES,
                 )
             }
         }
