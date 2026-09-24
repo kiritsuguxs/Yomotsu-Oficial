@@ -30,6 +30,24 @@ object UpdateStrategyColumnAdapter : ColumnAdapter<UpdateStrategy, Long> {
     override fun encode(value: UpdateStrategy): Long = value.ordinal.toLong()
 }
 
+object AnimeUpdateStrategyColumnAdapter : ColumnAdapter<eu.kanade.tachiyomi.animesource.model.AnimeUpdateStrategy, Long> {
+    override fun decode(databaseValue: Long): eu.kanade.tachiyomi.animesource.model.AnimeUpdateStrategy =
+        eu.kanade.tachiyomi.animesource.model.AnimeUpdateStrategy.entries.getOrElse(databaseValue.toInt()) {
+            eu.kanade.tachiyomi.animesource.model.AnimeUpdateStrategy.ALWAYS_UPDATE
+        }
+
+    override fun encode(value: eu.kanade.tachiyomi.animesource.model.AnimeUpdateStrategy): Long = value.ordinal.toLong()
+}
+
+object FetchTypeColumnAdapter : ColumnAdapter<eu.kanade.tachiyomi.animesource.model.FetchType, Long> {
+    override fun decode(databaseValue: Long): eu.kanade.tachiyomi.animesource.model.FetchType =
+        eu.kanade.tachiyomi.animesource.model.FetchType.entries.getOrElse(databaseValue.toInt()) {
+            eu.kanade.tachiyomi.animesource.model.FetchType.Episodes
+        }
+
+    override fun encode(value: eu.kanade.tachiyomi.animesource.model.FetchType): Long = value.ordinal.toLong()
+}
+
 object MemoColumnAdapter : ColumnAdapter<JsonObject, ByteArray> {
     override fun decode(databaseValue: ByteArray): JsonObject {
         return Json.decodeFromString<JsonObject>(databaseValue.decodeToString())
