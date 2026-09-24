@@ -5,10 +5,7 @@ object TranslationTextFit {
     data class Selection(val fontSizeSp: Int, val fits: Boolean, val keepsWords: Boolean)
 
     fun maximumFontSize(sourceCeiling: Int, balloonDetected: Boolean): Int =
-        // Allow text to grow up to 48sp.
-        // It will naturally be constrained by the layout region's width and height.
-        // Artificially clamping based on OCR symHeight (which is often wrong) causes thin horizontal strips.
-        48
+        if (balloonDetected) (sourceCeiling * 1.25f).toInt().coerceAtMost(48) else sourceCeiling
 
     fun select(
         minimum: Int,

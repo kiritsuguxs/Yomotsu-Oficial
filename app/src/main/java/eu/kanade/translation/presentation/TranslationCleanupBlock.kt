@@ -30,7 +30,7 @@ fun TranslationCleanupBlock(
     when (val cleanup = block.resolveCleanup(pageWidth, pageHeight, experimentalMaskPageValid)) {
         is LegacyCleanup -> cleanup.patches.forEach { patch ->
             val region = patch.region
-            val padding = (pageWidth * 0.0045f).coerceAtLeast(3.5f)
+            val padding = (pageWidth * 0.003f).coerceAtLeast(2f)
             val adjustedX = region.x - padding
             val adjustedY = region.y - padding
             val adjustedWidth = region.width + padding * 2
@@ -65,7 +65,7 @@ fun TranslationCleanupBlock(
                 color = block.backgroundColor?.let { Color(it) } ?: Color.White
                 isAntiAlias = false
             }
-            val padding = (width * 0.0055f).coerceAtLeast(4.5f)
+            val padding = (width * 0.003f).coerceAtLeast(2f)
             Canvas(
                 modifier = Modifier
                     .wrapContentSize(Alignment.TopStart, unbounded = true)

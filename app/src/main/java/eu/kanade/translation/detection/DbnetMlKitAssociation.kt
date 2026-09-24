@@ -62,15 +62,20 @@ object DbnetMlKitAssociation {
         }
 
         val blocksByGroup = mutableMapOf<Int, MutableList<OcrTextBlock>>()
+        val unmatchedBlocks = mutableListOf<OcrTextBlock>()
         for (block in blocks) {
             val matches = groups.indices.filter { groupIndex -> matches(block, groups[groupIndex]) }
             val match = matches.firstOrNull()
             if (match != null) {
                 val root = find(match)
                 blocksByGroup.getOrPut(root) { mutableListOf() }.add(block)
+            } else {
+                unmatchedBlocks.add(block)
             }
         }
-        if (blocksByGroup.isEmpty()) fail("DBNet and ML Kit produced no usable association")
+        if (blocksByGroup.isEmpty()) {
+            return mlKitPage.copy(blocks = blocks, dbnetAssociation = null)
+        }
 
         val orderedRoots = blocksByGroup.keys.sortedWith(
             compareBy<Int> { root -> groups[root].bounds.top }
@@ -113,7 +118,7 @@ object DbnetMlKitAssociation {
             merge(resolvedGroup, blocksByGroup.getValue(root))
         }
         return mlKitPage.copy(
-            blocks = associatedBlocks,
+            blocks = associatedBlocks + unmatchedBlocks,
             dbnetAssociation = DbnetAssociationMetadata(detection.mask, associatedGroups.toList()),
         )
     }

@@ -208,7 +208,7 @@ internal fun translationTextStyle(base: TextStyle, fontSizeSp: Int, fontFamily: 
     fontFamily = fontFamily,
     textAlign = TextAlign.Center,
     lineBreak = LineBreak.Paragraph,
-    hyphens = Hyphens.Auto,
+    hyphens = Hyphens.None,
 )
 
 private data class FittedTranslationText(

@@ -180,7 +180,7 @@ class DbnetCleanupMask private constructor(
                 fail("Invalid DBNet mask metadata")
             }
             if (metadata.mask.inputWidth != plan.inputWidth || metadata.mask.inputHeight != plan.inputHeight ||
-                metadata.mask.ratio != plan.ratio || metadata.groups.size != page.blocks.size ||
+                metadata.mask.ratio != plan.ratio || metadata.groups.size > page.blocks.size ||
                 metadata.groups.size > MAX_MASKS_PER_PAGE
             ) fail("Invalid DBNet cleanup ownership")
 
@@ -200,7 +200,6 @@ class DbnetCleanupMask private constructor(
                     budget,
                 )
             }
-            if (owners.any { it == null }) fail("Missing DBNet cleanup block owner")
             return page.copy(
                 blocks = page.blocks.mapIndexed { index, block -> block.copy(dbnetCleanupMask = owners[index]) },
             )

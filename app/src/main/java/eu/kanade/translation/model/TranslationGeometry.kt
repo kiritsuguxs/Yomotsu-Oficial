@@ -2,7 +2,7 @@ package eu.kanade.translation.model
 
 import kotlin.math.max
 
-const val CURRENT_TRANSLATION_GEOMETRY_VERSION = 6
+const val CURRENT_TRANSLATION_GEOMETRY_VERSION = 2
 
 /** Directional coverage; invalid or empty rectangles carry no geometric evidence. */
 fun TranslationRegion.overlapFraction(other: TranslationRegion): Float {
@@ -52,80 +52,20 @@ fun TranslationBlock.defaultLayoutRegion(
     pageWidth: Float = Float.MAX_VALUE,
     pageHeight: Float = Float.MAX_VALUE,
 ): TranslationRegion {
-    val w = width.coerceAtLeast(1f)
-    val h = height.coerceAtLeast(1f)
-    val cx = x + w / 2f
-    val cy = y + h / 2f
-
-    // Text inside manga bubbles looks best in a square or 1.2:1 ratio.
-    // PaddleOCR often returns long/thin lines that distort the layout.
-    // We reshape the region towards a square based on the text area.
-    val area = w * h
-    val targetArea = area * 1.8f // Portuguese is longer
-    val targetSide = kotlin.math.sqrt(targetArea)
-
-    // Blend the original shape with the ideal square shape.
-    var blendedWidth = w * 0.4f + targetSide * 0.6f
-    var blendedHeight = h * 0.4f + targetSide * 0.6f
-
-    // ENFORCE ASPECT RATIO LIMITS!
-    // Text in a comic bubble should never be an extreme rectangle.
-    // A typesetter almost always formats text to be somewhat square.
-    if (blendedWidth > blendedHeight * 1.4f) {
-        blendedWidth = blendedHeight * 1.4f
-    }
-    if (blendedHeight > blendedWidth * 1.4f) {
-        blendedHeight = blendedWidth * 1.4f
-    }
-
-    // Add sensible minimal padding so small words don't get choked
-    // We only use 1.5x symWidth as absolute minimum to avoid collapsing, 
-    // NOT 4.5x (minPadX * 3) which was destroying the aspect ratio.
-    val finalWidth = maxOf(blendedWidth, symWidth * 1.5f)
-    val finalHeight = maxOf(blendedHeight, symHeight * 1.5f)
-
-    return TranslationRegion(
-        x = cx - finalWidth / 2f,
-        y = cy - finalHeight / 2f,
-        width = finalWidth,
-        height = finalHeight
-    ).clamped(pageWidth, pageHeight)
+    val horizontalPadding = max(symWidth * 4.0f, width * 0.22f)
+    val verticalPadding = max(symHeight * 2.8f, height * 0.22f)
+    return sourceRegion().expanded(horizontalPadding, verticalPadding, pageWidth, pageHeight)
 }
 
 /**
  * Geometry saved by the first Y9 build was too generous. Falling back to the
  * OCR bounds upgrades those existing chapter files without deleting them.
  */
-fun TranslationBlock.resolvedLayoutRegion(pageWidth: Float, pageHeight: Float): TranslationRegion {
-    val defaultReg = defaultLayoutRegion(pageWidth, pageHeight)
-    val balloonReg = layoutRegion?.takeIf { geometryVersion >= CURRENT_TRANSLATION_GEOMETRY_VERSION }
-    
-    if (balloonReg != null && balloonDetected) {
-        // If we found a balloon, its center is usually better than OCR center.
-        // BUT compound balloons (figure-8) have their center in the empty intersection.
-        // If the balloon area is MASSIVELY larger than the text area (areaRatio >= 4), 
-        // it's almost certainly a compound balloon, so we fallback to OCR center.
-        val areaRatio = balloonReg.width * balloonReg.height / (defaultReg.width * defaultReg.height).coerceAtLeast(1f)
-        if (areaRatio < 4.0f) {
-            // Balloon is reasonably sized. Use its center!
-            // Crucially, we MUST NOT let the layout region width expand to fill the balloon,
-            // because Compose Text is greedy and will stretch the text into a thin line.
-            // We force the layout region to use the perfectly-squared defaultReg dimensions!
-            val cx = balloonReg.x + balloonReg.width / 2f
-            val cy = balloonReg.y + balloonReg.height / 2f
-            return TranslationRegion(
-                x = cx - defaultReg.width / 2f,
-                y = cy - defaultReg.height / 2f,
-                width = defaultReg.width,
-                height = defaultReg.height
-            ).clamped(pageWidth, pageHeight)
-        }
-    }
-    
-    // If balloon detection failed, OR the balloon is a massive compound bubble (areaRatio >= 4),
-    // rely entirely on the perfectly aspect-ratio-corrected OCR bounds.
-    return defaultReg
-}
+fun TranslationBlock.resolvedLayoutRegion(pageWidth: Float, pageHeight: Float): TranslationRegion =
+    layoutRegion
+        ?.takeIf { geometryVersion >= CURRENT_TRANSLATION_GEOMETRY_VERSION }
+        ?.clamped(pageWidth, pageHeight)
+        ?: defaultLayoutRegion(pageWidth, pageHeight)
 
 fun TranslationBlock.sourceRegion(): TranslationRegion = TranslationRegion(
     x = x,
