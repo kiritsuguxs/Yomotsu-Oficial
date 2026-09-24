@@ -142,9 +142,10 @@ class OpenRouterTranslator(
                 page.blocks.forEachIndexed { index, block ->
                     val res = resJson.optJSONArray(pageKey)?.optString(index, "NULL")
                     val raw = if (res == null || res == "NULL") block.text else res
+                    val postEdited = postEditMachineTranslation(block.text, raw, toLang)
                     val finalTranslation = TranslationGlossary.resolve(
                         prepared = preparedTexts[globalIndex],
-                        translatedText = raw,
+                        translatedText = postEdited,
                         context = context,
                     )
                     block.translation = finalTranslation

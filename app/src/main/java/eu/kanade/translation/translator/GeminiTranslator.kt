@@ -126,7 +126,8 @@ class GeminiTranslator(
                 v.blocks.forEachIndexed { i, b ->
                     val res = resJson.optJSONArray(k)?.optString(i, "NULL")
                     val raw = if (res == null || res == "NULL") b.text else res
-                    val finalTranslation = TranslationGlossary.resolve(preparedTexts[globalIndex], raw, context)
+                    val postEdited = postEditMachineTranslation(b.text, raw, toLang)
+                    val finalTranslation = TranslationGlossary.resolve(preparedTexts[globalIndex], postEdited, context)
                     b.translation = finalTranslation
                     if (cached.getOrNull(globalIndex) == null) TranslationCache.put(context, fromLang, toLang, normalizedTexts[globalIndex], finalTranslation)
                     continuity.remember(b.text, finalTranslation)
