@@ -40,7 +40,6 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import eu.kanade.tachiyomi.extension.novel.tts.NovelAudioPlayer
 import eu.kanade.tachiyomi.extension.novel.tts.NovelTtsVoice
 import androidx.lifecycle.lifecycleScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.RadioButton
 import androidx.compose.runtime.DisposableEffect
