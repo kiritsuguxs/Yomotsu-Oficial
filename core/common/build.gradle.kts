@@ -51,6 +51,8 @@ dependencies {
     // JavaScript engine
     implementation(libs.quickJs)
 
+    api(aniyomilibs.torrserver)
+
     testImplementation(libs.bundles.test)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
