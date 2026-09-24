@@ -7,8 +7,10 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.speech.tts.Voice
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
@@ -16,6 +18,7 @@ import tachiyomi.core.common.util.system.logcat
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 
 class NovelAudioPlayer(
     private val context: Context,
@@ -181,7 +184,7 @@ class NovelAudioPlayer(
             configureNativeVoice(tts, effectiveLocale, speed)
             tts.stop()
 
-            val chunks = splitIntoChunks(text, 1000)
+            val chunks = splitIntoChunks(text)
             chunks.forEachIndexed { index, chunk ->
                 val queueMode = if (index == 0) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD
                 val isLast = index == chunks.lastIndex
@@ -199,8 +202,29 @@ class NovelAudioPlayer(
     ) {
         playbackJob?.cancel()
         playbackJob = scope.launch(Dispatchers.IO) {
-            val chunks = splitIntoChunks(text, 1200)
-            var currentIdx = 0
+            val chunks = splitIntoChunks(text)
+            if (chunks.isEmpty()) {
+                withContext(Dispatchers.Main) { stop() }
+                return@launch
+            }
+
+            val prefetchMap = ConcurrentHashMap<Int, Deferred<ByteArray?>>()
+
+            fun getChunkDeferred(idx: Int): Deferred<ByteArray?> {
+                return prefetchMap.computeIfAbsent(idx) {
+                    async(Dispatchers.IO) {
+                        if (idx in chunks.indices) {
+                            EdgeTtsClient.synthesize(chunks[idx], voice.id, speed)
+                        } else null
+                    }
+                }
+            }
+
+            // Immediately launch synthesis for chunk 0 and prefetch chunk 1 in parallel
+            getChunkDeferred(0)
+            if (chunks.size > 1) {
+                getChunkDeferred(1)
+            }
 
             suspend fun playChunk(chunkIdx: Int) {
                 if (!isPlaying || chunkIdx >= chunks.size) {
@@ -208,12 +232,18 @@ class NovelAudioPlayer(
                     return
                 }
 
-                val chunkText = chunks[chunkIdx]
-                val audioBytes = EdgeTtsClient.synthesize(chunkText, voice.id, speed)
+                // Prefetch the next chunks in background while current chunk is playing
+                if (chunkIdx + 1 < chunks.size) getChunkDeferred(chunkIdx + 1)
+                if (chunkIdx + 2 < chunks.size) getChunkDeferred(chunkIdx + 2)
+
+                val deferred = getChunkDeferred(chunkIdx)
+                val audioBytes = deferred.await()
+
+                // Free memory for previous completed chunks
+                prefetchMap.remove(chunkIdx - 1)
 
                 if (audioBytes == null || audioBytes.isEmpty()) {
-                    // Fallback seamlessly to native offline TTS if offline or Edge network drops
-                    logcat(LogPriority.INFO) { "Edge TTS unavailable, falling back to Native TTS for chunk $chunkIdx" }
+                    logcat(LogPriority.INFO) { "Edge TTS unavailable, falling back to Native TTS for remaining chunks from $chunkIdx" }
                     val remainingText = chunks.subList(chunkIdx, chunks.size).joinToString("\n\n")
                     withContext(Dispatchers.Main) {
                         playWithNativeTts(remainingText, speed, isPortuguese)
@@ -226,15 +256,20 @@ class NovelAudioPlayer(
                     FileOutputStream(tempFile).use { it.write(audioBytes) }
                 } catch (e: Exception) {
                     logcat(LogPriority.ERROR, e) { "Failed to write TTS audio cache" }
+                    val remainingText = chunks.subList(chunkIdx, chunks.size).joinToString("\n\n")
                     withContext(Dispatchers.Main) {
-                        playWithNativeTts(chunkText, speed, isPortuguese)
+                        playWithNativeTts(remainingText, speed, isPortuguese)
                     }
                     return
                 }
 
                 withContext(Dispatchers.Main) {
                     if (!isPlaying) return@withContext
-                    mediaPlayer?.release()
+                    try {
+                        mediaPlayer?.stop()
+                        mediaPlayer?.release()
+                    } catch (_: Throwable) {}
+
                     mediaPlayer = MediaPlayer().apply {
                         setDataSource(tempFile.absolutePath)
                         setOnCompletionListener {
@@ -254,7 +289,7 @@ class NovelAudioPlayer(
                 }
             }
 
-            playChunk(currentIdx)
+            playChunk(0)
         }
     }
 
@@ -287,36 +322,60 @@ class NovelAudioPlayer(
         textToSpeech = null
     }
 
-    private fun splitIntoChunks(text: String, maxChunkSize: Int = 1000): List<String> {
+    internal fun splitIntoChunks(
+        text: String,
+        initialChunkMax: Int = 260,
+        subsequentChunkMax: Int = 850,
+    ): List<String> {
         val lines = text.split(Regex("\\r?\\n+")).map { it.trim() }.filter { it.isNotEmpty() }
+        if (lines.isEmpty()) return emptyList()
+
         val chunks = mutableListOf<String>()
         val current = StringBuilder()
+        var isFirstChunk = true
+
+        fun currentMax(): Int = if (isFirstChunk) initialChunkMax else subsequentChunkMax
+
+        fun flushCurrent() {
+            if (current.isNotEmpty()) {
+                chunks.add(current.toString().trim())
+                current.clear()
+                isFirstChunk = false
+            }
+        }
+
         for (line in lines) {
-            if (current.length + line.length + 1 > maxChunkSize) {
+            val max = currentMax()
+            if (current.length + line.length + 1 > max) {
                 if (current.isNotEmpty()) {
-                    chunks.add(current.toString())
-                    current.clear()
+                    flushCurrent()
                 }
-                if (line.length > maxChunkSize) {
+
+                if (line.length > currentMax()) {
                     var remaining = line
-                    while (remaining.length > maxChunkSize) {
-                        val splitIdx = remaining.take(maxChunkSize).lastIndexOfAny(charArrayOf('.', '!', '?', ';', ',', ' '))
-                            .takeIf { it > 100 } ?: maxChunkSize
+                    while (remaining.length > currentMax()) {
+                        val limit = currentMax()
+                        val splitIdx = remaining.take(limit).lastIndexOfAny(charArrayOf('.', '!', '?', ';', ':', '—', '–', ',', ' '))
+                            .takeIf { it > 50 } ?: limit
                         chunks.add(remaining.substring(0, splitIdx).trim())
+                        isFirstChunk = false
                         remaining = remaining.substring(splitIdx).trim()
                     }
-                    if (remaining.isNotEmpty()) current.append(remaining)
+                    if (remaining.isNotEmpty()) {
+                        current.append(remaining)
+                    }
                 } else {
                     current.append(line)
                 }
             } else {
                 if (current.isNotEmpty()) current.append(" ")
                 current.append(line)
+                if (isFirstChunk && current.length >= 100 && (line.endsWith('.') || line.endsWith('!') || line.endsWith('?'))) {
+                    flushCurrent()
+                }
             }
         }
-        if (current.isNotEmpty()) {
-            chunks.add(current.toString())
-        }
-        return chunks
+        flushCurrent()
+        return chunks.filter { it.isNotBlank() }
     }
 }

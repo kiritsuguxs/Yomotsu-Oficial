@@ -32,8 +32,8 @@ android {
     defaultConfig {
         applicationId = "app.mihon.tachiyomiat"
 
-        versionCode = 100
-        versionName = "0.20.4-Y39"
+        versionCode = 101
+        versionName = "0.20.4-Y40"
 
         buildConfigField("String", "COMMIT_COUNT", "\"${getLatestCommitCount()}\"")
         buildConfigField("String", "COMMIT_SHA", "\"${getLatestCommitSha()}\"")

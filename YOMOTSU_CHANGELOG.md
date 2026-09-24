@@ -4,6 +4,20 @@ Este arquivo contém somente as mudanças importantes para quem usa o aplicativo
 O workflow de lançamento lê automaticamente a seção correspondente à versão publicada.
 
 
+## 0.20.4-Y40
+
+🇧🇷 **Novidades e Aprimoramentos (Português):**
+- **Narração Neural de Novels (Edge TTS Instantâneo):** Adicionada narração com vozes neurais ultra-realistas (Francisca, Thalita e Antonio). Inclui inicialização instantânea da fala em menos de meio segundo, reprodução contínua em segundo plano (com tela apagada) e seletor rápido de voz e velocidade diretamente no leitor.
+- **Limpeza Inteligente de Narração:** O sanitizador de texto remove automaticamente notas de tradução (`[NT: ...]`), divisores decorativos e símbolos repetidos para uma leitura fluida e natural.
+- **Inpainting Neural de Alta Precisão (AOT-GAN):** Integração do motor AOT-GAN com aceleração nativa via NCNN C++, permitindo reconstrução de fundo sem rebarbas ou borrões em páginas de mangás e manhwas.
+- **Tradução Mais Rápida e Resiliente:** Processamento assíncrono em pipeline para capítulos longos, reparo automático de respostas JSON de LLMs e correção pós-edição para português do Brasil em traduções via Gemini e OpenRouter.
+
+🇺🇸 **Highlights & Improvements (English):**
+- **Neural Novel Narration (Instant Edge TTS):** Added ultra-realistic studio voices (Francisca, Thalita, and Antonio) with sub-second instant speech start, seamless background playback with screen off, and a quick voice/speed selector in the novel reader bar.
+- **Smart Speech Sanitizer:** Automatically filters translator notes (`[NT: ...]`), decorative dividers, and repeated punctuation marks for an uninterrupted storytelling experience.
+- **High-Precision Neural Inpainting (AOT-GAN):** Integrated offline AOT-GAN neural reconstruction powered by native NCNN C++, delivering clean background restores behind erased speech bubbles without artifacts.
+- **Faster, Resilient Translation:** Async pipeline dispatch for long chapters, automated LLM JSON syntax repair, and natural Brazilian Portuguese post-editing for Gemini and OpenRouter engines.
+
 ## 0.20.4-Y39
 
 🇧🇷 **Novidades e Correções (Português):**
