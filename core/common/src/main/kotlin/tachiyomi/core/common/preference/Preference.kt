@@ -22,6 +22,13 @@ interface Preference<T> {
 
     fun stateIn(scope: CoroutineScope): StateFlow<T>
 
+    fun deleteAndGet(): T {
+        delete()
+        return defaultValue()
+    }
+
+    operator fun invoke(): Preference<T> = this
+
     companion object {
         /**
          * A preference that should not be exposed in places like backups without user consent.
@@ -69,11 +76,4 @@ fun Preference<Boolean>.toggle(): Boolean {
     set(!get())
     return get()
 }
-
-fun <T> Preference<T>.deleteAndGet(): T {
-    delete()
-    return defaultValue()
-}
-
-operator fun <T> Preference<T>.invoke(): Preference<T> = this
 

@@ -54,6 +54,11 @@ class AnimeDownloadManager(
     fun deletePendingEpisodes() {}
     fun cancelQueuedDownloads(downloads: List<AnimeDownload>) {}
     fun getDownloadCount(): Int = 0
+    fun getDownloadCount(anime: Anime): Int = 0
+    fun getQueuedDownloadOrNull(episodeId: Long): AnimeDownload? = null
+    fun deleteAnime(anime: Anime, source: AnimeSource? = null) {}
+    fun startDownloadNow(episode: Episode) {}
+    fun updateDownloadState(download: AnimeDownload) {}
     fun renameSource(oldSource: AnimeSource, newSource: AnimeSource) {}
 
 

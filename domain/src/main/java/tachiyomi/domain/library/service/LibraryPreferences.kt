@@ -274,6 +274,21 @@ class LibraryPreferences(
         false,
     )
 
+    fun setEpisodeSettingsDefault(anime: Anime) {
+        filterEpisodeBySeen.set(anime.unseenFilterRaw)
+        filterEpisodeByDownloaded.set(anime.downloadedFilterRaw)
+        filterEpisodeByBookmarked.set(anime.bookmarkedFilterRaw)
+        filterEpisodeByFillermarked.set(anime.fillermarkedFilterRaw)
+        sortEpisodeBySourceOrNumber.set(anime.sorting)
+        displayEpisodeByNameOrNumber.set(anime.displayMode)
+        sortEpisodeByAscendingOrDescending.set(
+            if (anime.sortDescending()) Anime.EPISODE_SORT_DESC else Anime.EPISODE_SORT_ASC,
+        )
+    }
+
+    fun setSeasonSettingsDefault(anime: Anime) {
+    }
+
     // endregion
 
     // region Swipe Actions

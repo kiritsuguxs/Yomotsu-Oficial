@@ -225,6 +225,12 @@ class DomainModule : InjektModule {
         addFactory { tachiyomi.domain.entries.anime.interactor.NetworkToLocalAnime(get(), get()) }
         addFactory { eu.kanade.domain.entries.anime.interactor.UpdateAnime(get(), get()) }
         addFactory { tachiyomi.domain.category.anime.interactor.SetAnimeCategories(get()) }
+        addFactory { tachiyomi.domain.entries.anime.interactor.GetAnimeWithEpisodesAndSeasons(get(), get()) }
+        addFactory { tachiyomi.domain.entries.anime.interactor.SetAnimeSeasonFlags(get()) }
+        addFactory { tachiyomi.domain.items.season.interactor.SetAnimeDefaultSeasonFlags() }
+        addFactory { mihon.domain.items.episode.interactor.FilterEpisodesForDownload(get(), get(), get()) }
+        addFactory { mihon.domain.source.interactor.UpdateAnimeFromRemote(get()) }
+        addFactory { eu.kanade.domain.items.episode.interactor.SetSeenStatus(get()) }
 
         addSingletonFactory<tachiyomi.domain.items.episode.repository.EpisodeRepository> {
             tachiyomi.data.items.episode.EpisodeRepositoryImpl(get())

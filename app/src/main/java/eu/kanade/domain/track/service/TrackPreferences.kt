@@ -46,6 +46,13 @@ class TrackPreferences(
 
     val trackOnAddingToLibrary: Preference<Boolean> = preferenceStore.getBoolean("track_on_adding_to_library", true)
 
+    val autoUpdateTrack: Preference<Boolean> = preferenceStore.getBoolean("pref_auto_update_manga_sync_key", true)
+
+    val autoUpdateTrackOnMarkRead: Preference<AutoTrackState> = preferenceStore.getEnum(
+        "pref_auto_update_manga_on_mark_read",
+        AutoTrackState.ALWAYS,
+    )
+
     val showNextEpisodeAiringTime: Preference<Boolean> = preferenceStore.getBoolean(
         "show_next_episode_airing_time",
         true,

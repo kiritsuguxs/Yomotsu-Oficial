@@ -125,7 +125,7 @@ class AniyomiMPVView(context: Context, attributes: AttributeSet) : BaseMPVView(c
         if (decoderPreferences.useYUV420P().get()) {
             MPVLib.setOptionString("vf", "format=yuv420p")
         }
-        MPVLib.setOptionString("msg-level", "all=" + if (networkPreferences.verboseLogging().get()) "v" else "warn")
+        MPVLib.setOptionString("msg-level", "all=" + if (networkPreferences.verboseLogging.get()) "v" else "warn")
 
         MPVLib.setPropertyBoolean("keep-open", true)
         MPVLib.setPropertyBoolean("input-default-bindings", true)
