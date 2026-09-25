@@ -1,7 +1,6 @@
 package mihon.domain.items.episode.interactor
 
 import tachiyomi.domain.category.anime.interactor.GetAnimeCategories
-import tachiyomi.domain.category.model.Category.Companion.DEFAULT_CATEGORY_ID
 import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.entries.anime.model.Anime
 import tachiyomi.domain.items.episode.interactor.GetEpisodesByAnimeId
