@@ -400,11 +400,11 @@ class AnimeDownloadManager(
     private suspend fun getEpisodesToDelete(episodes: List<Episode>, anime: Anime): List<Episode> {
         // Retrieve the categories that are set to exclude from being deleted on read
         val categoriesToExclude =
-            downloadPreferences.removeExcludeAnimeCategories().get().map(String::toLong)
+            downloadPreferences.removeExcludeCategories().get().map(String::toLong)
 
         val categoriesForAnime = getCategories.await(anime.id)
             .map { it.id }
-            .ifEmpty { listOf(0) }
+            .ifEmpty { listOf(0L) }
         val filteredCategoryAnime = if (categoriesForAnime.intersect(categoriesToExclude).isNotEmpty()) {
             episodes.filterNot { it.seen }
         } else {
@@ -418,9 +418,9 @@ class AnimeDownloadManager(
         }
     }
 
-    private fun getEpisodesToDownload(episodes: List<Episode>): List<Episode> {
-        return if (!downloadPreferences.downloadFillermarkedItems().get()) {
-            episodes.filterNot { it.fillermark }
+        private fun getEpisodesToDownload(episodes: List<Episode>): List<Episode> {
+        return episodes
+    }
         } else {
             episodes
         }

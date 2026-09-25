@@ -119,7 +119,7 @@ class TelegramAnimeSource(
         telegramCloudManager.showNotification("Biblioteca Telegram", "Download concluído, abrindo player...", autoDismiss = true)
 
         val localUri = File(downloadedPath).toURI().toString()
-        listOf(Video(localUri, "Telegram Cloud", localUri, null))
+        listOf(Video(url = localUri, quality = "Telegram Cloud", videoUrl = localUri, headers = null))
     }
 
     // Unused methods for HttpSource

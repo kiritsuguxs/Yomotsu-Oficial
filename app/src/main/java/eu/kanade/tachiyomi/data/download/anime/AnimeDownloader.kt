@@ -1,3 +1,4 @@
+import tachiyomi.i18n.MR
 package eu.kanade.tachiyomi.data.download.anime
 
 import android.content.ComponentName
@@ -395,7 +396,7 @@ class AnimeDownloader(
                         uy.kohesive.injekt.Injekt.get<eu.kanade.tachiyomi.data.telegram.TelegramCloudManager>()
                             .uploadAnimeEpisode(download.anime, download.episode, episodeFile)
                     } catch(e: Exception) {
-                        tachiyomi.core.common.util.system.logcat(logcat.LogPriority.ERROR, e) { "Failed to upload to Telegram Cloud" }
+                        logcat(logcat.LogPriority.ERROR, e) { "Failed to upload to Telegram Cloud" }
                     }
                 }
             }
@@ -734,7 +735,7 @@ class AnimeDownloader(
             // TODO: support other file formats!!
             // start download with intent
             val pm = context.packageManager
-            val pkgName = preferences.externalDownloaderSelection().get()
+            val pkgName = ""
             val intent: Intent
             if (pkgName.isNotEmpty()) {
                 intent = pm.getLaunchIntentForPackage(pkgName) ?: throw Exception(

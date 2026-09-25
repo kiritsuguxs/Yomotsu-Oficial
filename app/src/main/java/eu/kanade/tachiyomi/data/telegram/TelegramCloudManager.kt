@@ -122,7 +122,7 @@ class TelegramCloudManager(
         try {
             notificationManager.notify(889911, builder.build())
         } catch (e: SecurityException) {
-            logcat(LogPriority.ERROR) { "Sem permissao de notificacao para a Nuvem Telegram" }
+            LogPriority.ERROR) { "Sem permissao de notificacao para a Nuvem Telegram" }
         }
     }
 
@@ -145,7 +145,7 @@ class TelegramCloudManager(
                         }
                         tdClient?.send(parameters) { result ->
                             if (result is TdApi.Error) {
-                                logcat(LogPriority.ERROR) { "Erro SetTdlibParameters: ${result.message}" }
+                                LogPriority.ERROR) { "Erro SetTdlibParameters: ${result.message}" }
                             }
                         }
                     }
@@ -154,12 +154,12 @@ class TelegramCloudManager(
                         if (botToken.isNotBlank()) {
                             tdClient?.send(TdApi.CheckAuthenticationBotToken(botToken)) { authResult ->
                                 if (authResult is TdApi.Error) {
-                                    logcat(LogPriority.ERROR) { "Erro na autenticacao do Bot: ${authResult.message}" }
+                                    LogPriority.ERROR) { "Erro na autenticacao do Bot: ${authResult.message}" }
                                     showNotification("Nuvem Telegram", "Erro de Token: ${authResult.message}", ongoing = false)
                                 }
                             }
                         } else {
-                            logcat(LogPriority.ERROR) { "Bot Token nao configurado!" }
+                            LogPriority.ERROR) { "Bot Token nao configurado!" }
                         }
                     }
                     is TdApi.AuthorizationStateReady -> {
@@ -226,7 +226,7 @@ class TelegramCloudManager(
                                 val downloadCache = Injekt.get<eu.kanade.tachiyomi.data.download.DownloadCache>()
                                 downloadCache.removeChapter(pending.chapter, pending.manga)
                             } catch (e: Exception) {
-                                logcat(LogPriority.ERROR, e) { "Erro ao atualizar cache de download" }
+                                LogPriority.ERROR, e) { "Erro ao atualizar cache de download" }
                             }
                         }
                     }
@@ -236,7 +236,7 @@ class TelegramCloudManager(
                 val messageId = update.oldMessageId
                 val pending = pendingUploads.remove(messageId)
                 pending?.tempFile?.delete()
-                logcat(LogPriority.ERROR) { "Falha confirmada pelo Telegram no envio da mensagem." }
+                LogPriority.ERROR) { "Falha confirmada pelo Telegram no envio da mensagem." }
                 showNotification("Nuvem Telegram", "Erro no upload", autoDismiss = true)
             }
         }
@@ -299,7 +299,7 @@ class TelegramCloudManager(
             }
             list
         } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e) { "Erro ao ler arquivo de índice: ${file.name}" }
+            LogPriority.ERROR, e) { "Erro ao ler arquivo de índice: ${file.name}" }
             null
         }
     }
@@ -348,7 +348,7 @@ class TelegramCloudManager(
                 }
             }
         } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e) { "Erro ao salvar telegram_cloud_index.json atomicamente" }
+            LogPriority.ERROR, e) { "Erro ao salvar telegram_cloud_index.json atomicamente" }
         }
     }
 
@@ -366,7 +366,7 @@ class TelegramCloudManager(
                     file.delete()
                 }
             } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e) { "Erro ao limpar índice da nuvem" }
+                LogPriority.ERROR, e) { "Erro ao limpar índice da nuvem" }
             }
         }
     }
@@ -478,7 +478,7 @@ class TelegramCloudManager(
                     logcat(LogPriority.INFO) { "DeleteMessages resultado: $res" }
                 }
             } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e) { "Erro ao deletar mensagem no Telegram" }
+                LogPriority.ERROR, e) { "Erro ao deletar mensagem no Telegram" }
             }
         }
         removeChapterFromIndex(mangaTitle, chapter.name)
@@ -502,7 +502,7 @@ class TelegramCloudManager(
                             logcat(LogPriority.INFO) { "DeleteMessages (manga completo) resultado: $res" }
                         }
                     } catch (e: Exception) {
-                        logcat(LogPriority.ERROR, e) { "Erro ao deletar mensagens no Telegram" }
+                        LogPriority.ERROR, e) { "Erro ao deletar mensagens no Telegram" }
                     }
                 }
             }
@@ -528,14 +528,14 @@ class TelegramCloudManager(
             } ?: false
 
             if (!ready) {
-                logcat(LogPriority.ERROR) { "TDLib nao inicializou a tempo para o upload." }
+                LogPriority.ERROR) { "TDLib nao inicializou a tempo para o upload." }
                 showNotification("Nuvem Telegram", "Erro: Cliente nao inicializado", ongoing = false)
                 return@withContext
             }
 
             val chatIdString = preferences.chatId.get()
             if (chatIdString.isBlank()) {
-                logcat(LogPriority.ERROR) { "Chat ID vazio." }
+                LogPriority.ERROR) { "Chat ID vazio." }
                 return@withContext
             }
 
@@ -622,7 +622,7 @@ class TelegramCloudManager(
                             logcat(LogPriority.INFO) { "Mensagem despachada pro TDLib. ID = ${result.id}" }
                         } else if (result is TdApi.Error) {
                             if (isTemp) fileToUpload.delete()
-                            logcat(LogPriority.ERROR) { "Erro ao empurrar pra TDLib: ${result.message}" }
+                            LogPriority.ERROR) { "Erro ao empurrar pra TDLib: ${result.message}" }
                             showNotification("Nuvem Telegram", "Erro: ${result.message}", autoDismiss = true)
                         }
                     }
@@ -631,7 +631,7 @@ class TelegramCloudManager(
                     delay(3000)
 
                 } catch (e: Exception) {
-                    logcat(LogPriority.ERROR, e) { "Erro no fluxo de preparo da TDLib" }
+                    LogPriority.ERROR, e) { "Erro no fluxo de preparo da TDLib" }
                     showNotification("Nuvem Telegram", "Falha interna no upload", autoDismiss = true)
                 } finally {
                     if (!dispatched && isTemp) {
@@ -720,7 +720,7 @@ class TelegramCloudManager(
             }
             false
         } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e) { "Erro ao extrair capa do capitulo ${chapterFile.name}" }
+            LogPriority.ERROR, e) { "Erro ao extrair capa do capitulo ${chapterFile.name}" }
             false
         }
     }
@@ -755,7 +755,7 @@ class TelegramCloudManager(
                     completer.complete(res.local.path)
                 }
             } else if (res is TdApi.Error) {
-                logcat(LogPriority.ERROR) { "Erro DownloadFile: ${res.message}" }
+                LogPriority.ERROR) { "Erro DownloadFile: ${res.message}" }
                 completer.completeExceptionally(Exception(res.message))
             }
         }
@@ -763,7 +763,7 @@ class TelegramCloudManager(
         return try {
             withTimeoutOrNull(180_000) { completer.await() }
         } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e) { "Excecao aguardando download do Telegram" }
+            LogPriority.ERROR, e) { "Excecao aguardando download do Telegram" }
             null
         } finally {
             pendingDownloads.remove(fileId)
@@ -837,7 +837,7 @@ class TelegramCloudManager(
 
         if (!ready) {
             lastDownloadError = "Conexão com Telegram não autenticada."
-            logcat(LogPriority.ERROR) { "TDLib nao autenticado para download" }
+            LogPriority.ERROR) { "TDLib nao autenticado para download" }
             return null
         }
 
@@ -929,7 +929,7 @@ class TelegramCloudManager(
                     completer.complete(res.local.path)
                 }
             } else if (res is TdApi.Error) {
-                logcat(LogPriority.ERROR) { "Erro DownloadFile: ${res.message}" }
+                LogPriority.ERROR) { "Erro DownloadFile: ${res.message}" }
                 completer.completeExceptionally(Exception(res.message))
             }
         }
@@ -938,7 +938,7 @@ class TelegramCloudManager(
             withTimeoutOrNull(180_000) { completer.await() }
         } catch (e: Exception) {
             lastDownloadError = "Timeout ou erro no download: ${e.message}"
-            logcat(LogPriority.ERROR, e) { "Excecao aguardando download do Telegram" }
+            LogPriority.ERROR, e) { "Excecao aguardando download do Telegram" }
             null
         } finally {
             pendingDownloads.remove(fileToDownload.id)
@@ -1090,7 +1090,7 @@ class TelegramCloudManager(
                 targetXml?.openOutputStream()?.use { it.write(xmlContent.toByteArray()) }
             }
         } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e) { "Erro ao configurar metadados da Fonte Local" }
+            LogPriority.ERROR, e) { "Erro ao configurar metadados da Fonte Local" }
         }
     }
 
@@ -1214,7 +1214,7 @@ class TelegramCloudManager(
 
             showNotification("Nuvem Telegram", "$mangaTitle salvo na Fonte Local! ($downloadedCount/${chapters.size})", autoDismiss = true)
         } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e) { "Erro ao baixar manga $mangaTitle" }
+            LogPriority.ERROR, e) { "Erro ao baixar manga $mangaTitle" }
             showNotification("Nuvem Telegram", "Erro ao baixar: $mangaTitle", autoDismiss = true)
         } finally {
             val notificationManager = androidx.core.app.NotificationManagerCompat.from(context)
@@ -1290,7 +1290,7 @@ class TelegramCloudManager(
                 success = true
                 true
             } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e) { "Erro ao restaurar capitulo $chapterName" }
+                LogPriority.ERROR, e) { "Erro ao restaurar capitulo $chapterName" }
                 showNotification("Nuvem Telegram", "Erro fatal ao restaurar: $chapterName", autoDismiss = true)
                 false
             } finally {
@@ -1317,7 +1317,7 @@ class TelegramCloudManager(
         } ?: false
 
         if (!ready) {
-            logcat(LogPriority.ERROR) { "TDLib nao autenticado para syncFromTelegram" }
+            LogPriority.ERROR) { "TDLib nao autenticado para syncFromTelegram" }
             return@withContext getCloudIndex()
         }
 
@@ -1547,7 +1547,7 @@ data class PendingAnimeUpload(
                     val inputFile = org.drinkless.tdlib.TdApi.InputFileLocal(path)
                     
                     // Use InputMessageVideo for videos!
-                    val video = org.drinkless.tdlib.TdApi.InputMessageVideo(inputFile, thumbnail, emptyArray(), 0, 0, 0, false, caption)
+                    val video = org.drinkless.tdlib.TdApi.InputMessageVideo(inputFile, thumbnail, IntArray(0), 0, 0, 0, false, caption)
                     val sendMessageRequest = org.drinkless.tdlib.TdApi.SendMessage(targetChatId, null, null, null, null, video)
 
                     showNotification("Nuvem Telegram", "Enviando Episódio: ${anime.title}...", progress = 0, max = 100, ongoing = true)
@@ -1559,13 +1559,13 @@ data class PendingAnimeUpload(
                             // We don't have pendingAnimeUploads map, we can just log success
                             showNotification("Nuvem Telegram", "Envio Completo: ${anime.title} - ${episode.name}", autoDismiss = true)
                         } else if (result is org.drinkless.tdlib.TdApi.Error) {
-                            tachiyomi.core.common.util.system.logcat(logcat.LogPriority.ERROR) { "Erro ao empurrar anime pra TDLib: ${result.message}" }
+                            logcat(LogPriority.ERROR) { "Erro ao empurrar anime pra TDLib: ${result.message}" }
                             showNotification("Nuvem Telegram", "Erro: ${result.message}", autoDismiss = true)
                         }
                     }
                     kotlinx.coroutines.delay(3000)
                 } catch (e: Exception) {
-                    tachiyomi.core.common.util.system.logcat(logcat.LogPriority.ERROR, e) { "Erro ao enviar anime" }
+                    logcat(LogPriority.ERROR, e) { "Erro ao enviar anime" }
                     showNotification("Nuvem Telegram", "Erro fatal ao enviar anime", autoDismiss = true)
                 }
             }
@@ -1616,13 +1616,13 @@ data class PendingAnimeUpload(
                             }
                             success = true
                         } else if (result is TdApi.Error) {
-                            logcat(LogPriority.ERROR) { "Erro ao empurrar novel pra TDLib: ${result.message}" }
+                            LogPriority.ERROR) { "Erro ao empurrar novel pra TDLib: ${result.message}" }
                             showNotification("Nuvem Telegram", "Erro: ${result.message}", autoDismiss = true)
                         }
                     }
                     delay(3000)
                 } catch (e: Exception) {
-                    logcat(LogPriority.ERROR, e) { "Erro ao enviar novel" }
+                    LogPriority.ERROR, e) { "Erro ao enviar novel" }
                     showNotification("Nuvem Telegram", "Erro fatal ao enviar novel", autoDismiss = true)
                 }
             }

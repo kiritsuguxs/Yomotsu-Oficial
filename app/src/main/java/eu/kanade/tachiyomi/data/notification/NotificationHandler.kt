@@ -37,6 +37,34 @@ object NotificationHandler {
      * @param context context of application
      * @param file file containing image
      */
+
+    internal fun openAnimeDownloadManagerPendingActivity(context: Context): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            action = "eu.kanade.tachiyomi.SHOW_ANIME_DOWNLOADS"
+        }
+        return PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
+    internal fun openAnimeEntryPendingActivity(context: Context, animeId: Long): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            action = "eu.kanade.tachiyomi.SHOW_ANIME"
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("animeId", animeId)
+        }
+        return PendingIntent.getActivity(
+            context,
+            animeId.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
     internal fun openImagePendingActivity(context: Context, uri: Uri): PendingIntent {
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "image/*")

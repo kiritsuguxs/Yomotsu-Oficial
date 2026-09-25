@@ -44,6 +44,7 @@ class NotificationReceiver : BroadcastReceiver() {
     private val getChapter: GetChapter by injectLazy()
     private val updateChapter: UpdateChapter by injectLazy()
     private val downloadManager: DownloadManager by injectLazy()
+    private val animeDownloadManager: eu.kanade.tachiyomi.data.download.anime.AnimeDownloadManager by injectLazy()
 
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
@@ -55,6 +56,13 @@ class NotificationReceiver : BroadcastReceiver() {
             ACTION_PAUSE_DOWNLOADS -> downloadManager.pauseDownloads()
             // Clear the download queue
             ACTION_CLEAR_DOWNLOADS -> downloadManager.clearQueue()
+            // Resume the download service
+            ACTION_RESUME_ANIME_DOWNLOADS -> animeDownloadManager.startDownloads()
+            // Pause the download service
+            ACTION_PAUSE_ANIME_DOWNLOADS -> animeDownloadManager.pauseDownloads()
+            // Clear the download queue
+            ACTION_CLEAR_ANIME_DOWNLOADS -> animeDownloadManager.clearQueue()
+
             // Launch share activity and dismiss notification
             ACTION_SHARE_IMAGE ->
                 shareImage(
