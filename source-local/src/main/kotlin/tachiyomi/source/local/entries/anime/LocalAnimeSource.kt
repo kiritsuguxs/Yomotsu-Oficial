@@ -15,11 +15,6 @@ import tachiyomi.domain.entries.anime.model.Anime
 
 class LocalAnimeSource(
     private val context: Context,
-    p1: Any? = null,
-    p2: Any? = null,
-    p3: Any? = null,
-    p4: Any? = null,
-    p5: Any? = null,
 ) : AnimeSource, UnmeteredSource {
 
     override val id: Long = ID
