@@ -66,7 +66,7 @@ class MigrateSeasonSelectScreenModel(
             Pager(
                 config = PagingConfig(pageSize = 25),
                 pagingSourceFactory = {
-                    SeasonListPagingSource {
+                    SeasonListPagingSource(anime.source, networkToLocalAnime) {
                         updateAnimeFromRemote.awaitSeasonsUpdate(
                             anime = anime,
                             fetchSeasons = true,
@@ -90,11 +90,18 @@ class MigrateSeasonSelectScreenModel(
         .stateIn(ioCoroutineScope, SharingStarted.Lazily, emptyFlow())
 
     private class SeasonListPagingSource(
+        private val sourceId: Long,
+        private val networkToLocalAnime: NetworkToLocalAnime,
         private val loadSeasonList: suspend () -> List<SAnime>,
     ) : PagingSource<Int, SAnime>() {
         override suspend fun load(params: LoadParams<Int>): LoadResult<Int, SAnime> {
             return try {
                 val seasonList = loadSeasonList()
+
+                // Persiste cada temporada para que ela possua id local ao ser aberta
+                seasonList
+                    .map { it.toDomainAnime(sourceId) }
+                    .let { networkToLocalAnime(it) }
 
                 LoadResult.Page(
                     data = seasonList,
