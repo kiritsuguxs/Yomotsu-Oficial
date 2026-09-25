@@ -46,7 +46,7 @@ abstract class AnimeSourcePagingSource(
                     .takeIf { it.animes.isNotEmpty() }
                     ?: throw NoEpisodesException()
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             return LoadResult.Error(e)
         }
 

@@ -54,7 +54,7 @@ class QueryPagingSource<RowType : Any>(
                 itemsBefore = maxOf(0L, offset).toInt(),
                 itemsAfter = maxOf(0L, count - (offset + loadSize)).toInt(),
             )
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             return LoadResult.Error(throwable = e)
         }
     }

@@ -63,7 +63,7 @@ abstract class BaseSourcePagingSource(
                 prevKey = null,
                 nextKey = if (mangasPage.hasNextPage) page + 1 else null,
             )
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             LoadResult.Error(e)
         }
     }
