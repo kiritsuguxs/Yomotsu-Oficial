@@ -57,6 +57,7 @@ class AndroidAnimeSourceManager(
                             ),
                         ),
                     )
+                    mutableMap[eu.kanade.tachiyomi.source.anime.TelegramAnimeSource.ID] = eu.kanade.tachiyomi.source.anime.TelegramAnimeSource(context)
                     extensions.forEach { extension ->
                         extension.sources.forEach { source ->
                             try {

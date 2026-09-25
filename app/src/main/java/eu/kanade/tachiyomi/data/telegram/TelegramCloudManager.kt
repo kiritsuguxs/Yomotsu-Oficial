@@ -57,6 +57,7 @@ data class CloudManga(
     val description: String = "",
     val coverUrl: String = "",
     val chapters: MutableList<CloudChapter> = mutableListOf(),
+    val type: String = "MANGA",
 )
 
 class TelegramCloudManager(
@@ -292,6 +293,7 @@ class TelegramCloudManager(
                         description = obj.optString("description", ""),
                         coverUrl = obj.optString("coverUrl", ""),
                         chapters = chapters,
+                        type = obj.optString("type", "MANGA"),
                     ),
                 )
             }
@@ -310,6 +312,7 @@ class TelegramCloudManager(
                     put("title", manga.title)
                     put("description", manga.description)
                     put("coverUrl", manga.coverUrl)
+                    put("type", manga.type)
                     val cArray = JSONArray()
                     for (chap in manga.chapters) {
                         cArray.put(
@@ -813,7 +816,9 @@ class TelegramCloudManager(
         // 1. Estrategia Bot API HTTP direto (rapido, confiavel, sem dependencia de sessao MTProto)
         if (chapter.remoteFileId.isNotBlank()) {
             val cacheDir = File(context.cacheDir, "tg_downloads").apply { mkdirs() }
-            val tempFile = File(cacheDir, "${System.currentTimeMillis()}_${DiskUtil.buildValidFilename(chapter.name)}.cbz")
+            val type = getCloudIndex().find { it.title == mangaTitle }?.type ?: "MANGA"
+            val ext = if (type == "ANIME") ".mkv" else if (type == "NOVEL") ".txt" else ".cbz"
+            val tempFile = File(cacheDir, "${System.currentTimeMillis()}_${DiskUtil.buildValidFilename(chapter.name)}$ext")
             val httpSuccess = downloadViaBotApi(chapter.remoteFileId, tempFile)
             if (httpSuccess && tempFile.exists() && tempFile.length() > 0L) {
                 logcat(LogPriority.INFO) { "Capitulo baixado via Bot API HTTP: ${tempFile.length()} bytes" }
@@ -1415,13 +1420,12 @@ class TelegramCloudManager(
             }
             if (messages.isEmpty()) break
 
-            for (msg in messages) {
+                        for (msg in messages) {
                 if (msg.id == fromMessageId && iterations > 0) continue
                 val content = msg.content
-                if (content is TdApi.MessageDocument) {
-                    val caption = content.caption.text
-                    val docName = content.document.fileName ?: ""
-
+                if (content is org.drinkless.tdlib.TdApi.MessageDocument || content is org.drinkless.tdlib.TdApi.MessageVideo) {
+                    val caption = if (content is org.drinkless.tdlib.TdApi.MessageDocument) content.caption.text else (content as org.drinkless.tdlib.TdApi.MessageVideo).caption.text
+                    
                     var titleMatch: String? = null
                     var capMatch: String? = null
                     var sinopseMatch: String? = null
@@ -1434,58 +1438,42 @@ class TelegramCloudManager(
                     if (!cMatch.isNullOrBlank()) capMatch = cMatch
                     if (!sMatch.isNullOrBlank()) sinopseMatch = sMatch
 
-                    if (titleMatch.isNullOrBlank() || capMatch.isNullOrBlank()) {
-                        val lines = caption.lines().map { it.trim() }.filter { it.isNotBlank() && !it.startsWith("#") }
-                        if (lines.size >= 2) {
-                            if (titleMatch.isNullOrBlank()) titleMatch = lines[0].removePrefix("📖").trim()
-                            if (capMatch.isNullOrBlank()) capMatch = lines[1].removePrefix("📄").trim()
+                    if (titleMatch != null && capMatch != null) {
+                        val mangaType = when {
+                            caption.contains("#YomotsuAnime", ignoreCase = true) -> "ANIME"
+                            caption.contains("#YomotsuNovel", ignoreCase = true) -> "NOVEL"
+                            else -> "MANGA"
                         }
-                    }
-
-                    if (titleMatch.isNullOrBlank() || capMatch.isNullOrBlank()) {
-                        if (docName.endsWith(".cbz", ignoreCase = true) || docName.endsWith(".zip", ignoreCase = true)) {
-                            val cleanDocName = docName.removeSuffix(".cbz").removeSuffix(".zip")
-                            if (cleanDocName.contains(" - ")) {
-                                val parts = cleanDocName.split(" - ", limit = 2)
-                                if (titleMatch.isNullOrBlank()) titleMatch = parts[0].trim()
-                                if (capMatch.isNullOrBlank()) capMatch = parts[1].trim()
-                            }
+                        
+                        var m = currentIndex.find { it.title.equals(titleMatch, ignoreCase = true) }
+                        if (m == null) {
+                            val cUrl = existingCovers[titleMatch!!.lowercase()]
+                                ?: libraryMangas[titleMatch!!.lowercase()]
+                                ?: ""
+                            val desc = existingDescs[titleMatch!!.lowercase()]
+                                ?: sinopseMatch
+                                ?: ""
+                            m = CloudManga(titleMatch!!, desc, cUrl, mutableListOf(), type = mangaType)
+                            currentIndex.add(m)
                         }
-                    }
 
-                    if (!titleMatch.isNullOrBlank() && !capMatch.isNullOrBlank()) {
-                        var manga = currentIndex.find { it.title.equals(titleMatch, ignoreCase = true) }
-                        if (manga == null) {
-                            val fallbackCover = existingCovers[titleMatch.lowercase()] ?: libraryMangas[titleMatch.lowercase()] ?: ""
-                            val fallbackDesc = sinopseMatch ?: existingDescs[titleMatch.lowercase()] ?: ""
-                            manga = CloudManga(
-                                title = titleMatch,
-                                description = fallbackDesc,
-                                coverUrl = fallbackCover
+                        if (m.chapters.none { it.name.equals(capMatch, ignoreCase = true) }) {
+                            val docId = if (content is org.drinkless.tdlib.TdApi.MessageDocument) content.document.document.id else (content as org.drinkless.tdlib.TdApi.MessageVideo).video.video.id
+                            val remoteDocId = if (content is org.drinkless.tdlib.TdApi.MessageDocument) content.document.document.remote.id else (content as org.drinkless.tdlib.TdApi.MessageVideo).video.video.remote.id
+                            m.chapters.add(
+                                CloudChapter(
+                                    name = capMatch!!,
+                                    messageId = msg.id,
+                                    fileId = docId,
+                                    remoteFileId = remoteDocId,
+                                    date = msg.date.toLong(),
+                                ),
                             )
-                            currentIndex.add(manga)
-                        } else if (manga.description.isBlank() && !sinopseMatch.isNullOrBlank()) {
-                            val updatedManga = manga.copy(description = sinopseMatch)
-                            val mIdx = currentIndex.indexOf(manga)
-                            currentIndex[mIdx] = updatedManga
-                            manga = updatedManga
-                        }
-
-                        val existingCapIndex = manga.chapters.indexOfFirst { it.name.equals(capMatch, ignoreCase = true) }
-                        val cloudCap = CloudChapter(
-                            name = capMatch,
-                            messageId = msg.id,
-                            fileId = content.document.document.id,
-                            remoteFileId = content.document.document.remote.id
-                        )
-                        if (existingCapIndex >= 0) {
-                            manga.chapters[existingCapIndex] = cloudCap
-                        } else {
-                            manga.chapters.add(cloudCap)
                         }
                     }
                 }
             }
+
             val lastId = messages.last().id
             if (lastId == fromMessageId) break
             fromMessageId = lastId
@@ -1508,6 +1496,81 @@ class TelegramCloudManager(
     // NOVELS
     // ==========================================
 
+data class PendingAnimeUpload(
+    val file: UniFile,
+    val anime: tachiyomi.domain.entries.anime.model.Anime,
+    val episode: tachiyomi.domain.items.episode.model.Episode,
+)
+
+    // ==========================================
+    // ANIME
+    // ==========================================
+
+    suspend fun uploadAnimeEpisode(anime: tachiyomi.domain.entries.anime.model.Anime, episode: tachiyomi.domain.items.episode.model.Episode, videoFile: com.hippo.unifile.UniFile) {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            if (!preferences.enableTelegramCloud.get()) return@withContext
+            if (tdClient == null) initializeTdlib()
+
+            val ready = kotlinx.coroutines.withTimeoutOrNull(10000) {
+                isAuthReady.first { it }
+                true
+            } ?: false
+
+            if (!ready) return@withContext
+
+            val chatIdString = preferences.chatId.get()
+            val targetChatId = chatIdString.toLongOrNull() ?: return@withContext
+
+            uploadMutex.withLock {
+                try {
+                    val description = anime.description?.let {
+                        if (it.length > 500) it.take(497) + "..." else it
+                    } ?: "Sem sinopse disponivel."
+
+                    val textCaption = "#YomotsuAnime\n\n📖 Obra: ${anime.title}\n📄 Episódio: ${episode.name}\n\n📝 Sinopse: $description"
+                    val caption = org.drinkless.tdlib.TdApi.FormattedText(textCaption, emptyArray())
+
+                    val coverCache = uy.kohesive.injekt.Injekt.get<eu.kanade.tachiyomi.data.cache.CoverCache>()
+                    val coverFile = coverCache.getCoverFile(anime.thumbnailUrl)
+                    val thumbnail = if (coverFile != null && coverFile.exists()) {
+                        org.drinkless.tdlib.TdApi.InputThumbnail(org.drinkless.tdlib.TdApi.InputFileLocal(coverFile.absolutePath), 0, 0)
+                    } else null
+
+                    // TdLib requires local file path. Since videoFile is UniFile, it might not have an absolutePath if it's on SAF.
+                    // But Anime downloader uses File internally? UniFile.filePath
+                    val path = videoFile.filePath
+                    if (path == null) {
+                        showNotification("Nuvem Telegram", "Erro: Caminho do arquivo inválido", autoDismiss = true)
+                        return@withContext
+                    }
+
+                    val inputFile = org.drinkless.tdlib.TdApi.InputFileLocal(path)
+                    
+                    // Use InputMessageVideo for videos!
+                    val video = org.drinkless.tdlib.TdApi.InputMessageVideo(inputFile, thumbnail, emptyArray(), 0, 0, 0, false, caption)
+                    val sendMessageRequest = org.drinkless.tdlib.TdApi.SendMessage(targetChatId, null, null, null, null, video)
+
+                    showNotification("Nuvem Telegram", "Enviando Episódio: ${anime.title}...", progress = 0, max = 100, ongoing = true)
+
+                    var success = false
+                    tdClient?.send(sendMessageRequest) { result ->
+                        if (result is org.drinkless.tdlib.TdApi.Message) {
+                            success = true
+                            // We don't have pendingAnimeUploads map, we can just log success
+                            showNotification("Nuvem Telegram", "Envio Completo: ${anime.title} - ${episode.name}", autoDismiss = true)
+                        } else if (result is org.drinkless.tdlib.TdApi.Error) {
+                            tachiyomi.core.common.util.system.logcat(logcat.LogPriority.ERROR) { "Erro ao empurrar anime pra TDLib: ${result.message}" }
+                            showNotification("Nuvem Telegram", "Erro: ${result.message}", autoDismiss = true)
+                        }
+                    }
+                    kotlinx.coroutines.delay(3000)
+                } catch (e: Exception) {
+                    tachiyomi.core.common.util.system.logcat(logcat.LogPriority.ERROR, e) { "Erro ao enviar anime" }
+                    showNotification("Nuvem Telegram", "Erro fatal ao enviar anime", autoDismiss = true)
+                }
+            }
+        }
+    }
     suspend fun uploadNovelChapter(manga: Manga, chapter: Chapter, txtFile: File) {
         withContext(Dispatchers.IO) {
             if (!preferences.enableTelegramCloud.get() || txtFile.length() == 0L) return@withContext

@@ -65,7 +65,7 @@ class TelegramSource(
 
     override suspend fun getPopularManga(page: Int): MangasPage = withContext(Dispatchers.IO) {
         val index = telegramCloudManager.getCloudIndex()
-        val mangas = index.map { cloudManga ->
+        val mangas = index.filter { it.type != "ANIME" && it.type != "ANIME" }.map { cloudManga ->
             SManga.create().apply {
                 title = cloudManga.title
                 url = cloudManga.title
@@ -81,7 +81,7 @@ class TelegramSource(
 
     override suspend fun getSearchManga(page: Int, query: String, filters: FilterList): MangasPage = withContext(Dispatchers.IO) {
         val index = telegramCloudManager.getCloudIndex()
-        val mangas = index.filter {
+        val mangas = index.filter { it.type != "ANIME" &&
             it.title.contains(query, ignoreCase = true)
         }.map { cloudManga ->
             SManga.create().apply {

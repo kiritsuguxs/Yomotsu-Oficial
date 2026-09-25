@@ -387,6 +387,18 @@ class AnimeDownloader(
             DiskUtil.createNoMediaFile(tmpDir, context)
 
             download.status = AnimeDownload.State.DOWNLOADED
+            
+            val episodeFile = animeDir.findFile("${filename}.mkv") ?: animeDir.findFile("${filename}.mp4") ?: tmpDir.findFile(episodeDirname)
+            if (episodeFile != null) {
+                launchIO {
+                    try {
+                        uy.kohesive.injekt.Injekt.get<eu.kanade.tachiyomi.data.telegram.TelegramCloudManager>()
+                            .uploadAnimeEpisode(download.anime, download.episode, episodeFile)
+                    } catch(e: Exception) {
+                        tachiyomi.core.common.util.system.logcat(logcat.LogPriority.ERROR, e) { "Failed to upload to Telegram Cloud" }
+                    }
+                }
+            }
         } catch (error: Throwable) {
             if (error is CancellationException) throw error
             // If the video threw, it will resume here
