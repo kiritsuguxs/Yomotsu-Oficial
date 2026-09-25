@@ -56,9 +56,13 @@ class AndroidAnimeSourceManager(
                         ),
                     )
                     extensions.forEach { extension ->
-                        extension.sources.forEach {
-                            mutableMap[it.id] = it
-                            registerStubSource(StubAnimeSource.from(it))
+                        extension.sources.forEach { source ->
+                            try {
+                                mutableMap[source.id] = source
+                                registerStubSource(StubAnimeSource.from(source))
+                            } catch (e: Throwable) {
+                                logcat(logcat.LogPriority.ERROR, e) { "Failed to load extension source: ${extension.pkgName}" }
+                            }
                         }
                     }
                     sourcesMapFlow.value = mutableMap

@@ -315,8 +315,15 @@ internal object AnimeExtensionLoader {
             .flatMap {
                 try {
                     when (val obj = Class.forName(it, false, classLoader).getDeclaredConstructor().newInstance()) {
-                        is AnimeSource -> listOf(obj)
-                        is AnimeSourceFactory -> obj.createSources()
+                        is AnimeSource -> {
+                            obj.id // Force evaluate to catch NPE early
+                            listOf(obj)
+                        }
+                        is AnimeSourceFactory -> {
+                            val sources = obj.createSources()
+                            sources.forEach { it.id } // Force evaluate
+                            sources
+                        }
                         else -> throw Exception("Unknown source class type: ${obj.javaClass}")
                     }
                 } catch (e: LinkageError) {
@@ -330,9 +337,14 @@ internal object AnimeExtensionLoader {
                             ).getDeclaredConstructor().newInstance()
                         ) {
                             is AnimeSource -> {
+                                obj.id // Force evaluate
                                 listOf(obj)
                             }
-                            is AnimeSourceFactory -> obj.createSources()
+                            is AnimeSourceFactory -> {
+                                val sources = obj.createSources()
+                                sources.forEach { it.id } // Force evaluate
+                                sources
+                            }
                             else -> throw Exception("Unknown source class type: ${obj.javaClass}")
                         }
                     } catch (e: Throwable) {
