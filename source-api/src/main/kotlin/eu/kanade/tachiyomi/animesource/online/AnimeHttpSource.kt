@@ -98,8 +98,10 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
      * @return a unique ID for the source
      */
     @Suppress("MemberVisibilityCanBePrivate")
-    protected fun generateId(name: String, lang: String, versionId: Int): Long {
-        val key = "${name.lowercase()}/$lang/$versionId"
+    protected fun generateId(name: String?, lang: String?, versionId: Int): Long {
+        val safeName = name ?: "unknown"
+        val safeLang = lang ?: "all"
+        val key = "${safeName.lowercase()}/$safeLang/$versionId"
         val bytes = MessageDigest.getInstance("MD5").digest(key.toByteArray())
         return (0..7).map { bytes[it].toLong() and 0xff shl 8 * (7 - it) }.reduce(Long::or) and Long.MAX_VALUE
     }
