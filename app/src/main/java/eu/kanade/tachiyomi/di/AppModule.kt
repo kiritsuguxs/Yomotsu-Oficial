@@ -126,8 +126,9 @@ class AppModule(val app: Application) : InjektModule {
             eu.kanade.tachiyomi.source.anime.AndroidAnimeSourceManager(app, get(), get())
         }
         addSingletonFactory { eu.kanade.tachiyomi.extension.anime.AnimeExtensionManager(app) }
+        addSingletonFactory { eu.kanade.tachiyomi.data.download.anime.AnimeDownloadProvider(app) }
         addSingletonFactory { eu.kanade.tachiyomi.data.download.anime.AnimeDownloadManager(app) }
-        addSingletonFactory { eu.kanade.tachiyomi.data.download.anime.AnimeDownloadCache() }
+        addSingletonFactory { eu.kanade.tachiyomi.data.download.anime.AnimeDownloadCache(app) }
 
         addSingletonFactory {
             Json {

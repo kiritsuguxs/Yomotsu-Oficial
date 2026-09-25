@@ -1,37 +1,25 @@
 -dontobfuscate
 
--keep,allowoptimization class eu.kanade.** { *; }
--keep,allowoptimization class tachiyomi.** { *; }
--keep,allowoptimization class mihon.** { *; }
+-keep,allowoptimization class eu.kanade.**
+-keep,allowoptimization class tachiyomi.**
+-keep,allowoptimization class mihon.**
 
 # Keep common dependencies used in extensions
 -keep,allowoptimization class androidx.preference.** { public protected *; }
+-keep,allowoptimization class android.content.** { *; }
+-keep,allowoptimization class uy.kohesive.injekt.** { public protected *; }
+-keep,allowoptimization class android.test.base.** { *; }
 -keep,allowoptimization class kotlin.** { public protected *; }
 -keep,allowoptimization class kotlinx.coroutines.** { public protected *; }
 -keep,allowoptimization class kotlinx.serialization.** { public protected *; }
--keep,allowoptimization class kotlin.time.** { public protected *; }
 -keep,allowoptimization class okhttp3.** { public protected *; }
 -keep,allowoptimization class okio.** { public protected *; }
 -keep,allowoptimization class org.jsoup.** { public protected *; }
 -keep,allowoptimization class rx.** { public protected *; }
--keep class app.cash.quickjs.** { *; }
--keep interface eu.kanade.tachiyomi.extension.novel.runtime.NovelJsRuntime$NativeApi { *; }
--keepclassmembers interface eu.kanade.tachiyomi.extension.novel.runtime.NovelJsRuntime$NativeApi { *; }
--keep class * implements eu.kanade.tachiyomi.extension.novel.runtime.NovelJsRuntime$NativeApi { *; }
--keepclassmembers class * implements eu.kanade.tachiyomi.extension.novel.runtime.NovelJsRuntime$NativeApi { *; }
--keep class eu.kanade.tachiyomi.extension.novel.runtime.** { *; }
--keepclassmembers class eu.kanade.tachiyomi.extension.novel.runtime.** { *; }
+-keep,allowoptimization class app.cash.quickjs.** { public protected *; }
 -keep,allowoptimization class uy.kohesive.injekt.** { public protected *; }
--keep,allowoptimization class com.squareup.zstd.** { public protected *; }
-
-# ML Kit OCR uses runtime component discovery. Keep its implementations in release builds.
--keep class com.google.mlkit.** { *; }
--keep class com.google.android.gms.internal.mlkit_vision_text_common.** { *; }
--keep class com.google.android.gms.internal.mlkit_vision_text_bundled_common.** { *; }
-
-# PaddleOCR uses ONNX Runtime and SDK classes through its inference pipeline.
--keep class com.paddle.ocr.** { *; }
--keep class ai.onnxruntime.** { *; }
+-keep,allowoptimization class is.xyz.mpv.** { public protected *; }
+-keep,allowoptimization class com.arthenica.** { public protected *; }
 
 # From extensions-lib
 -keep,allowoptimization class eu.kanade.tachiyomi.network.interceptor.RateLimitInterceptorKt { public protected *; }
@@ -40,11 +28,7 @@
 -keep,allowoptimization class eu.kanade.tachiyomi.network.OkHttpExtensionsKt { public protected *; }
 -keep,allowoptimization class eu.kanade.tachiyomi.network.RequestsKt { public protected *; }
 -keep,allowoptimization class eu.kanade.tachiyomi.AppInfo { public protected *; }
-
--keepclassmembers class * implements java.io.Serializable {
-    java.lang.Object writeReplace();
-    java.lang.Object readResolve();
-}
+-keep,allowoptimization class eu.kanade.tachiyomi.torrentutils.** { public protected *; }
 
 ##---------------Begin: proguard configuration for RxJava 1.x  ----------
 -dontwarn sun.misc.**
@@ -97,22 +81,3 @@
 
 # XmlUtil
 -keep public enum nl.adaptivity.xmlutil.EventType { *; }
-
-# Firebase
--keep class com.google.firebase.installations.** { *; }
--keep interface com.google.firebase.installations.** { *; }
-
-# KotlinX Datetime
--keep,allowoptimization class kotlinx.datetime.** { public protected *; }
-
-# Methods called by Shizuku only
--keepclassmembers class mihon.app.shizuku.ShellInterface {
-    public <init>();
-    public void destroy();
-}
-
-# Detector JNI symbols are called only from the disposable :dbnet process.
--keep class eu.kanade.translation.detection.DbnetNativeBackend { *; }
-
-# TDLib JNI callbacks
--keep class org.drinkless.tdlib.** { *; }
