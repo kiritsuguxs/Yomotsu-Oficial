@@ -83,7 +83,7 @@ fun EntryDownloadDropdownMenu(
         },
     )
 
-    val content: @Composable () -> Unit = {
+    val content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit = {
         items.forEach { (downloadAction, string) ->
             DropdownMenuItem(
                 text = { Text(text = string) },

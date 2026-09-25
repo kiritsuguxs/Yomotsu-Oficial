@@ -375,7 +375,7 @@ class AnimeScreen(
                     initialSkipIntroLength = if (!successState.anime.skipIntroDisable &&
                         successState.anime.skipIntroLength == 0
                     ) {
-                        screenModel.gesturePreferences.defaultIntroLength().get()
+                        screenModel.gesturePreferences.defaultIntroLength().get().toLong()
                     } else {
                         successState.anime.skipIntroLength
                     },

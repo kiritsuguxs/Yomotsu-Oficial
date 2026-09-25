@@ -8,12 +8,12 @@ import tachiyomi.presentation.core.i18n.stringResource
 object PlayerSettingsGesturesScreen {
     @Composable
     fun SkipIntroLengthDialog(
-        initialSkipIntroLength: Long,
+        initialSkipIntroLength: Int,
         onDismissRequest: () -> Unit,
         onValueChanged: (Int) -> Unit,
     ) {
         IntegerPickerDialog(
-            defaultValue = initialSkipIntroLength.toInt(),
+            defaultValue = initialSkipIntroLength,
             minValue = 0,
             maxValue = 255,
             step = 1,
@@ -21,6 +21,19 @@ object PlayerSettingsGesturesScreen {
             title = stringResource(AYMR.strings.pref_intro_length),
             onChange = onValueChanged,
             onDismissRequest = onDismissRequest,
+        )
+    }
+
+    @Composable
+    fun SkipIntroLengthDialog(
+        initialSkipIntroLength: Long,
+        onDismissRequest: () -> Unit,
+        onValueChanged: (Int) -> Unit,
+    ) {
+        SkipIntroLengthDialog(
+            initialSkipIntroLength = initialSkipIntroLength.toInt(),
+            onDismissRequest = onDismissRequest,
+            onValueChanged = onValueChanged,
         )
     }
 }
