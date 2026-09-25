@@ -52,11 +52,6 @@ class AndroidAnimeSourceManager(
                         mapOf(
                             LocalAnimeSource.ID to LocalAnimeSource(
                                 context,
-                                Injekt.get(),
-                                Injekt.get(),
-                                Injekt.get(),
-                                Injekt.get(),
-                                Injekt.get(),
                             ),
                         ),
                     )
