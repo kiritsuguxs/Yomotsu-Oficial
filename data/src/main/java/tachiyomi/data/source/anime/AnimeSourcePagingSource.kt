@@ -42,10 +42,14 @@ abstract class AnimeSourcePagingSource(
 
         val animesPage = try {
             withIOContext {
-                requestNextPage(page.toInt())
-                    .takeIf { it.animes.isNotEmpty() }
-                    ?: throw NoEpisodesException()
+                kotlinx.coroutines.withTimeoutOrNull(15000L) {
+                    requestNextPage(page.toInt())
+                        .takeIf { it.animes.isNotEmpty() }
+                        ?: throw NoEpisodesException()
+                } ?: throw RuntimeException("A extensão demorou muito para responder (Timeout).")
             }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (e: Throwable) {
             return LoadResult.Error(e)
         }
