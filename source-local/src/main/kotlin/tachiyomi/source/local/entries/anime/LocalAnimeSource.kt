@@ -4,8 +4,11 @@ import android.content.Context
 import eu.kanade.tachiyomi.animesource.AnimeSource
 import eu.kanade.tachiyomi.animesource.UnmeteredSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimeRelation
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.SAnimeEpisodeUpdate
+import eu.kanade.tachiyomi.animesource.model.SAnimeSeasonUpdate
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import tachiyomi.domain.entries.anime.model.Anime
@@ -30,6 +33,22 @@ class LocalAnimeSource(
     override suspend fun getPopularAnime(page: Int): AnimesPage = AnimesPage(emptyList(), false)
     override suspend fun getSearchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage = AnimesPage(emptyList(), false)
     override suspend fun getLatestUpdates(page: Int): AnimesPage = AnimesPage(emptyList(), false)
+
+    override suspend fun getAnimeEpisodeUpdate(
+        anime: SAnime,
+        episodes: List<SEpisode>,
+        fetchDetails: Boolean,
+        fetchEpisodes: Boolean,
+    ): SAnimeEpisodeUpdate = SAnimeEpisodeUpdate(anime, episodes)
+
+    override suspend fun getAnimeSeasonUpdate(
+        anime: SAnime,
+        seasons: List<SAnime>,
+        fetchDetails: Boolean,
+        fetchSeasons: Boolean,
+    ): SAnimeSeasonUpdate = SAnimeSeasonUpdate(anime, seasons)
+
+    override suspend fun getRelatedAnimeList(anime: SAnime): List<AnimeRelation> = emptyList()
 
     companion object {
         const val ID = 0L
