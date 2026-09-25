@@ -69,12 +69,14 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
      *
      * Note: the generated ID sets the sign bit to `0`.
      */
-    override val id: Long by lazy { generateId(name, lang, versionId) }
+    override val id: Long
+        get() = generateId(name, lang, versionId)
 
     /**
      * Headers used for requests.
      */
-    val headers: Headers by lazy { headersBuilder().build() }
+    val headers: Headers
+        get() = headersBuilder().build()
 
     /**
      * Default network client for doing requests.
