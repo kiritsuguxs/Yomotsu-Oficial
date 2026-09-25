@@ -26,6 +26,24 @@ class AnimeExtensionStoreService(
     private val protoBuf: ProtoBuf,
 ) {
     suspend fun fetch(indexUrl: String): Result<AnimeExtensionStore> {
+        val candidates = buildList {
+            add(indexUrl)
+            val trimmed = indexUrl.trim().trimEnd('/')
+            if (!indexUrl.endsWith(".json", ignoreCase = true) && !indexUrl.endsWith(".pb", ignoreCase = true)) {
+                add("$trimmed/index.min.json")
+                add("$trimmed/repo.json")
+            }
+        }
+        for ((i, candidate) in candidates.withIndex()) {
+            val result = fetchSingle(candidate)
+            if (result.isSuccess || i == candidates.lastIndex) {
+                return result
+            }
+        }
+        return Result.failure(Exception("Not found"))
+    }
+
+    private suspend fun fetchSingle(indexUrl: String): Result<AnimeExtensionStore> {
         var updatedIndexUrl: String = indexUrl
         return try {
             val response = network.client.newCall(GET(updatedIndexUrl)).awaitSuccess()

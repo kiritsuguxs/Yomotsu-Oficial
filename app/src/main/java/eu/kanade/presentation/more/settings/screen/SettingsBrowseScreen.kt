@@ -34,8 +34,11 @@ object SettingsBrowseScreen : SearchableSettings {
 
         val sourcePreferences = remember { Injekt.get<SourcePreferences>() }
         val getExtensionStoreCountAsFlow = remember { Injekt.get<GetExtensionStoreCountAsFlow>() }
+        val getAnimeExtensionStoreCountAsFlow = remember { Injekt.get<mihon.domain.extension.anime.interactor.GetAnimeExtensionStoreCountAsFlow>() }
 
-        val reposCount by getExtensionStoreCountAsFlow().collectAsState(0)
+        val mangaReposCount by getExtensionStoreCountAsFlow().collectAsState(0)
+        val animeReposCount by getAnimeExtensionStoreCountAsFlow().collectAsState(0)
+        val reposCount = mangaReposCount + animeReposCount
 
         return listOf(
             Preference.PreferenceGroup(

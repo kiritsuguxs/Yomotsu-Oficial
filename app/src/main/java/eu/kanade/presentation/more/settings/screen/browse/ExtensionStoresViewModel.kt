@@ -3,10 +3,16 @@ package eu.kanade.presentation.more.settings.screen.browse
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.viewModelScope
 import eu.kanade.tachiyomi.extension.ExtensionManager
+import eu.kanade.tachiyomi.extension.anime.AnimeExtensionManager
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import mihon.core.viewmodel.StateViewModel
+import mihon.domain.extension.anime.interactor.AddAnimeExtensionStore
+import mihon.domain.extension.anime.interactor.GetAnimeExtensionStores
+import mihon.domain.extension.anime.interactor.RemoveAnimeExtensionStore
+import mihon.domain.extension.anime.interactor.UpdateAnimeExtensionStores
 import mihon.domain.extension.interactor.AddExtensionStore
 import mihon.domain.extension.interactor.GetExtensionStores
 import mihon.domain.extension.interactor.RemoveExtensionStore
@@ -22,6 +28,12 @@ class ExtensionStoresViewModel(
     private val removeExtensionStore: RemoveExtensionStore = Injekt.get(),
     private val updateExtensionStores: UpdateExtensionStores = Injekt.get(),
     private val extensionManager: ExtensionManager = Injekt.get(),
+
+    private val getAnimeExtensionStores: GetAnimeExtensionStores = Injekt.get(),
+    private val addAnimeExtensionStore: AddAnimeExtensionStore = Injekt.get(),
+    private val removeAnimeExtensionStore: RemoveAnimeExtensionStore = Injekt.get(),
+    private val updateAnimeExtensionStores: UpdateAnimeExtensionStores = Injekt.get(),
+    private val animeExtensionManager: AnimeExtensionManager = Injekt.get(),
 ) : StateViewModel<ExtensionStoreScreenState>(ExtensionStoreScreenState.Loading) {
 
     private inline fun updateSuccessState(
@@ -37,7 +49,23 @@ class ExtensionStoresViewModel(
 
     init {
         viewModelScope.launchIO {
-            getExtensionStores.subscribe()
+            combine(
+                getExtensionStores.subscribe(),
+                getAnimeExtensionStores.subscribe(),
+            ) { mangaStores, animeStores ->
+                val mappedAnimeStores = animeStores.map {
+                    ExtensionStore(
+                        indexUrl = it.indexUrl,
+                        name = it.name,
+                        badgeLabel = if (it.badgeLabel.isBlank() || it.badgeLabel.equals(it.name, ignoreCase = true)) "Anime" else it.badgeLabel,
+                        signingKey = it.signingKey,
+                        contact = ExtensionStore.Contact(it.contact.website, it.contact.discord),
+                        isLegacy = it.isLegacy,
+                        extensionListUrl = it.extensionListUrl,
+                    )
+                }
+                (mangaStores + mappedAnimeStores).distinctBy { it.indexUrl }
+            }
                 .collectLatest { stores ->
                     mutableState.update {
                         when (it) {
@@ -50,7 +78,7 @@ class ExtensionStoresViewModel(
     }
 
     /**
-     * Creates and adds a new repo to the database.
+     * Creates and adds a new repo to the database (manga, novel or anime).
      *
      * @param baseUrl The baseUrl of the repo to create.
      */
@@ -65,28 +93,61 @@ class ExtensionStoresViewModel(
                     },
                 )
             }
-            addExtensionStore(baseUrl)
-                .onSuccess {
-                    extensionManager.findAvailableExtensions()
-                    dismissDialog()
-                }
-                .onFailure { throwable ->
-                    updateSuccessState {
-                        it.copy(
-                            dialog = when (it.dialog) {
-                                is ExtensionStoreDialog.Create -> it.dialog.copy(
-                                    processing = false,
-                                    errorMessage = throwable.message ?: "unknown error",
-                                )
-                                is ExtensionStoreDialog.Confirm -> it.dialog.copy(
-                                    processing = false,
-                                    errorMessage = throwable.message ?: "unknown error",
-                                )
-                                else -> it.dialog
-                            },
-                        )
+
+            val isAnimeHint = baseUrl.contains("anime", ignoreCase = true) ||
+                baseUrl.contains("aniyomi", ignoreCase = true) ||
+                baseUrl.contains("anikku", ignoreCase = true)
+
+            var added = false
+            var lastError: Throwable? = null
+
+            if (isAnimeHint) {
+                val animeResult = addAnimeExtensionStore(baseUrl)
+                if (animeResult.isSuccess) {
+                    added = true
+                    animeExtensionManager.findAvailableExtensions()
+                } else {
+                    lastError = animeResult.exceptionOrNull()
+                    val mangaResult = addExtensionStore(baseUrl)
+                    if (mangaResult.isSuccess) {
+                        added = true
+                        extensionManager.findAvailableExtensions()
                     }
                 }
+            } else {
+                val mangaResult = addExtensionStore(baseUrl)
+                if (mangaResult.isSuccess) {
+                    added = true
+                    extensionManager.findAvailableExtensions()
+                } else {
+                    lastError = mangaResult.exceptionOrNull()
+                    val animeResult = addAnimeExtensionStore(baseUrl)
+                    if (animeResult.isSuccess) {
+                        added = true
+                        animeExtensionManager.findAvailableExtensions()
+                    }
+                }
+            }
+
+            if (added) {
+                dismissDialog()
+            } else {
+                updateSuccessState {
+                    it.copy(
+                        dialog = when (it.dialog) {
+                            is ExtensionStoreDialog.Create -> it.dialog.copy(
+                                processing = false,
+                                errorMessage = lastError?.message ?: "unknown error",
+                            )
+                            is ExtensionStoreDialog.Confirm -> it.dialog.copy(
+                                processing = false,
+                                errorMessage = lastError?.message ?: "unknown error",
+                            )
+                            else -> it.dialog
+                        },
+                    )
+                }
+            }
         }
     }
 
@@ -99,6 +160,9 @@ class ExtensionStoresViewModel(
         if (status is ExtensionStoreScreenState.Success) {
             viewModelScope.launchIO {
                 updateExtensionStores()
+                updateAnimeExtensionStores()
+                extensionManager.findAvailableExtensions()
+                animeExtensionManager.findAvailableExtensions()
             }
         }
     }
@@ -109,7 +173,9 @@ class ExtensionStoresViewModel(
     fun deleteRepo(baseUrl: String) {
         viewModelScope.launchIO {
             removeExtensionStore(baseUrl)
+            removeAnimeExtensionStore(baseUrl)
             extensionManager.findAvailableExtensions()
+            animeExtensionManager.findAvailableExtensions()
         }
     }
 
