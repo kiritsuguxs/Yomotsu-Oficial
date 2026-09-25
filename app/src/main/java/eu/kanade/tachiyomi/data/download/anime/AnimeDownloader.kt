@@ -363,10 +363,10 @@ class AnimeDownloader(
                 // Pull video from network and add them to download object
                 val hosters = EpisodeLoader.getHosters(download.episode, download.anime, download.source)
                 if (hosters.isEmpty()) {
-                    throw Exception(context.stringResource(MR.strings.video_list_empty_error))
+                    throw Exception(context.stringResource(MR.strings.page_list_empty_error))
                 }
                 val bestVideo = HosterLoader.getBestVideo(download.source, hosters)
-                    ?: throw Exception(context.stringResource(MR.strings.video_list_empty_error))
+                    ?: throw Exception(context.stringResource(MR.strings.page_list_empty_error))
                 download.video = bestVideo
             }
 

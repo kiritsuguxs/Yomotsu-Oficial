@@ -88,7 +88,7 @@ internal class AnimeDownloadNotifier(private val context: Context) {
                 addAction(
                     R.drawable.ic_book_24dp,
                     context.stringResource(MR.strings.action_show_manga),
-                    NotificationReceiver.openAnimeEntryPendingActivity(context, download.anime.id),
+                    NotificationHandler.openAnimeEntryPendingActivity(context, download.anime.id),
                 )
             }
 
@@ -127,7 +127,7 @@ internal class AnimeDownloadNotifier(private val context: Context) {
      */
     fun onPaused() {
         with(progressNotificationBuilder) {
-            setContentTitle(context.stringResource(MR.strings.download_paused))
+            setContentTitle(context.stringResource(MR.strings.download_notifier_download_paused))
             setContentText(context.stringResource(MR.strings.download_notifier_download_paused))
             setSmallIcon(R.drawable.ic_pause_24dp)
             setProgress(0, 0, false)
@@ -184,7 +184,7 @@ internal class AnimeDownloadNotifier(private val context: Context) {
                 addAction(
                     R.drawable.ic_book_24dp,
                     context.stringResource(MR.strings.action_show_manga),
-                    NotificationReceiver.openAnimeEntryPendingActivity(context, animeId),
+                    NotificationHandler.openAnimeEntryPendingActivity(context, animeId),
                 )
             }
             setProgress(0, 0, false)
@@ -222,7 +222,7 @@ internal class AnimeDownloadNotifier(private val context: Context) {
                 addAction(
                     R.drawable.ic_book_24dp,
                     context.stringResource(MR.strings.action_show_manga),
-                    NotificationReceiver.openAnimeEntryPendingActivity(context, animeId),
+                    NotificationHandler.openAnimeEntryPendingActivity(context, animeId),
                 )
             }
             setProgress(0, 0, false)
