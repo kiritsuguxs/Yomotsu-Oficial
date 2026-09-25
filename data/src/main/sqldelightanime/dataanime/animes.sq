@@ -202,3 +202,39 @@ WHERE _id = :animeId;
 
 selectLastInsertedRowId:
 SELECT last_insert_rowid();
+
+insertNetworkAnime {
+    -- Insert the anime if it doesn't exist already
+    INSERT INTO animes(
+        source, url, artist, author, description, genre, title, status, thumbnail_url, favorite,
+        last_update, next_update, initialized, viewer, episode_flags, cover_last_modified, date_added,
+        update_strategy, calculate_interval, last_modified_at, version, memo
+    )
+    SELECT
+        :source, :url, :artist, :author, :description, :genre, :title, :status, :thumbnailUrl, :favorite,
+        :lastUpdate, :nextUpdate, :initialized, :viewerFlags, :episodeFlags, :coverLastModified, :dateAdded,
+        :updateStrategy, :calculateInterval, 0, :version, :memo
+    WHERE NOT EXISTS(SELECT 0 FROM animes WHERE source = :source AND url = :url);
+
+    -- Update the relevant details if applicable and not favorite
+    UPDATE animes
+    SET
+        title = CASE WHEN :updateTitle THEN :title ELSE title END,
+        thumbnail_url = CASE WHEN :updateCover THEN :thumbnailUrl ELSE thumbnail_url END,
+        author = CASE WHEN :updateDetails THEN :author ELSE author END,
+        artist = CASE WHEN :updateDetails THEN :artist ELSE artist END,
+        description = CASE WHEN :updateDetails THEN :description ELSE description END,
+        genre = CASE WHEN :updateDetails THEN :genre ELSE genre END,
+        status = CASE WHEN :updateDetails THEN :status ELSE status END,
+        update_strategy = CASE WHEN :updateDetails THEN :updateStrategy ELSE update_strategy END,
+        initialized = :updateDetails,
+        memo = :memo
+    WHERE source = :source
+    AND url = :url
+    AND favorite = 0;
+
+    -- Finally return the anime
+    SELECT *
+    FROM animes
+    WHERE source = :source AND url = :url;
+}

@@ -8,6 +8,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.domain.items.episode.model.NoEpisodesException
 import tachiyomi.domain.source.anime.repository.AnimeSourcePagingSourceType
+import eu.kanade.domain.entries.anime.model.toDomainAnime
 
 class AnimeSourceSearchPagingSource(
     source: AnimeSource,
@@ -37,24 +38,32 @@ abstract class AnimeSourcePagingSource(
 
     abstract suspend fun requestNextPage(currentPage: Int): AnimesPage
 
+    private val networkToLocalAnime: tachiyomi.domain.entries.anime.interactor.NetworkToLocalAnime = uy.kohesive.injekt.Injekt.get()
+    private val seenAnime = hashSetOf<String>()
+
     override suspend fun load(params: LoadParams<Long>): LoadResult<Long, SAnime> {
         val page = params.key ?: 1
 
-        val animesPage = try {
-            withIOContext {
+        return try {
+            val animesPage = withIOContext {
                 requestNextPage(page.toInt())
                     .takeIf { it.animes.isNotEmpty() }
                     ?: throw NoEpisodesException()
             }
-        } catch (e: Exception) {
-            return LoadResult.Error(e)
-        }
 
-        return LoadResult.Page(
-            data = animesPage.animes,
-            prevKey = null,
-            nextKey = if (animesPage.hasNextPage) page + 1 else null,
-        )
+            val animes = animesPage.animes
+                .map { it.toDomainAnime(source.id) }
+                .filter { seenAnime.add(it.url) }
+                .let { networkToLocalAnime(it) }
+
+            LoadResult.Page(
+                data = animesPage.animes,
+                prevKey = null,
+                nextKey = if (animesPage.hasNextPage) page + 1 else null,
+            )
+        } catch (e: Exception) {
+            LoadResult.Error(e)
+        }
     }
 
     override fun getRefreshKey(state: PagingState<Long, SAnime>): Long? {

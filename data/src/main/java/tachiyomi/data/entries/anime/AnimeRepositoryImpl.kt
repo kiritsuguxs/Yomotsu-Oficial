@@ -1,3 +1,4 @@
+import app.cash.sqldelight.async.coroutines.awaitAsOne
 package tachiyomi.data.entries.anime
 
 import aniyomi.domain.anime.SeasonAnime
@@ -6,8 +7,8 @@ import logcat.LogPriority
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.data.AnimeUpdateStrategyColumnAdapter
 import tachiyomi.data.FetchTypeColumnAdapter
-import tachiyomi.data.MemoColumnAdapter
-import tachiyomi.data.StringListColumnAdapter
+import MemoColumnAdapter
+import StringListColumnAdapter
 import tachiyomi.data.handlers.anime.AnimeDatabaseHandler
 import tachiyomi.domain.entries.anime.model.Anime
 import tachiyomi.domain.entries.anime.model.AnimeUpdate
@@ -134,6 +135,41 @@ class AnimeRepositoryImpl(
                 memo = anime.memo,
             )
             animesQueries.selectLastInsertedRowId()
+        }
+    }
+
+    override suspend fun insertNetworkAnime(anime: List<Anime>): List<Anime> {
+        return handler.await(inTransaction = true) {
+            anime.map {
+                animesQueries.insertNetworkAnime(
+                    source = it.source,
+                    url = it.url,
+                    artist = it.artist,
+                    author = it.author,
+                    description = it.description,
+                    genre = it.genre,
+                    title = it.title,
+                    status = it.status,
+                    thumbnailUrl = it.thumbnailUrl,
+                    favorite = it.favorite,
+                    lastUpdate = it.lastUpdate,
+                    nextUpdate = it.nextUpdate,
+                    calculateInterval = it.fetchInterval.toLong(),
+                    initialized = it.initialized,
+                    viewerFlags = it.viewerFlags,
+                    episodeFlags = it.episodeFlags,
+                    coverLastModified = it.coverLastModified,
+                    dateAdded = it.dateAdded,
+                    updateStrategy = it.updateStrategy,
+                    version = it.version,
+                    memo = it.memo,
+                    updateTitle = it.title.isNotBlank(),
+                    updateCover = !it.thumbnailUrl.isNullOrBlank(),
+                    updateDetails = it.initialized,
+                    mapper = AnimeMapper::mapAnime,
+                )
+                    .awaitAsOne()
+            }
         }
     }
 

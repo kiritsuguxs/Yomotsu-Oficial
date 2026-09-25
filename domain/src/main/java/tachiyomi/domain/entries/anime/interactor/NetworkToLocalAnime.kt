@@ -9,6 +9,14 @@ class NetworkToLocalAnime(
     private val sourceManager: AnimeSourceManager,
 ) {
 
+    suspend operator fun invoke(anime: Anime): Anime {
+        return invoke(listOf(anime)).single()
+    }
+
+    suspend operator fun invoke(anime: List<Anime>): List<Anime> {
+        return animeRepository.insertNetworkAnime(anime)
+    }
+
     suspend fun await(anime: Anime): Anime {
         val localAnime = getAnime(anime.url, anime.source)
         return when {

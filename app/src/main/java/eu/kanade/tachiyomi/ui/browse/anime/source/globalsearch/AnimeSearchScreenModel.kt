@@ -161,8 +161,9 @@ abstract class AnimeSearchScreenModel(
                         }
 
                         val titles = page.animes.map {
-                            networkToLocalAnime.await(it.toDomainAnime(source.id))
+                            it.toDomainAnime(source.id)
                         }
+                            .let { networkToLocalAnime(it) }
 
                         if (isActive) {
                             updateItem(source, AnimeSearchItemResult.Success(titles))
