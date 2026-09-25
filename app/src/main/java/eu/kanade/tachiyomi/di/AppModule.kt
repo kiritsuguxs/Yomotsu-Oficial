@@ -171,6 +171,10 @@ class AppModule(val app: Application) : InjektModule {
 
         addSingletonFactory { TrackerManager() }
         addSingletonFactory { DelayedTrackingStore(app) }
+        addSingletonFactory { eu.kanade.domain.track.anime.store.DelayedAnimeTrackingStore(app) }
+        addSingletonFactory { aniyomi.core.common.torrent.TorrentServerApi(get(), get()) }
+        addSingletonFactory { aniyomi.core.common.torrent.TorrentServerUtils(get(), get()) }
+        addSingletonFactory { eu.kanade.tachiyomi.ui.player.utils.TrackSelect(get(), get()) }
 
         addSingletonFactory { ImageSaver(app) }
 

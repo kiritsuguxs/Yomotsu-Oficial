@@ -24,7 +24,7 @@ internal class AnimeExtensionApi {
     private val animeExtensionManager: AnimeExtensionManager by injectLazy()
 
     private val lastExtCheck: Preference<Long> by lazy {
-        preferenceStore.getLong("last_ext_check", 0)
+        preferenceStore.getLong("last_anime_ext_check", 0)
     }
 
     suspend fun findExtensions(): List<AnimeExtension.Available> {

@@ -224,13 +224,34 @@ class DomainModule : InjektModule {
         addFactory { eu.kanade.domain.entries.anime.interactor.SetAnimeViewerFlags(get()) }
         addFactory { tachiyomi.domain.entries.anime.interactor.NetworkToLocalAnime(get(), get()) }
         addFactory { eu.kanade.domain.entries.anime.interactor.UpdateAnime(get(), get()) }
-        addFactory { tachiyomi.domain.category.anime.interactor.SetAnimeCategories(get()) }
         addFactory { tachiyomi.domain.entries.anime.interactor.GetAnimeWithEpisodesAndSeasons(get(), get()) }
         addFactory { tachiyomi.domain.entries.anime.interactor.SetAnimeSeasonFlags(get()) }
         addFactory { tachiyomi.domain.items.season.interactor.SetAnimeDefaultSeasonFlags() }
         addFactory { mihon.domain.items.episode.interactor.FilterEpisodesForDownload(get(), get(), get()) }
         addFactory { mihon.domain.source.interactor.UpdateAnimeFromRemote(get()) }
         addFactory { eu.kanade.domain.items.episode.interactor.SetSeenStatus(get()) }
+
+        addSingletonFactory<tachiyomi.domain.entries.anime.repository.AnimeRelationRepository> {
+            tachiyomi.data.entries.anime.AnimeRelationRepositoryImpl(get())
+        }
+        addFactory { tachiyomi.domain.entries.anime.interactor.GetRelatedAnime(get()) }
+        addFactory { eu.kanade.domain.entries.anime.interactor.SyncRelatedAnimeWithSource(get(), get(), get()) }
+
+        addSingletonFactory<tachiyomi.domain.category.anime.repository.AnimeCategoryRepository> {
+            tachiyomi.data.category.anime.AnimeCategoryRepositoryImpl(get())
+        }
+        addFactory { tachiyomi.domain.category.anime.interactor.GetAnimeCategories(get()) }
+        addFactory { tachiyomi.domain.category.anime.interactor.GetVisibleAnimeCategories(get()) }
+        addFactory { tachiyomi.domain.category.anime.interactor.SetAnimeCategories(get()) }
+        addFactory { tachiyomi.domain.category.anime.interactor.CreateAnimeCategoryWithName(get(), get()) }
+        addFactory { tachiyomi.domain.category.anime.interactor.DeleteAnimeCategory(get(), get(), get()) }
+        addFactory { tachiyomi.domain.category.anime.interactor.HideAnimeCategory(get()) }
+        addFactory { tachiyomi.domain.category.anime.interactor.RenameAnimeCategory(get()) }
+        addFactory { tachiyomi.domain.category.anime.interactor.ReorderAnimeCategory(get()) }
+        addFactory { tachiyomi.domain.category.anime.interactor.ResetAnimeCategoryFlags(get(), get()) }
+        addFactory { tachiyomi.domain.category.anime.interactor.SetAnimeDisplayMode(get()) }
+        addFactory { tachiyomi.domain.category.anime.interactor.SetSortModeForAnimeCategory(get(), get()) }
+        addFactory { tachiyomi.domain.category.anime.interactor.UpdateAnimeCategory(get()) }
 
         addSingletonFactory<tachiyomi.domain.items.episode.repository.EpisodeRepository> {
             tachiyomi.data.items.episode.EpisodeRepositoryImpl(get())
@@ -239,6 +260,31 @@ class DomainModule : InjektModule {
         addFactory { tachiyomi.domain.items.episode.interactor.GetEpisodesByAnimeId(get()) }
         addFactory { tachiyomi.domain.items.episode.interactor.GetEpisodeByUrlAndAnimeId(get()) }
         addFactory { tachiyomi.domain.items.episode.interactor.UpdateEpisode(get()) }
+
+        addSingletonFactory<tachiyomi.domain.history.anime.repository.AnimeHistoryRepository> {
+            tachiyomi.data.history.anime.AnimeHistoryRepositoryImpl(get())
+        }
+        addFactory { tachiyomi.domain.history.anime.interactor.GetAnimeHistory(get()) }
+        addFactory { tachiyomi.domain.history.anime.interactor.GetNextEpisodes(get(), get(), get()) }
+        addFactory { tachiyomi.domain.history.anime.interactor.RemoveAnimeHistory(get()) }
+        addFactory { tachiyomi.domain.history.anime.interactor.UpsertAnimeHistory(get()) }
+
+        addSingletonFactory<tachiyomi.domain.track.anime.repository.AnimeTrackRepository> {
+            tachiyomi.data.track.anime.AnimeTrackRepositoryImpl(get())
+        }
+        addFactory { tachiyomi.domain.track.anime.interactor.GetAnimeTracks(get()) }
+        addFactory { tachiyomi.domain.track.anime.interactor.GetTracksPerAnime(get()) }
+        addFactory { tachiyomi.domain.track.anime.interactor.InsertAnimeTrack(get()) }
+        addFactory { tachiyomi.domain.track.anime.interactor.DeleteAnimeTrack(get()) }
+        addFactory { eu.kanade.domain.track.anime.interactor.SyncEpisodeProgressWithTrack(get(), get(), get()) }
+        addFactory { eu.kanade.domain.track.anime.interactor.AddAnimeTracks(get(), get(), get(), get()) }
+        addFactory { eu.kanade.domain.track.anime.interactor.RefreshAnimeTracks(get(), get(), get(), get()) }
+        addFactory { eu.kanade.domain.track.anime.interactor.TrackEpisode(get(), get(), get(), get()) }
+
+        addSingletonFactory<tachiyomi.domain.updates.anime.repository.AnimeUpdatesRepository> {
+            tachiyomi.data.updates.anime.AnimeUpdatesRepositoryImpl(get())
+        }
+        addFactory { tachiyomi.domain.updates.anime.interactor.GetAnimeUpdates(get()) }
 
         addSingletonFactory<tachiyomi.domain.source.anime.repository.AnimeSourceRepository> {
             tachiyomi.data.source.anime.AnimeSourceRepositoryImpl(get(), get())
@@ -250,13 +296,24 @@ class DomainModule : InjektModule {
         addFactory { tachiyomi.domain.source.anime.interactor.GetAnimeSourcesWithNonLibraryAnime(get()) }
         addFactory { eu.kanade.domain.source.anime.interactor.ToggleAnimeSource(get()) }
         addFactory { eu.kanade.domain.source.anime.interactor.ToggleAnimeSourcePin(get()) }
+        addFactory { eu.kanade.domain.source.anime.interactor.GetAnimeIncognitoState(get(), get(), get()) }
+        addFactory { eu.kanade.domain.source.anime.interactor.ToggleAnimeIncognito(get()) }
+        addFactory { eu.kanade.domain.source.anime.interactor.GetEnabledAnimeSources(get(), get()) }
+        addFactory { eu.kanade.domain.source.anime.interactor.GetLanguagesWithAnimeSources(get(), get()) }
+        addFactory { tachiyomi.domain.source.anime.interactor.GetRemoteAnime(get()) }
 
+        addSingletonFactory { mihon.data.extension.anime.service.AnimeExtensionStoreService(get(), get(), get()) }
         addSingletonFactory<mihon.domain.extension.anime.repository.AnimeExtensionStoreRepository> {
             mihon.data.extension.anime.repository.AnimeExtensionStoreRepositoryImpl(get(), get())
         }
+        addFactory { mihon.domain.extension.anime.interactor.AddAnimeExtensionStore(get()) }
+        addFactory { mihon.domain.extension.anime.interactor.GetAnimeExtensionStoreCountAsFlow(get()) }
         addFactory { mihon.domain.extension.anime.interactor.GetAnimeExtensionStores(get()) }
+        addFactory { mihon.domain.extension.anime.interactor.RemoveAnimeExtensionStore(get()) }
         addFactory { mihon.domain.extension.anime.interactor.UpdateAnimeExtensionStores(get()) }
         addFactory { eu.kanade.domain.extension.anime.interactor.GetAnimeExtensionsByType(get(), get()) }
+        addFactory { eu.kanade.domain.extension.anime.interactor.GetAnimeExtensionSources(get()) }
+        addFactory { eu.kanade.domain.extension.anime.interactor.GetAnimeExtensionLanguages(get(), get()) }
         addFactory { eu.kanade.domain.extension.anime.interactor.TrustAnimeExtension(get(), get()) }
         addSingletonFactory<tachiyomi.domain.custombuttons.repository.CustomButtonRepository> {
             tachiyomi.data.custombutton.CustomButtonRepositoryImpl()
