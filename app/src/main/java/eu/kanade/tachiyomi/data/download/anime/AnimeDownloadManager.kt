@@ -41,12 +41,21 @@ class AnimeDownloadManager(
     fun progressFlow(): Flow<AnimeDownload> = emptyFlow()
 
     fun downloadEpisodes(anime: Anime, episodes: List<Episode>) {}
+    fun downloadEpisodes(
+        anime: Anime,
+        episodes: List<Episode>,
+        customQuality: Boolean = false,
+        useExternalDownloader: Boolean = false,
+        video: Video? = null,
+    ) {}
     fun deleteEpisodes(episodes: List<Episode>, anime: Anime, source: AnimeSource? = null) {}
     fun addDownloadsToStartOfQueue(downloads: List<AnimeDownload>) {}
     fun enqueueEpisodesToDelete(episodes: List<Episode>, anime: Anime) {}
     fun deletePendingEpisodes() {}
     fun cancelQueuedDownloads(downloads: List<AnimeDownload>) {}
     fun getDownloadCount(): Int = 0
+    fun renameSource(oldSource: AnimeSource, newSource: AnimeSource) {}
+
 
     fun buildVideo(source: AnimeSource, anime: Anime, episode: Episode): Video = error("Not supported")
 }

@@ -86,4 +86,20 @@ class SourcePreferences(
         "migration_hide_without_updates",
         false,
     )
+
+    val disabledAnimeSources: Preference<Set<String>> = preferenceStore.getStringSet("hidden_anime_catalogues", emptySet())
+
+    val incognitoAnimeExtensions: Preference<Set<String>> = preferenceStore.getStringSet("incognito_anime_extensions", emptySet())
+
+    val pinnedAnimeSources: Preference<Set<String>> = preferenceStore.getStringSet("pinned_anime_catalogues", emptySet())
+
+    val lastUsedAnimeSource: Preference<Long> = preferenceStore.getLong(
+        Preference.appStateKey("last_anime_catalogue_source"),
+        -1,
+    )
+
+    val hideInAnimeLibraryItems: Preference<Boolean> = preferenceStore.getBoolean("browse_hide_in_anime_library_items", false)
+
+    val animeExtensionRepos: Preference<Set<String>> = preferenceStore.getStringSet("anime_extension_repos", emptySet())
 }
+

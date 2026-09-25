@@ -10,12 +10,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import eu.kanade.presentation.components.TabbedScreen
 import eu.kanade.presentation.util.Tab
 import eu.kanade.tachiyomi.R
+import eu.kanade.tachiyomi.ui.browse.anime.extension.AnimeExtensionsScreenModel
 import eu.kanade.tachiyomi.ui.browse.anime.extension.animeExtensionsTab
 import eu.kanade.tachiyomi.ui.browse.anime.source.animeSourcesTab
 import eu.kanade.tachiyomi.ui.browse.extension.ExtensionsViewModel
@@ -64,8 +66,8 @@ data object BrowseTab : Tab {
         val extensionsViewModel = viewModel<ExtensionsViewModel>()
         val extensionsState by extensionsViewModel.state.collectAsState()
 
-        val animeExtensionsScreenModel = cafe.adriel.voyager.core.model.rememberScreenModel {
-            eu.kanade.tachiyomi.ui.browse.anime.extension.AnimeExtensionsScreenModel()
+        val animeExtensionsScreenModel = rememberScreenModel {
+            AnimeExtensionsScreenModel()
         }
         val animeExtensionsState by animeExtensionsScreenModel.state.collectAsState()
 

@@ -77,6 +77,12 @@ class LibraryPreferences(
         emptySet(),
     )
 
+    val markDuplicateSeenEpisodeAsSeen: Preference<Set<String>> = preferenceStore.getStringSet(
+        "mark_duplicate_seen_episode_seen",
+        emptySet(),
+    )
+
+
     // region Filter
 
     val filterDownloaded: Preference<TriState> = preferenceStore.getEnum(
@@ -345,6 +351,10 @@ class LibraryPreferences(
 
         const val MARK_DUPLICATE_CHAPTER_READ_NEW = "new"
         const val MARK_DUPLICATE_CHAPTER_READ_EXISTING = "existing"
+
+        const val MARK_DUPLICATE_EPISODE_SEEN_NEW = "new"
+        const val MARK_DUPLICATE_EPISODE_SEEN_EXISTING = "existing"
+
 
         const val DEFAULT_CATEGORY_PREF_KEY = "default_category"
         private const val LIBRARY_UPDATE_CATEGORIES_PREF_KEY = "library_update_categories"

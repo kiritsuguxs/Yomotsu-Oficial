@@ -44,15 +44,10 @@ class TrackPreferences(
 
     val mangabakaScoreType: Preference<String> = preferenceStore.getString("mangabaka_score_type", MangaBaka.STEP_1)
 
-    fun autoUpdateTrack() = autoUpdateTrack
-    fun autoUpdateTrackOnMarkRead() = autoUpdateTrackOnMarkRead
-
     val trackOnAddingToLibrary: Preference<Boolean> = preferenceStore.getBoolean("track_on_adding_to_library", true)
-    fun trackOnAddingToLibrary() = trackOnAddingToLibrary
 
     val showNextEpisodeAiringTime: Preference<Boolean> = preferenceStore.getBoolean(
         "show_next_episode_airing_time",
         true,
     )
-    fun showNextEpisodeAiringTime() = showNextEpisodeAiringTime
 }

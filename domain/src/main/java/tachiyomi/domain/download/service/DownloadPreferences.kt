@@ -18,6 +18,9 @@ class DownloadPreferences(
 
     val autoDownloadWhileReading: Preference<Int> = preferenceStore.getInt("auto_download_while_reading", 0)
 
+    val autoDownloadWhileWatching: Preference<Int> = preferenceStore.getInt("auto_download_while_watching", 0)
+
+
     val removeAfterReadSlots: Preference<Int> = preferenceStore.getInt("remove_after_read_slots", -1)
 
     val removeAfterMarkedAsRead: Preference<Boolean> = preferenceStore.getBoolean(
@@ -54,7 +57,7 @@ class DownloadPreferences(
     val parallelPageLimit: Preference<Int> = preferenceStore.getInt("download_parallel_page_limit", 5)
 
     val useExternalDownloader: Preference<Boolean> = preferenceStore.getBoolean("use_external_downloader", false)
-    fun useExternalDownloader() = useExternalDownloader
+
 
     companion object {
         private const val REMOVE_EXCLUDE_CATEGORIES_PREF_KEY = "remove_exclude_categories"

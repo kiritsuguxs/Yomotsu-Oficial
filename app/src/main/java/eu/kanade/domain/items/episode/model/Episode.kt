@@ -30,3 +30,27 @@ fun Episode.copyFromSEpisode(sEpisode: SEpisode): Episode {
         memo = sEpisode.memo,
     )
 }
+
+fun Episode.toDbEpisode(): eu.kanade.tachiyomi.data.database.models.anime.Episode =
+    eu.kanade.tachiyomi.data.database.models.anime.EpisodeImpl().also {
+        it.id = id
+        it.anime_id = animeId
+        it.url = url
+        it.name = name
+        it.scanlator = scanlator
+        it.summary = summary
+        it.preview_url = previewUrl
+        it.seen = seen
+        it.bookmark = bookmark
+        it.fillermark = fillermark
+        it.last_second_seen = lastSecondSeen
+        it.total_seconds = totalSeconds
+        it.date_fetch = dateFetch
+        it.date_upload = dateUpload
+        it.episode_number = episodeNumber.toFloat()
+        it.source_order = sourceOrder.toInt()
+        it.last_modified = lastModifiedAt
+        it.version = version
+        it.memo = memo
+    }
+

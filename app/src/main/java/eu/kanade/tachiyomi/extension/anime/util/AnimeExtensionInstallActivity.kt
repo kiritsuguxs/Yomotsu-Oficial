@@ -3,7 +3,7 @@ package eu.kanade.tachiyomi.extension.anime.util
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import eu.kanade.tachiyomi.extension.InstallStep
+import eu.kanade.tachiyomi.extension.model.InstallStep
 import eu.kanade.tachiyomi.extension.anime.AnimeExtensionManager
 import eu.kanade.tachiyomi.util.system.hasMiuiPackageInstaller
 import eu.kanade.tachiyomi.util.system.toast

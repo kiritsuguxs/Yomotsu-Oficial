@@ -44,3 +44,11 @@ fun Episode.editThumbnail(
     stream: InputStream,
 ) {
 }
+
+fun eu.kanade.tachiyomi.data.database.models.anime.Episode.editThumbnail(
+    anime: Anime,
+    thumbnailManager: Any = Unit,
+    stream: InputStream,
+) {
+}
+

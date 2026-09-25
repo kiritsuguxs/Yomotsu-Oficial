@@ -11,7 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
-import eu.kanade.presentation.browse.BrowseSourceLoadingItem
+import eu.kanade.presentation.browse.components.BrowseSourceLoadingItem
 import eu.kanade.presentation.browse.InLibraryBadge
 import eu.kanade.presentation.library.components.CommonEntryItemDefaults
 import eu.kanade.presentation.library.components.EntryCompactGridItem

@@ -47,6 +47,24 @@ fun DownloadDropdownMenu(
 }
 
 @Composable
+fun EntryDownloadDropdownMenu(
+    modifier: Modifier = Modifier,
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    onDownloadClicked: (DownloadAction) -> Unit,
+    offset: DpOffset? = null,
+) {
+    DownloadDropdownMenu(
+        modifier = modifier,
+        expanded = expanded,
+        onDismissRequest = onDismissRequest,
+        onDownloadClicked = onDownloadClicked,
+        offset = offset,
+    )
+}
+
+
+@Composable
 private fun DownloadDropdownMenuItems(
     onDismissRequest: () -> Unit,
     onDownloadClicked: (DownloadAction) -> Unit,

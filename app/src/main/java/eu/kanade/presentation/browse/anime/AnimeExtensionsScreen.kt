@@ -45,16 +45,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import eu.kanade.presentation.browse.BaseBrowseItem
+import eu.kanade.presentation.browse.ExtensionHeader
+import eu.kanade.presentation.browse.ExtensionTrustDialog
 import eu.kanade.presentation.browse.anime.components.AnimeExtensionIcon
-import eu.kanade.presentation.browse.manga.ExtensionHeader
-import eu.kanade.presentation.browse.manga.ExtensionTrustDialog
+import eu.kanade.presentation.browse.components.BaseBrowseItem
 import eu.kanade.presentation.components.WarningBanner
 import eu.kanade.presentation.entries.components.DotSeparatorNoSpaceText
 import eu.kanade.presentation.more.settings.screen.browse.AnimeExtensionStoresScreen
-import eu.kanade.presentation.util.animateItemFastScroll
 import eu.kanade.presentation.util.rememberRequestPackageInstallsPermissionState
-import eu.kanade.tachiyomi.extension.InstallStep
+import eu.kanade.tachiyomi.extension.model.InstallStep
 import eu.kanade.tachiyomi.extension.anime.model.AnimeExtension
 import eu.kanade.tachiyomi.ui.browse.anime.extension.AnimeExtensionUiModel
 import eu.kanade.tachiyomi.ui.browse.anime.extension.AnimeExtensionsScreenModel
@@ -193,14 +192,14 @@ private fun AnimeExtensionContent(
                             }
                         ExtensionHeader(
                             textRes = header.textRes,
-                            modifier = Modifier.animateItemFastScroll(),
+                            modifier = Modifier.animateItem(),
                             action = action,
                         )
                     }
                     is AnimeExtensionUiModel.Header.Text -> {
                         ExtensionHeader(
                             text = header.text,
-                            modifier = Modifier.animateItemFastScroll(),
+                            modifier = Modifier.animateItem(),
                         )
                     }
                 }
@@ -219,7 +218,7 @@ private fun AnimeExtensionContent(
             ) { item ->
                 AnimeExtensionItem(
                     item = item,
-                    modifier = Modifier.animateItemFastScroll(),
+                    modifier = Modifier.animateItem(),
                     onClickItem = {
                         when (it) {
                             is AnimeExtension.Available -> onInstallExtension(it)

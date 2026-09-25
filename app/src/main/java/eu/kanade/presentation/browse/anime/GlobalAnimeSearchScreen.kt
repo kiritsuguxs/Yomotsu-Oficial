@@ -5,9 +5,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
-import eu.kanade.presentation.browse.GlobalSearchErrorResultItem
-import eu.kanade.presentation.browse.GlobalSearchLoadingResultItem
-import eu.kanade.presentation.browse.GlobalSearchResultItem
+import eu.kanade.presentation.browse.components.GlobalSearchErrorResultItem
+import eu.kanade.presentation.browse.components.GlobalSearchLoadingResultItem
+import eu.kanade.presentation.browse.components.GlobalSearchResultItem
 import eu.kanade.presentation.browse.anime.components.GlobalAnimeSearchCardRow
 import eu.kanade.presentation.browse.anime.components.GlobalAnimeSearchToolbar
 import eu.kanade.tachiyomi.animesource.AnimeSource

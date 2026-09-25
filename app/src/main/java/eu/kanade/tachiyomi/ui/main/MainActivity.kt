@@ -605,6 +605,38 @@ class MainActivity : BaseActivity() {
         ): Pair<Boolean, Int> {
             return Pair(false, 0)
         }
+
+        suspend fun startPlayerActivity(
+            context: android.content.Context,
+            animeId: Long,
+            episodeId: Long,
+            extPlayer: Boolean,
+            sourceId: Long? = null,
+            video: eu.kanade.tachiyomi.animesource.model.Video? = null,
+            hostIndex: Int? = null,
+            vidIndex: Int? = null,
+        ) {
+            if (extPlayer) {
+                val intent = try {
+                    eu.kanade.tachiyomi.ui.player.ExternalIntents.newIntent(context, animeId, episodeId, video)
+                } catch (e: Exception) {
+                    null
+                }
+                if (intent != null) {
+                    context.startActivity(intent)
+                    return
+                }
+            }
+            context.startActivity(
+                eu.kanade.tachiyomi.ui.player.PlayerActivity.newIntent(
+                    context = context,
+                    animeId = animeId,
+                    episodeId = episodeId,
+                    hostIndex = hostIndex,
+                    vidIndex = vidIndex,
+                ),
+            )
+        }
     }
 }
 

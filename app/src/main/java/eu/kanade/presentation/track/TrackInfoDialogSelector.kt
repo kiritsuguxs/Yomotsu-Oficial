@@ -90,15 +90,16 @@ fun TrackStatusSelector(
 }
 
 @Composable
-fun TrackChapterSelector(
+fun TrackItemSelector(
     selection: Int,
     onSelectionChange: (Int) -> Unit,
     range: Iterable<Int>,
     onConfirm: () -> Unit,
     onDismissRequest: () -> Unit,
+    isManga: Boolean = true,
 ) {
     BaseSelector(
-        title = stringResource(MR.strings.chapters),
+        title = stringResource(if (isManga) MR.strings.chapters else aniyomi.i18n.MR.strings.episodes),
         content = {
             WheelNumberPicker(
                 items = range.toList(),
@@ -109,6 +110,24 @@ fun TrackChapterSelector(
         },
         onConfirm = onConfirm,
         onDismissRequest = onDismissRequest,
+    )
+}
+
+@Composable
+fun TrackChapterSelector(
+    selection: Int,
+    onSelectionChange: (Int) -> Unit,
+    range: Iterable<Int>,
+    onConfirm: () -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    TrackItemSelector(
+        selection = selection,
+        onSelectionChange = onSelectionChange,
+        range = range,
+        onConfirm = onConfirm,
+        onDismissRequest = onDismissRequest,
+        isManga = true,
     )
 }
 

@@ -8,7 +8,7 @@ import android.content.IntentFilter
 import android.net.Uri
 import androidx.annotation.CallSuper
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import eu.kanade.tachiyomi.extension.InstallStep
+import eu.kanade.tachiyomi.extension.model.InstallStep
 import eu.kanade.tachiyomi.extension.anime.AnimeExtensionManager
 import uy.kohesive.injekt.injectLazy
 import java.util.Collections

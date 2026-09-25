@@ -43,7 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import eu.kanade.domain.extension.anime.interactor.AnimeExtensionSourceItem
 import eu.kanade.presentation.browse.anime.components.AnimeExtensionIcon
-import eu.kanade.presentation.browse.manga.NsfwWarningDialog
+import eu.kanade.presentation.browse.NsfwWarningDialog
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.AppBarActions
 import eu.kanade.presentation.components.WarningBanner

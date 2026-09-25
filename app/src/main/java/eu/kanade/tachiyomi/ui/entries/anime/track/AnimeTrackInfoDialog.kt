@@ -87,6 +87,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
+import kotlinx.datetime.TimeZone
 import tachiyomi.domain.track.anime.model.AnimeTrack as DbAnimeTrack
 
 data class AnimeTrackInfoDialogHomeScreen(
@@ -565,14 +566,14 @@ private data class TrackDateSelectorScreen(
                     (if (start) track.startDate else track.finishDate)
                         .takeIf { it != 0L }
                         ?: Instant.now().toEpochMilli()
-                return millis.convertEpochMillisZone(ZoneOffset.systemDefault(), ZoneOffset.UTC)
+                return millis.convertEpochMillisZone(TimeZone.currentSystemDefault(), TimeZone.UTC)
             }
 
         // In UTC
         fun setDate(millis: Long) {
             // Convert to local time
             val localMillis =
-                millis.convertEpochMillisZone(ZoneOffset.UTC, ZoneOffset.systemDefault())
+                millis.convertEpochMillisZone(TimeZone.UTC, TimeZone.currentSystemDefault())
             screenModelScope.launchNonCancellable {
                 if (start) {
                     tracker.animeService.setRemoteStartDate(track.toDbTrack(), localMillis)

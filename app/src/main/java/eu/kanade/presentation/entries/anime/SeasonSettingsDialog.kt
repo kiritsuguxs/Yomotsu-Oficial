@@ -261,7 +261,7 @@ private fun ColumnScope.SeasonDisplayPage(
             value = displayGridModeSize,
             valueRange = 0..10,
             label = stringResource(AYMR.strings.pref_library_rows),
-            valueText = if (displayGridModeSize > 0) {
+            valueString = if (displayGridModeSize > 0) {
                 displayGridModeSize.toString()
             } else {
                 stringResource(MR.strings.label_auto)
@@ -274,7 +274,7 @@ private fun ColumnScope.SeasonDisplayPage(
             value = displayGridModeSize,
             valueRange = 0..10,
             label = stringResource(MR.strings.pref_library_columns),
-            valueText = if (displayGridModeSize > 0) {
+            valueString = if (displayGridModeSize > 0) {
                 displayGridModeSize.toString()
             } else {
                 stringResource(MR.strings.label_auto)

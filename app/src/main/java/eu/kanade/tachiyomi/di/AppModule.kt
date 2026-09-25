@@ -121,6 +121,7 @@ class AppModule(val app: Application) : InjektModule {
             tachiyomi.data.handlers.anime.AndroidAnimeDatabaseHandler(get(), sqlDriverAnime)
         }
         addSingletonFactory { eu.kanade.tachiyomi.data.cache.AnimeCoverCache(app) }
+        addSingletonFactory { eu.kanade.tachiyomi.data.cache.AnimeBackgroundCache(app) }
         addSingletonFactory<tachiyomi.domain.source.anime.service.AnimeSourceManager> {
             eu.kanade.tachiyomi.source.anime.AndroidAnimeSourceManager(app, get(), get())
         }
