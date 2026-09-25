@@ -615,6 +615,7 @@ class MainActivity : BaseActivity() {
             video: eu.kanade.tachiyomi.animesource.model.Video? = null,
             hostIndex: Int? = null,
             vidIndex: Int? = null,
+            hostList: List<eu.kanade.tachiyomi.animesource.model.Hoster>? = null,
         ) {
             if (extPlayer) {
                 val intent = try {
@@ -632,6 +633,7 @@ class MainActivity : BaseActivity() {
                     context = context,
                     animeId = animeId,
                     episodeId = episodeId,
+                    hostList = hostList,
                     hostIndex = hostIndex,
                     vidIndex = vidIndex,
                 ),

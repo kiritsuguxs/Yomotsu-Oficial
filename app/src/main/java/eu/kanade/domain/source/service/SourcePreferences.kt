@@ -54,6 +54,8 @@ class SourcePreferences(
 
     val extensionUpdatesCount: Preference<Int> = preferenceStore.getInt("ext_updates_count", 0)
 
+    val animeExtensionUpdatesCount: Preference<Int> = preferenceStore.getInt("anime_ext_updates_count", 0)
+
     val trustedExtensions: Preference<Set<String>> = preferenceStore.getStringSet(
         Preference.appStateKey("trusted_extensions"),
         emptySet(),

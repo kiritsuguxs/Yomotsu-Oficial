@@ -43,6 +43,10 @@ class LibraryPreferences(
 
     val landscapeColumns: Preference<Int> = preferenceStore.getInt("pref_library_columns_landscape_key", 0)
 
+    val animePortraitColumns: Preference<Int> = preferenceStore.getInt("pref_anime_library_columns_portrait_key", 0)
+
+    val animeLandscapeColumns: Preference<Int> = preferenceStore.getInt("pref_anime_library_columns_landscape_key", 0)
+
     val lastUpdatedTimestamp: Preference<Long> = preferenceStore.getLong(
         Preference.appStateKey("library_update_last_timestamp"),
         0L,

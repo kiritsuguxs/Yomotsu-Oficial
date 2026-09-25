@@ -13,4 +13,6 @@ class AnimeDownloadCache {
         sourceId: Long,
         skipCache: Boolean = false,
     ): Boolean = false
+
+    fun getDownloadCount(anime: tachiyomi.domain.entries.anime.model.Anime): Int = 0
 }

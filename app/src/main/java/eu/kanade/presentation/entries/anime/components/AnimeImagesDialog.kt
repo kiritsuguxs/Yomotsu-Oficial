@@ -211,7 +211,7 @@ fun AnimeImagesDialog(
                                 .useBackground(page == 1)
                                 .size(Size.ORIGINAL)
                                 .memoryCachePolicy(CachePolicy.DISABLED)
-                                .target { image ->
+                                .target { image: coil3.Image ->
                                     val drawable = image.asDrawable(context.resources)
                                     // Copy bitmap in case it came from memory cache
                                     // Because SSIV needs to thoroughly read the image

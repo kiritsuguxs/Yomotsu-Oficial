@@ -99,7 +99,7 @@ fun TrackItemSelector(
     isManga: Boolean = true,
 ) {
     BaseSelector(
-        title = stringResource(if (isManga) MR.strings.chapters else aniyomi.i18n.MR.strings.episodes),
+        title = stringResource(if (isManga) MR.strings.chapters else tachiyomi.i18n.aniyomi.AYMR.strings.episodes),
         content = {
             WheelNumberPicker(
                 items = range.toList(),

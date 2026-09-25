@@ -28,7 +28,7 @@ import uy.kohesive.injekt.api.get
 
 
 @Composable
-internal fun DownloadsBadge(count: Int) {
+fun DownloadsBadge(count: Int) {
     if (count > 0) {
         Badge(
             text = "$count",
@@ -39,7 +39,19 @@ internal fun DownloadsBadge(count: Int) {
 }
 
 @Composable
-internal fun UnreadBadge(count: Long) {
+fun DownloadsBadge(count: Long) {
+    DownloadsBadge(count = count.toInt())
+}
+
+@Composable
+fun UnreadBadge(count: Long) {
+    if (count > 0) {
+        Badge(text = "$count")
+    }
+}
+
+@Composable
+fun UnviewedBadge(count: Long) {
     if (count > 0) {
         Badge(text = "$count")
     }

@@ -22,7 +22,7 @@ import eu.kanade.presentation.browse.anime.BrowseAnimeSourceContent
 import eu.kanade.presentation.components.SearchToolbar
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
-import eu.kanade.tachiyomi.core.common.Constants
+import tachiyomi.core.common.Constants
 import eu.kanade.tachiyomi.ui.browse.anime.migration.anime.season.MigrateSeasonSelectScreen
 import eu.kanade.tachiyomi.ui.browse.anime.source.browse.BrowseAnimeSourceScreenModel
 import eu.kanade.tachiyomi.ui.browse.anime.source.browse.SourceFilterAnimeDialog
@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 import mihon.presentation.core.util.collectAsLazyPagingItems
 import tachiyomi.domain.entries.anime.model.Anime
 import tachiyomi.i18n.MR
-import tachiyomi.presentation.core.components.material.ExtendedFloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import tachiyomi.presentation.core.components.material.Scaffold
 import tachiyomi.presentation.core.i18n.stringResource
 import tachiyomi.presentation.core.screens.LoadingScreen

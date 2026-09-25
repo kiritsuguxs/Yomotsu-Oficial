@@ -11,6 +11,7 @@ interface EpisodeRepository {
     suspend fun updateEpisode(episodeUpdate: EpisodeUpdate)
 
     suspend fun updateAllEpisodes(episodeUpdates: List<EpisodeUpdate>)
+    suspend fun updateAll(episodeUpdates: List<EpisodeUpdate>) = updateAllEpisodes(episodeUpdates)
 
     suspend fun removeEpisodesWithIds(episodeIds: List<Long>)
 

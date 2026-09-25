@@ -8,7 +8,6 @@ import dev.icerock.moko.resources.StringResource
 import eu.kanade.domain.base.BasePreferences
 import eu.kanade.domain.extension.anime.interactor.GetAnimeExtensionsByType
 import eu.kanade.domain.source.service.SourcePreferences
-import eu.kanade.presentation.components.SEARCH_DEBOUNCE_MILLIS
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.extension.model.InstallStep
 import eu.kanade.tachiyomi.extension.anime.AnimeExtensionManager
@@ -245,3 +244,5 @@ object AnimeExtensionUiModel {
         val installStep: InstallStep,
     )
 }
+
+private const val SEARCH_DEBOUNCE_MILLIS = 250L

@@ -1708,7 +1708,7 @@ class AnimeScreenModel(
 
                 val comparator = getSeasonSortComparator(anime)
                     .let { if (anime.seasonSortDescending()) it.reversed() else it }
-                    .thenComparator(seasonSortAlphabetically)
+                    .then(seasonSortAlphabetically)
 
                 return asSequence()
                     .filter { (season) -> applyFilter(unseenFilter) { !season.seen } }

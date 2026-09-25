@@ -128,7 +128,7 @@ class AnimeImageScreenModel(
                 Image.Cover(
                     bitmap = bitmap,
                     name = if (isCover) "cover" else "background",
-                    location = if (temp) Location.Cache else Location.Pictures(anime.title),
+                    location = if (temp) Location.Cache else Location.Pictures.create(anime.title),
                 ),
             )
         }

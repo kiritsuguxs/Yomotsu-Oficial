@@ -27,6 +27,9 @@ interface Episode : SEpisode, Serializable {
     var last_modified: Long
 
     var version: Long
+
+    val lastSecondSeen: Long
+        get() = last_second_seen
 }
 
 val Episode.isRecognizedNumber: Boolean

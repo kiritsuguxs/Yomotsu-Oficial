@@ -79,3 +79,5 @@ class CategoryScreen : Screen() {
         }
     }
 }
+
+val CategoriesTab: Screen = CategoryScreen()

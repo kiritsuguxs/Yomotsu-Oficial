@@ -19,6 +19,15 @@ fun Anime.removeCovers(coverCache: AnimeCoverCache = Injekt.get()): Anime {
     }
 }
 
+fun Anime.removeBackgrounds(backgroundCache: eu.kanade.tachiyomi.data.cache.AnimeBackgroundCache = Injekt.get()): Anime {
+    if (isLocal()) return this
+    return if (backgroundCache.deleteFromCache(this, true) > 0) {
+        copy(coverLastModified = Clock.System.now().toEpochMilliseconds())
+    } else {
+        this
+    }
+}
+
 suspend fun Anime.editCover(
     coverManager: Any = Unit,
     stream: InputStream,
@@ -35,7 +44,12 @@ suspend fun Anime.editBackground(
     backgroundManager: Any = Unit,
     stream: InputStream,
     updateAnime: UpdateAnime = Injekt.get(),
+    backgroundCache: eu.kanade.tachiyomi.data.cache.AnimeBackgroundCache = Injekt.get(),
 ) {
+    if (favorite) {
+        backgroundCache.setCustomBackgroundToCache(this, stream)
+        updateAnime.awaitUpdateCoverLastModified(id)
+    }
 }
 
 fun Episode.editThumbnail(

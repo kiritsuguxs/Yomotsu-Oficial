@@ -112,4 +112,6 @@ fun Anime.hasCustomCover(coverCache: AnimeCoverCache = Injekt.get()): Boolean {
     return coverCache.getCustomCoverFile(id).exists()
 }
 
-fun Anime.hasCustomBackground(): Boolean = false
+fun Anime.hasCustomBackground(backgroundCache: eu.kanade.tachiyomi.data.cache.AnimeBackgroundCache = Injekt.get()): Boolean {
+    return backgroundCache.getCustomBackgroundFile(id).exists()
+}

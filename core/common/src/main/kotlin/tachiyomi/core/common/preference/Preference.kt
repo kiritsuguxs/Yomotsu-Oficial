@@ -77,3 +77,8 @@ fun Preference<Boolean>.toggle(): Boolean {
     return get()
 }
 
+fun <T> Preference<T>.deleteAndGet(): T {
+    delete()
+    return defaultValue()
+}
+

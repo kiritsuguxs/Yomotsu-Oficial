@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.extension.anime.api
 
 import android.content.Context
-import eu.kanade.tachiyomi.extension.ExtensionUpdateNotifier
+import eu.kanade.tachiyomi.extension.api.ExtensionUpdateNotifier
 import eu.kanade.tachiyomi.extension.anime.AnimeExtensionManager
 import eu.kanade.tachiyomi.extension.anime.model.AnimeExtension
 import eu.kanade.tachiyomi.extension.anime.model.AnimeLoadResult

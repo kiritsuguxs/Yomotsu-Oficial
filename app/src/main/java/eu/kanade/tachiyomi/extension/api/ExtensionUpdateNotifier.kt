@@ -17,7 +17,7 @@ class ExtensionUpdateNotifier(
     private val context: Context,
     private val securityPreferences: SecurityPreferences = Injekt.get(),
 ) {
-    fun promptUpdates(names: List<String>) {
+    fun promptUpdates(names: List<String>, anime: Boolean = false) {
         context.notify(
             Notifications.ID_UPDATES_TO_EXTS,
             Notifications.CHANNEL_EXTENSIONS_UPDATE,
