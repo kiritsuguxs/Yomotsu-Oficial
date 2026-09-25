@@ -1,6 +1,6 @@
 package eu.kanade.domain.entries.anime.interactor
 
-import eu.kanade.domain.entries.anime.model.toDomainAnime
+import tachiyomi.domain.entries.anime.model.toDomainAnime
 import eu.kanade.domain.entries.anime.model.toSAnime
 import tachiyomi.domain.entries.anime.interactor.NetworkToLocalAnime
 import tachiyomi.domain.entries.anime.model.Anime

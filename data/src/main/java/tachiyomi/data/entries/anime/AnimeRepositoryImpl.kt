@@ -1,14 +1,14 @@
-import app.cash.sqldelight.async.coroutines.awaitAsOne
 package tachiyomi.data.entries.anime
 
 import aniyomi.domain.anime.SeasonAnime
+import app.cash.sqldelight.async.coroutines.awaitAsOne
 import kotlinx.coroutines.flow.Flow
 import logcat.LogPriority
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.data.AnimeUpdateStrategyColumnAdapter
 import tachiyomi.data.FetchTypeColumnAdapter
-import MemoColumnAdapter
-import StringListColumnAdapter
+import tachiyomi.data.MemoColumnAdapter
+import tachiyomi.data.StringListColumnAdapter
 import tachiyomi.data.handlers.anime.AnimeDatabaseHandler
 import tachiyomi.domain.entries.anime.model.Anime
 import tachiyomi.domain.entries.anime.model.AnimeUpdate

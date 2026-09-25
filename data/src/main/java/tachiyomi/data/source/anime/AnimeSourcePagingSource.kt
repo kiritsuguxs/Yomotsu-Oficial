@@ -6,9 +6,12 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import tachiyomi.core.common.util.lang.withIOContext
+import tachiyomi.domain.entries.anime.interactor.NetworkToLocalAnime
+import tachiyomi.domain.entries.anime.model.toDomainAnime
 import tachiyomi.domain.items.episode.model.NoEpisodesException
 import tachiyomi.domain.source.anime.repository.AnimeSourcePagingSourceType
-import eu.kanade.domain.entries.anime.model.toDomainAnime
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 class AnimeSourceSearchPagingSource(
     source: AnimeSource,
@@ -38,7 +41,7 @@ abstract class AnimeSourcePagingSource(
 
     abstract suspend fun requestNextPage(currentPage: Int): AnimesPage
 
-    private val networkToLocalAnime: tachiyomi.domain.entries.anime.interactor.NetworkToLocalAnime = uy.kohesive.injekt.Injekt.get()
+    private val networkToLocalAnime: NetworkToLocalAnime = Injekt.get()
     private val seenAnime = hashSetOf<String>()
 
     override suspend fun load(params: LoadParams<Long>): LoadResult<Long, SAnime> {
@@ -51,7 +54,8 @@ abstract class AnimeSourcePagingSource(
                     ?: throw NoEpisodesException()
             }
 
-            val animes = animesPage.animes
+            // Persiste no banco para que o item tenha id/cover cache quando for aberto
+            animesPage.animes
                 .map { it.toDomainAnime(source.id) }
                 .filter { seenAnime.add(it.url) }
                 .let { networkToLocalAnime(it) }
