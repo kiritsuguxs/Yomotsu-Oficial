@@ -4,6 +4,8 @@
 
 -keep class eu.kanade.tachiyomi.animesource.model.** { public protected *; }
 -keep class eu.kanade.tachiyomi.animesource.online.** { public protected *; }
+-keep class eu.kanade.tachiyomi.animesource.AnimeSource { public protected *; }
+-keep class eu.kanade.tachiyomi.animesource.AnimeCatalogueSource { public protected *; }
 -keep class eu.kanade.tachiyomi.animesource.** extends eu.kanade.tachiyomi.animesource.AnimeSource { public protected *; }
 -keep class eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource { public protected *; }
 
