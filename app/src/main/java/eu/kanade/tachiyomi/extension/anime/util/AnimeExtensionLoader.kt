@@ -316,7 +316,13 @@ internal object AnimeExtensionLoader {
                 try {
                     when (val obj = Class.forName(it, false, classLoader).getDeclaredConstructor().newInstance()) {
                         is AnimeSource -> {
-                            obj.id // Force evaluate to catch NPE early
+                            try {
+                                obj.id // Force evaluate to catch NPE early
+                            } catch (e: Throwable) {
+                                val file = java.io.File(context.getExternalFilesDir(null), "yomotsu_crash.txt")
+                                file.writeText(android.util.Log.getStackTraceString(e))
+                                throw e
+                            }
                             listOf(obj)
                         }
                         is AnimeSourceFactory -> {
@@ -337,7 +343,13 @@ internal object AnimeExtensionLoader {
                             ).getDeclaredConstructor().newInstance()
                         ) {
                             is AnimeSource -> {
-                                obj.id // Force evaluate
+                                try {
+                                    obj.id // Force evaluate to catch NPE early
+                                } catch (e: Throwable) {
+                                    val file = java.io.File(context.getExternalFilesDir(null), "yomotsu_crash.txt")
+                                    file.appendText(android.util.Log.getStackTraceString(e))
+                                    throw e
+                                }
                                 listOf(obj)
                             }
                             is AnimeSourceFactory -> {
