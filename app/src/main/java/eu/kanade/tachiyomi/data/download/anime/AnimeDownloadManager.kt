@@ -421,10 +421,6 @@ class AnimeDownloadManager(
         private fun getEpisodesToDownload(episodes: List<Episode>): List<Episode> {
         return episodes
     }
-        } else {
-            episodes
-        }
-    }
 
     fun statusFlow(): Flow<AnimeDownload> = queueState
         .flatMapLatest { downloads ->

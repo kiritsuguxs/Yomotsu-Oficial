@@ -1,8 +1,8 @@
-import tachiyomi.i18n.MR
 package eu.kanade.tachiyomi.data.download.anime
 
 import android.content.ComponentName
 import android.content.Context
+import tachiyomi.i18n.MR
 import android.content.Intent
 import android.os.Bundle
 import androidx.core.net.toUri
