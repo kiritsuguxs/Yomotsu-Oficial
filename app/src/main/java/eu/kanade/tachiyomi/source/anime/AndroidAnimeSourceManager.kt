@@ -23,6 +23,8 @@ import tachiyomi.source.local.entries.anime.LocalAnimeSource
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import tachiyomi.core.common.util.system.logcat
+import logcat.LogPriority
 import java.util.concurrent.ConcurrentHashMap
 
 class AndroidAnimeSourceManager(
@@ -61,7 +63,7 @@ class AndroidAnimeSourceManager(
                                 mutableMap[source.id] = source
                                 registerStubSource(StubAnimeSource.from(source))
                             } catch (e: Throwable) {
-                                logcat(logcat.LogPriority.ERROR, e) { "Failed to load extension source: ${extension.pkgName}" }
+                                logcat(LogPriority.ERROR, e) { "Failed to load extension source: ${extension.pkgName}" }
                             }
                         }
                     }
