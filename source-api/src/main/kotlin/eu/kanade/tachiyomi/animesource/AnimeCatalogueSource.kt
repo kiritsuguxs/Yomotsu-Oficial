@@ -22,17 +22,35 @@ interface AnimeCatalogueSource : AnimeSource {
     override val lang: String
 
     @Suppress("DEPRECATION")
-    override suspend fun getPopularAnime(page: Int): AnimesPage = fetchPopularAnime(page).awaitSingle()
+    override suspend fun getPopularAnime(page: Int): AnimesPage = try {
+        fetchPopularAnime(page).awaitSingle()
+    } catch (e: Exception) {
+        throw e
+    } catch (e: Throwable) {
+        throw RuntimeException("Extension error: ${e.javaClass.simpleName}: ${e.message}", e)
+    }
 
     @Suppress("DEPRECATION")
-    override suspend fun getLatestUpdates(page: Int): AnimesPage = fetchLatestUpdates(page).awaitSingle()
+    override suspend fun getLatestUpdates(page: Int): AnimesPage = try {
+        fetchLatestUpdates(page).awaitSingle()
+    } catch (e: Exception) {
+        throw e
+    } catch (e: Throwable) {
+        throw RuntimeException("Extension error: ${e.javaClass.simpleName}: ${e.message}", e)
+    }
 
     @Suppress("DEPRECATION")
     override suspend fun getSearchAnime(
         page: Int,
         query: String,
         filters: AnimeFilterList,
-    ): AnimesPage = fetchSearchAnime(page, query, filters).awaitSingle()
+    ): AnimesPage = try {
+        fetchSearchAnime(page, query, filters).awaitSingle()
+    } catch (e: Exception) {
+        throw e
+    } catch (e: Throwable) {
+        throw RuntimeException("Extension error: ${e.javaClass.simpleName}: ${e.message}", e)
+    }
 
     @Suppress("DEPRECATION")
     override suspend fun getAnimeEpisodeUpdate(
