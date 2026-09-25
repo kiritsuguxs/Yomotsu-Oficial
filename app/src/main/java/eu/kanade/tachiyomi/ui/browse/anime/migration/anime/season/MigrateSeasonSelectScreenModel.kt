@@ -77,10 +77,10 @@ class MigrateSeasonSelectScreenModel(
                     }
                 },
             ).flow.map { pagingData ->
-                pagingData.map {
-                    networkToLocalAnime.await(it.toDomainAnime(anime.source))
-                        .let { localAnime -> getAnime.subscribe(localAnime.url, localAnime.source) }
-                        .filterNotNull()
+                pagingData.map { sAnime ->
+                    val domainAnime = sAnime.toDomainAnime(anime.source)
+                    getAnime.subscribe(domainAnime.url, domainAnime.source)
+                        .map { it ?: domainAnime }
                         .stateIn(ioCoroutineScope)
                 }
                     .filter { !hideInLibraryItems || !it.value.favorite }
