@@ -64,7 +64,7 @@ class CloudflareInterceptor(
         // we don't crash the entire app
         catch (e: CloudflareBypassException) {
             throw IOException(context.stringResource(MR.strings.information_cloudflare_bypass_failure), e)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             throw IOException(e)
         }
     }
