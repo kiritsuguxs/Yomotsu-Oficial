@@ -40,7 +40,7 @@ fun Call.asObservable(): Observable<Response> {
                         subscriber.onNext(response)
                         subscriber.onCompleted()
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     if (!subscriber.isUnsubscribed) {
                         subscriber.onError(e)
                     }
