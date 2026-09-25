@@ -25,6 +25,11 @@ class SourcePreferences(
         LocaleHelper.getDefaultEnabledLanguages(),
     )
 
+    val animeEnabledLanguages: Preference<Set<String>> = preferenceStore.getStringSet(
+        "anime_source_languages",
+        LocaleHelper.getDefaultEnabledLanguages(),
+    )
+
     val disabledSources: Preference<Set<String>> = preferenceStore.getStringSet("hidden_catalogues", emptySet())
 
     val incognitoExtensions: Preference<Set<String>> = preferenceStore.getStringSet("incognito_extensions", emptySet())

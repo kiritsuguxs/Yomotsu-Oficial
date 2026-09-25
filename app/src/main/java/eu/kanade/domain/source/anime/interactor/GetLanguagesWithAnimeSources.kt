@@ -15,7 +15,7 @@ class GetLanguagesWithAnimeSources(
 
     fun subscribe(): Flow<SortedMap<String, List<AnimeSource>>> {
         return combine(
-            preferences.enabledLanguages().changes(),
+            preferences.animeEnabledLanguages().changes(),
             preferences.disabledAnimeSources().changes(),
             repository.getOnlineAnimeSources(),
         ) { enabledLanguage, disabledSource, onlineSources ->

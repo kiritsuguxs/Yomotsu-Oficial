@@ -16,7 +16,7 @@ class GetAnimeExtensionsByType(
         val showNsfwSources = preferences.showNsfwSource().get()
 
         return combine(
-            preferences.enabledLanguages().changes(),
+            preferences.animeEnabledLanguages().changes(),
             extensionManager.installedExtensionsFlow,
             extensionManager.untrustedExtensionsFlow,
             extensionManager.availableExtensionsFlow,

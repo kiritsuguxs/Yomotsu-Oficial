@@ -5,7 +5,7 @@ import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.domain.source.anime.interactor.GetLanguagesWithAnimeSources
 import eu.kanade.domain.source.anime.interactor.ToggleAnimeSource
-import eu.kanade.domain.source.interactor.ToggleLanguage
+import eu.kanade.domain.source.anime.interactor.ToggleAnimeLanguage
 import eu.kanade.domain.source.service.SourcePreferences
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
@@ -21,14 +21,14 @@ class AnimeSourcesFilterScreenModel(
     private val preferences: SourcePreferences = Injekt.get(),
     private val getLanguagesWithSources: GetLanguagesWithAnimeSources = Injekt.get(),
     private val toggleSource: ToggleAnimeSource = Injekt.get(),
-    private val toggleLanguage: ToggleLanguage = Injekt.get(),
+    private val toggleLanguage: ToggleAnimeLanguage = Injekt.get(),
 ) : StateScreenModel<AnimeSourcesFilterScreenModel.State>(State.Loading) {
 
     init {
         screenModelScope.launch {
             combine(
                 getLanguagesWithSources.subscribe(),
-                preferences.enabledLanguages().changes(),
+                preferences.animeEnabledLanguages().changes(),
                 preferences.disabledAnimeSources().changes(),
             ) { a, b, c -> Triple(a, b, c) }
                 .catch { throwable ->

@@ -296,6 +296,7 @@ class DomainModule : InjektModule {
         addFactory { tachiyomi.domain.source.anime.interactor.GetAnimeSourcesWithNonLibraryAnime(get()) }
         addFactory { eu.kanade.domain.source.anime.interactor.ToggleAnimeSource(get()) }
         addFactory { eu.kanade.domain.source.anime.interactor.ToggleAnimeSourcePin(get()) }
+        addFactory { eu.kanade.domain.source.anime.interactor.ToggleAnimeLanguage(get()) }
         addFactory { eu.kanade.domain.source.anime.interactor.GetAnimeIncognitoState(get(), get(), get()) }
         addFactory { eu.kanade.domain.source.anime.interactor.ToggleAnimeIncognito(get()) }
         addFactory { eu.kanade.domain.source.anime.interactor.GetEnabledAnimeSources(get(), get()) }

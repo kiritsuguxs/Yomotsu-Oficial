@@ -79,7 +79,7 @@ class AnimeExtensionManager(
         AnimeExtensionInstallReceiver(AnimeInstallationListener()).register(context)
     }
 
-    private var subLanguagesEnabledOnFirstRun = preferences.enabledLanguages.isSet()
+    private var subLanguagesEnabledOnFirstRun = preferences.animeEnabledLanguages.isSet()
 
     fun getExtensionPackage(sourceId: Long): String? {
         return installedExtensionsFlow.value.find { extension ->
@@ -181,12 +181,12 @@ class AnimeExtensionManager(
             .map(AnimeExtension.Available.AnimeSource::lang)
 
         val deviceLanguage = Locale.getDefault().language
-        val defaultLanguages = preferences.enabledLanguages.defaultValue()
+        val defaultLanguages = preferences.animeEnabledLanguages.defaultValue()
         val languagesToEnable = availableLanguages.filter {
             it != deviceLanguage && it.startsWith(deviceLanguage)
         }
 
-        preferences.enabledLanguages.set(defaultLanguages + languagesToEnable)
+        preferences.animeEnabledLanguages.set(defaultLanguages + languagesToEnable)
         subLanguagesEnabledOnFirstRun = true
     }
 

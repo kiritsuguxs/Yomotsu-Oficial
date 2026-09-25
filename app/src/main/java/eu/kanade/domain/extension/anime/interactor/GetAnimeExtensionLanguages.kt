@@ -12,7 +12,7 @@ class GetAnimeExtensionLanguages(
 ) {
     fun subscribe(): Flow<List<String>> {
         return combine(
-            preferences.enabledLanguages().changes(),
+            preferences.animeEnabledLanguages().changes(),
             extensionManager.availableExtensionsFlow,
         ) { enabledLanguage, availableExtensions ->
             availableExtensions
