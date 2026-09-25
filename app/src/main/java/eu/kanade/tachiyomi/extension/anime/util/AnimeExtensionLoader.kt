@@ -319,8 +319,10 @@ internal object AnimeExtensionLoader {
                             try {
                                 obj.id // Force evaluate to catch NPE early
                             } catch (e: Throwable) {
-                                val file = java.io.File(context.getExternalFilesDir(null), "yomotsu_crash.txt")
-                                file.writeText(android.util.Log.getStackTraceString(e))
+                                val msg = "Erro na extensão: ${e.javaClass.simpleName}: ${e.message}"
+                                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
+                                }
                                 throw e
                             }
                             listOf(obj)
@@ -346,8 +348,10 @@ internal object AnimeExtensionLoader {
                                 try {
                                     obj.id // Force evaluate to catch NPE early
                                 } catch (e: Throwable) {
-                                    val file = java.io.File(context.getExternalFilesDir(null), "yomotsu_crash.txt")
-                                    file.appendText(android.util.Log.getStackTraceString(e))
+                                    val msg = "Erro na extensão: ${e.javaClass.simpleName}: ${e.message}"
+                                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                        android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
+                                    }
                                     throw e
                                 }
                                 listOf(obj)
