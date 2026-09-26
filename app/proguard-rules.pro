@@ -22,6 +22,10 @@
 -keep class eu.kanade.tachiyomi.extension.novel.runtime.** { *; }
 -keepclassmembers class eu.kanade.tachiyomi.extension.novel.runtime.** { *; }
 -keep,allowoptimization class uy.kohesive.injekt.** { public protected *; }
+# Player de video anime (MPV)
+-keep,allowoptimization class is.xyz.mpv.** { *; }
+-keep,allowoptimization class dev.vivvvek.seeker.** { *; }
+-keep,allowoptimization class com.yubyf.truetypeparser.** { *; }
 -keep,allowoptimization class com.squareup.zstd.** { public protected *; }
 
 # ML Kit OCR uses runtime component discovery. Keep its implementations in release builds.

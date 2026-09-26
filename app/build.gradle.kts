@@ -102,7 +102,7 @@ android {
     splits { abi { isEnable = true; isUniversalApk = true; reset(); include("armeabi-v7a", "arm64-v8a", "x86", "x86_64") } }
     packaging {
         jniLibs {
-            keepDebugSymbols += listOf("libandroidx.graphics.path", "libarchive-jni", "libconscrypt_jni", "libimagedecoder", "libquickjs", "libsqlite3x").map { "**/$it.so" }
+            keepDebugSymbols += listOf("libandroidx.graphics.path", "libarchive-jni", "libconscrypt_jni", "libimagedecoder", "libquickjs", "libsqlite3x", "libmpv", "libplayer", "libpostproc", "libavcodec", "libavdevice", "libavfilter", "libavformat", "libavutil", "libswresample", "libswscale", "libc++_shared").map { "**/$it.so" }
         }
         resources {
             excludes += setOf("kotlin-tooling-metadata.json", "LICENSE.txt", "META-INF/**/*.properties", "META-INF/**/LICENSE.txt", "META-INF/*.properties", "META-INF/*.version", "META-INF/DEPENDENCIES", "META-INF/INDEX.LIST", "META-INF/LICENSE", "META-INF/NOTICE", "META-INF/README.md")
@@ -149,6 +149,14 @@ dependencies {
     implementation(libs.image.decoder); implementation(libs.material); implementation(libs.flexibleAdapter); implementation(libs.photoView)
     implementation(libs.directionalViewPager) { exclude(group = "androidx.viewpager", module = "viewpager") }
     implementation(libs.composeRichEditor); implementation(libs.aboutLibraries.compose); implementation(libs.bundles.voyager); implementation(libs.composeMaterialMotion); implementation(libs.swipe); implementation(libs.composeWebview); implementation(libs.composeGrid); implementation(libs.reorderable); implementation(libs.bundles.markdown); implementation(libs.materialKolor); implementation(libs.logcat); implementation(libs.bundles.shizuku); implementation(libs.stringSimilarity); testImplementation(libs.bundles.test); testRuntimeOnly(libs.junit.platform.launcher); implementation(libs.leakCanary.plumber); testImplementation(libs.kotlinx.coroutines.test); implementation(libs.mlkit.text.recognition); implementation(libs.mlkit.text.recognition.japanese); implementation(libs.mlkit.text.recognition.korean); implementation(libs.mlkit.text.recognition.chinese); implementation(libs.mlkit.text.translate); implementation(libs.google.generativeai)
+    // Player de video anime (MPV) - doador: Anikku
+    implementation(libs.mpv.lib)
+    implementation(libs.arthenica.smartexceptions)
+    implementation(libs.androidx.constraintLayoutCompose)
+    implementation(libs.androidx.media)
+    implementation(libs.seeker)
+    implementation(libs.truetypeparser)
+    implementation(libs.nanohttpd)
 }
 
 androidComponents {
