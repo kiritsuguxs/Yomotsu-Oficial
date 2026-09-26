@@ -8,6 +8,7 @@ object Constants {
     const val URL_DISCORD = "https://discord.gg/mihon"
 
     const val MANGA_EXTRA = "manga"
+    const val ANIME_EXTRA = "anime"
 
     const val MAIN_ACTIVITY = "eu.kanade.tachiyomi.ui.main.MainActivity"
 
@@ -19,4 +20,5 @@ object Constants {
     const val SHORTCUT_SOURCES = "eu.kanade.tachiyomi.SHOW_CATALOGUES"
     const val SHORTCUT_EXTENSIONS = "eu.kanade.tachiyomi.EXTENSIONS"
     const val SHORTCUT_DOWNLOADS = "eu.kanade.tachiyomi.SHOW_DOWNLOADS"
+    const val SHORTCUT_ANIME = "eu.kanade.tachiyomi.SHOW_ANIME"
 }

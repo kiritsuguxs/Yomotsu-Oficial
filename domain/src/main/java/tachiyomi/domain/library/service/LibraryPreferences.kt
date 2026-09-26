@@ -58,6 +58,24 @@ class LibraryPreferences(
             DEVICE_ONLY_ON_WIFI,
         ),
     )
+    val autoUpdateAnimeRestrictions: Preference<Set<String>> = preferenceStore.getStringSet(
+        "library_update_anime_restriction",
+        setOf(
+            ANIME_HAS_UNSEEN,
+            ANIME_NON_COMPLETED,
+            ANIME_NON_SEEN,
+            ANIME_OUTSIDE_RELEASE_PERIOD,
+        ),
+    )
+    fun newAnimeUpdatesCount() = preferenceStore.getInt("library_unseen_updates_count", 0)
+    val animeUpdateCategories: Preference<Set<String>> = preferenceStore.getStringSet(
+        "animelib_update_categories",
+        emptySet(),
+    )
+    val animeUpdateCategoriesExclude: Preference<Set<String>> = preferenceStore.getStringSet(
+        "animelib_update_categories_exclude",
+        emptySet(),
+    )
     val autoUpdateMangaRestrictions: Preference<Set<String>> = preferenceStore.getStringSet(
         "library_update_manga_restriction",
         setOf(
@@ -397,6 +415,11 @@ class LibraryPreferences(
         const val MANGA_HAS_UNREAD = "manga_fully_read"
         const val MANGA_NON_READ = "manga_started"
         const val MANGA_OUTSIDE_RELEASE_PERIOD = "manga_outside_release_period"
+
+        const val ANIME_NON_COMPLETED = "anime_ongoing"
+        const val ANIME_HAS_UNSEEN = "anime_fully_seen"
+        const val ANIME_NON_SEEN = "anime_started"
+        const val ANIME_OUTSIDE_RELEASE_PERIOD = "anime_outside_release_period"
 
         const val ENTRY_NON_COMPLETED = MANGA_NON_COMPLETED
         const val ENTRY_HAS_UNREAD = MANGA_HAS_UNREAD

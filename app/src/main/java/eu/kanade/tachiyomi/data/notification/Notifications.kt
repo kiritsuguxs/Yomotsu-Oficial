@@ -9,7 +9,7 @@ import eu.kanade.tachiyomi.util.system.buildNotificationChannel
 import eu.kanade.tachiyomi.util.system.buildNotificationChannelGroup
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.i18n.MR
-import tachiyomi.i18n.aniyomi.AYMR
+import tachiyomi.i18n.at.ATMR
 
 /**
  * Class to manage the basic information of all the notifications used in the app.
@@ -21,6 +21,9 @@ object Notifications {
      */
     const val CHANNEL_COMMON = "common_channel"
     const val ID_DOWNLOAD_IMAGE = 2
+
+    const val CHANNEL_TORRENT_SERVER = "torrent_server_channel"
+    const val ID_TORRENT_SERVER = -901
 
     /**
      * Notification channel and ids used by the library updater.
@@ -38,19 +41,27 @@ object Notifications {
     private const val GROUP_DOWNLOADER = "group_downloader"
     const val CHANNEL_DOWNLOADER_PROGRESS = "downloader_progress_channel"
     const val ID_DOWNLOAD_CHAPTER_PROGRESS = -201
-    const val ID_DOWNLOAD_EPISODE_PROGRESS = -203
     const val CHANNEL_DOWNLOADER_ERROR = "downloader_error_channel"
     const val ID_DOWNLOAD_CHAPTER_ERROR = -202
+    const val ID_DOWNLOAD_EPISODE_PROGRESS = -203
     const val ID_DOWNLOAD_EPISODE_ERROR = -204
+
+    /**
+     * Notification channel and ids used by the chapter translator.
+     */
+    private const val GROUP_TRANSLATION = "group_translation"
+    const val CHANNEL_TRANSLATION_PROGRESS = "translation_progress_channel"
+    const val ID_TRANSLATION_PROGRESS = -801
+    const val CHANNEL_TRANSLATION_ERROR = "translation_error_channel"
+    const val ID_TRANSLATION_ERROR = -802
 
     /**
      * Notification channel and ids used by the library updater.
      */
-    const val CHANNEL_NEW_CHAPTERS_EPISODES = "new_chapters_episodes_channel"
+    const val CHANNEL_NEW_CHAPTERS = "new_chapters_channel"
     const val ID_NEW_CHAPTERS = -301
-    const val ID_NEW_EPISODES = -1301
+    const val ID_NEW_EPISODES = -302
     const val GROUP_NEW_CHAPTERS = "eu.kanade.tachiyomi.NEW_CHAPTERS"
-    const val GROUP_NEW_EPISODES = "eu.kanade.tachiyomi.NEW_EPISODES"
 
     /**
      * Notification channel and ids used by the backup/restore system.
@@ -70,25 +81,11 @@ object Notifications {
     const val ID_INCOGNITO_MODE = -701
 
     /**
-     * Notification channel and ids used for torrent server
-     */
-    const val CHANNEL_TORRENT_SERVER = "torrent_server_channel"
-    const val ID_TORRENT_SERVER = -801
-
-    /**
-     * Notification channel and ids used for http server
-     */
-    const val CHANNEL_HTTP_SERVER = "http_server_channel"
-    const val ID_HTTP_SERVER = -901
-
-    /**
      * Notification channel and ids used for app and extension updates.
      */
     private const val GROUP_APK_UPDATES = "group_apk_updates"
     const val CHANNEL_APP_UPDATE = "app_apk_update_channel"
     const val ID_APP_UPDATER = 1
-    const val ID_APP_UPDATE_PROMPT = 2
-    const val ID_APP_UPDATE_ERROR = 3
     const val CHANNEL_EXTENSIONS_UPDATE = "ext_apk_update_channel"
     const val ID_UPDATES_TO_EXTS = -401
     const val ID_EXTENSION_INSTALLER = -402
@@ -131,6 +128,9 @@ object Notifications {
                 buildNotificationChannelGroup(GROUP_APK_UPDATES) {
                     setName(context.stringResource(MR.strings.label_recent_updates))
                 },
+                buildNotificationChannelGroup(GROUP_TRANSLATION) {
+                    setName(context.stringResource(ATMR.strings.translation_notification_group))
+                },
             ),
         )
 
@@ -149,8 +149,8 @@ object Notifications {
                     setGroup(GROUP_LIBRARY)
                     setShowBadge(false)
                 },
-                buildNotificationChannel(CHANNEL_NEW_CHAPTERS_EPISODES, IMPORTANCE_DEFAULT) {
-                    setName(context.stringResource(AYMR.strings.channel_new_chapters_episodes))
+                buildNotificationChannel(CHANNEL_NEW_CHAPTERS, IMPORTANCE_DEFAULT) {
+                    setName(context.stringResource(MR.strings.channel_new_chapters))
                 },
                 buildNotificationChannel(CHANNEL_DOWNLOADER_PROGRESS, IMPORTANCE_LOW) {
                     setName(context.stringResource(MR.strings.channel_progress))
@@ -160,6 +160,16 @@ object Notifications {
                 buildNotificationChannel(CHANNEL_DOWNLOADER_ERROR, IMPORTANCE_LOW) {
                     setName(context.stringResource(MR.strings.channel_errors))
                     setGroup(GROUP_DOWNLOADER)
+                    setShowBadge(false)
+                },
+                buildNotificationChannel(CHANNEL_TRANSLATION_PROGRESS, IMPORTANCE_LOW) {
+                    setName(context.stringResource(ATMR.strings.translation_notification_progress_channel))
+                    setGroup(GROUP_TRANSLATION)
+                    setShowBadge(false)
+                },
+                buildNotificationChannel(CHANNEL_TRANSLATION_ERROR, IMPORTANCE_LOW) {
+                    setName(context.stringResource(ATMR.strings.translation_notification_error_channel))
+                    setGroup(GROUP_TRANSLATION)
                     setShowBadge(false)
                 },
                 buildNotificationChannel(CHANNEL_BACKUP_RESTORE_PROGRESS, IMPORTANCE_LOW) {
@@ -176,14 +186,6 @@ object Notifications {
                 buildNotificationChannel(CHANNEL_INCOGNITO_MODE, IMPORTANCE_LOW) {
                     setName(context.stringResource(MR.strings.pref_incognito_mode))
                 },
-                buildNotificationChannel(CHANNEL_TORRENT_SERVER, IMPORTANCE_LOW) {
-                    setName(context.stringResource(AYMR.strings.pref_category_torrentserver))
-                    setShowBadge(false)
-                },
-                buildNotificationChannel(CHANNEL_HTTP_SERVER, IMPORTANCE_LOW) {
-                    setName(context.stringResource(AYMR.strings.pref_http_server_name))
-                    setShowBadge(false)
-                },
                 buildNotificationChannel(CHANNEL_APP_UPDATE, IMPORTANCE_DEFAULT) {
                     setGroup(GROUP_APK_UPDATES)
                     setName(context.stringResource(MR.strings.channel_app_updates))
@@ -191,6 +193,10 @@ object Notifications {
                 buildNotificationChannel(CHANNEL_EXTENSIONS_UPDATE, IMPORTANCE_DEFAULT) {
                     setGroup(GROUP_APK_UPDATES)
                     setName(context.stringResource(MR.strings.channel_ext_updates))
+                },
+                buildNotificationChannel(CHANNEL_TORRENT_SERVER, IMPORTANCE_LOW) {
+                    setName("Torrent Server")
+                    setShowBadge(false)
                 },
             ),
         )

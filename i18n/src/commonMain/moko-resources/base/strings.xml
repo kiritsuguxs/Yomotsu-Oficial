@@ -1083,4 +1083,11 @@
     <string name="donationCampaign.paragraph3">Regardless, Mihon will continue to be maintained by me and the volunteers, and it will stay open source.</string>
     <string name="donationCampaign.contactPlatform">Discord</string>
     <string name="donationCampaign.dismiss">Dismiss</string>
+    <string name="action_mark_as_seen">Mark as watched</string>
+    <string name="action_view_episodes">View episodes</string>
+    <string name="notification_episodes_multiple">Episodes %1$s</string>
+    <string name="notification_episodes_single">Episode %1$s</string>
+    <string name="notification_episodes_single_and_more">Episode %1$s and %2$d more</string>
+    <string name="notification_new_episodes">New episodes found</string>
+    <string name="notification_update_error">%1$d update(s) failed</string>
 </resources>
