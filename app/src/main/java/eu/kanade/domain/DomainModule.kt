@@ -228,7 +228,40 @@ class DomainModule : InjektModule {
         addFactory { tachiyomi.domain.entries.anime.interactor.SetAnimeSeasonFlags(get()) }
         addFactory { tachiyomi.domain.items.season.interactor.SetAnimeDefaultSeasonFlags() }
         addFactory { mihon.domain.items.episode.interactor.FilterEpisodesForDownload(get(), get(), get()) }
-        addFactory { mihon.domain.source.interactor.UpdateAnimeFromRemote(get()) }
+        addFactory { tachiyomi.domain.items.season.interactor.GetAnimeSeasonsByParentId(get()) }
+        addFactory { tachiyomi.domain.items.season.interactor.ShouldUpdateDbSeason() }
+        addFactory {
+            eu.kanade.domain.items.episode.interactor.SyncEpisodesWithSource(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        }
+        addFactory {
+            eu.kanade.domain.entries.anime.interactor.SyncSeasonsWithSource(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        }
+        addFactory {
+            mihon.domain.source.interactor.UpdateAnimeFromRemote(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        }
         addFactory { eu.kanade.domain.items.episode.interactor.SetSeenStatus(get()) }
 
         addSingletonFactory<tachiyomi.domain.entries.anime.repository.AnimeRelationRepository> {

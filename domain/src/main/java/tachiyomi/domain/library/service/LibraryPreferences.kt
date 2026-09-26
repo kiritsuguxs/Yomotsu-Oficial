@@ -21,6 +21,25 @@ class LibraryPreferences(
         LibraryDisplayMode.Serializer::deserialize,
     )
 
+    val animeDisplayMode: Preference<LibraryDisplayMode> = preferenceStore.getObjectFromString(
+        "pref_display_mode_animelib",
+        LibraryDisplayMode.default,
+        LibraryDisplayMode.Serializer::serialize,
+        LibraryDisplayMode.Serializer::deserialize,
+    )
+
+    val animeCategoryTabs: Preference<Boolean> = preferenceStore.getBoolean(
+        "display_animelib_category_tabs",
+        true,
+    )
+
+    val unseenBadge: Preference<Boolean> = preferenceStore.getBoolean("display_unseen_badge", true)
+
+    val showContinueWatchingButton: Preference<Boolean> = preferenceStore.getBoolean(
+        "display_continue_watching_button",
+        true,
+    )
+
     val sortingMode: Preference<LibrarySort> = preferenceStore.getObjectFromString(
         "library_sorting_mode",
         LibrarySort.default,
@@ -118,6 +137,31 @@ class LibraryPreferences(
 
     fun filterTracking(id: Int): Preference<TriState> = preferenceStore.getEnum(
         "pref_filter_library_tracked_${id}_v2",
+        TriState.DISABLED,
+    )
+
+    val animeFilterUnseen: Preference<TriState> = preferenceStore.getEnum(
+        "pref_filter_animelib_unseen_v2",
+        TriState.DISABLED,
+    )
+
+    val animeFilterStarted: Preference<TriState> = preferenceStore.getEnum(
+        "pref_filter_animelib_started_v2",
+        TriState.DISABLED,
+    )
+
+    val animeFilterBookmarked: Preference<TriState> = preferenceStore.getEnum(
+        "pref_filter_animelib_bookmarked_v2",
+        TriState.DISABLED,
+    )
+
+    val animeFilterCompleted: Preference<TriState> = preferenceStore.getEnum(
+        "pref_filter_animelib_completed_v2",
+        TriState.DISABLED,
+    )
+
+    fun filterTrackedAnime(id: Int): Preference<TriState> = preferenceStore.getEnum(
+        "pref_filter_animelib_tracked_${id}_v2",
         TriState.DISABLED,
     )
 
