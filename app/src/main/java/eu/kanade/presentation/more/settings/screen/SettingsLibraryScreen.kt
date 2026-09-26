@@ -52,7 +52,6 @@ object SettingsLibraryScreen : SearchableSettings {
     override fun getPreferences(): List<Preference> {
         val getCategories = remember { Injekt.get<GetCategories>() }
         val libraryPreferences = remember { Injekt.get<LibraryPreferences>() }
-        val uiPreferences = remember { Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
         val allCategories by getCategories.subscribe().collectAsState(initial = emptyList())
 
         return listOf(
@@ -95,7 +94,7 @@ object SettingsLibraryScreen : SearchableSettings {
                     title = stringResource(MR.strings.default_category),
                 ),
                 Preference.PreferenceItem.SwitchPreference(
-                    preference = uiPreferences.useConsolidatedLibrary(),
+                    preference = Injekt.get<eu.kanade.domain.ui.UiPreferences>().useConsolidatedLibrary(),
                     title = stringResource(MR.strings.label_library),
                     subtitle = stringResource(MR.strings.categorized_display_settings),
                 ),

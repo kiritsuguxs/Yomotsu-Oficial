@@ -25,7 +25,7 @@ import tachiyomi.i18n.aniyomi.AYMR
 import tachiyomi.presentation.core.i18n.stringResource
 
 fun labelFor(mode: LibraryViewMode) = when (mode) {
-    LibraryViewMode.Manga -> MR.strings.label_manga
+    LibraryViewMode.Manga -> MR.strings.manga
     LibraryViewMode.Anime -> AYMR.strings.label_anime
     LibraryViewMode.Novels -> MR.strings.label_novels
 }

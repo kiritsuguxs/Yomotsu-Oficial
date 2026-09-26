@@ -283,6 +283,7 @@ fun AnimeLibraryPanel(
         }
 
         LaunchedEffect(Unit) {
+            launch { AnimeLibraryTab.queryFlow().collect { screenModel.search(it) } }
             launch { requestSettingsSheetEvent.receiveAsFlow().collectLatest { screenModel.showSettingsDialog() } }
         }
     }
