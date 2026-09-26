@@ -293,6 +293,7 @@ class DomainModule : InjektModule {
         addFactory { tachiyomi.domain.items.episode.interactor.GetEpisodesByAnimeId(get()) }
         addFactory { tachiyomi.domain.items.episode.interactor.GetEpisodeByUrlAndAnimeId(get()) }
         addFactory { tachiyomi.domain.items.episode.interactor.UpdateEpisode(get()) }
+        addFactory { tachiyomi.domain.items.episode.interactor.ShouldUpdateDbEpisode() }
 
         addSingletonFactory<tachiyomi.domain.history.anime.repository.AnimeHistoryRepository> {
             tachiyomi.data.history.anime.AnimeHistoryRepositoryImpl(get())
