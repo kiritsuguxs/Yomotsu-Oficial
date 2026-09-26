@@ -1,16 +1,14 @@
 package eu.kanade.tachiyomi.ui.library.anime
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.util.fastAny
-import androidx.compose.ui.util.fastMapNotNull
+import androidx.compose.ui.util.fastFilter
+import androidx.compose.ui.util.fastPartition
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.core.preference.PreferenceMutableState
 import eu.kanade.core.preference.asState
 import eu.kanade.core.util.fastFilterNot
-import eu.kanade.core.util.fastPartition
 import eu.kanade.domain.base.BasePreferences
 import eu.kanade.domain.entries.anime.interactor.UpdateAnime
 
@@ -86,7 +84,7 @@ class AnimeLibraryScreenModel(
                 combine(getTracksPerAnime.subscribe(), getTrackingFiltersFlow(), ::Pair),
                 getLibraryItemPreferencesFlow(),
             ) { searchQuery, categories, favorites, (tracksMap, trackingFilters), itemPreferences ->
-                val showSystemCategory = favorites.any { it.libraryAnime.category == 0 }
+                val showSystemCategory = favorites.any { it.libraryAnime.category == 0L }
                 val filteredFavorites = favorites
                     .applyFilters(tracksMap, trackingFilters, itemPreferences)
                     .let { libraryItems ->
@@ -250,14 +248,10 @@ class AnimeLibraryScreenModel(
 
         val defaultTrackerScoreSortValue = -1.0
         val trackerScores by lazy {
-            val trackerMap = trackerManager.getAll(loggedInTrackerIds).associateBy { e -> e.id }
             trackMap.mapValues { entry ->
                 when {
                     entry.value.isEmpty() -> null
-                    else ->
-                        entry.value
-                            .mapNotNull { trackerMap[it.trackerId]?.get10PointScore(it) }
-                            .average()
+                    else -> entry.value.map { it.score }.average()
                 }
             }
         }
@@ -332,14 +326,12 @@ class AnimeLibraryScreenModel(
             getTracksPerAnime.subscribe(),
         ) { trackers, tracksMap ->
             trackers.map { tracker ->
+                val hasScoredAnime = tracksMap.values.any { tracks ->
+                    tracks.any { it.trackerId == tracker.id && it.score != 0.0 }
+                }
                 tracker.id.toLong() to allTriStates.first { state ->
                     when (state) {
-                        TriState.ENABLED_IS -> tracksMap.any { mTrack ->
-                            mTrack.any { it.trackerId == tracker.id } &&
-                                trackerManager.getAll(setOf(tracker.id)).first()
-                                    .get10PointScore(mTrack.first { it.trackerId == tracker.id })
-                                    .let { it != 0.0 }
-                        }
+                        TriState.ENABLED_IS -> hasScoredAnime
                         else -> state == TriState.ENABLED_NOT
                     }
                 }
@@ -455,7 +447,7 @@ class AnimeLibraryScreenModel(
         val ids = state.selection.map { it.id }
         if (ids.isEmpty()) return
         screenModelScope.launchIO {
-            val defaultCategoryId = libraryPreferences.defaultAnimeCategory.get()
+            val defaultCategoryId = libraryPreferences.defaultAnimeCategory.get().toLong()
             if (defaultCategoryId == -1L) {
                 clearSelection()
                 return@launchIO
