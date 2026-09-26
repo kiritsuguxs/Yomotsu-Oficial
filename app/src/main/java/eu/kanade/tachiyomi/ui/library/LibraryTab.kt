@@ -43,6 +43,8 @@ import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.library.LibraryUpdateJob
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
 import eu.kanade.tachiyomi.ui.library.anime.AnimeLibraryPanel
+import eu.kanade.tachiyomi.ui.library.anime.AnimeLibraryScreenModel
+import eu.kanade.tachiyomi.ui.library.anime.AnimeLibrarySettingsScreenModel
 import eu.kanade.tachiyomi.ui.library.anime.LibraryViewModeDropdown
 import eu.kanade.tachiyomi.ui.library.anime.NovelsLibraryPanel
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
@@ -132,6 +134,8 @@ data object LibraryTab : Tab {
             )
 
             LibraryViewMode.Anime -> AnimeLibraryPanel(
+                screenModel = androidx.lifecycle.viewmodel.compose.viewModel<AnimeLibraryScreenModel>(),
+                settingsScreenModel = androidx.lifecycle.viewmodel.compose.viewModel<AnimeLibrarySettingsScreenModel>(),
                 libraryMode = libraryMode,
                 showModeDropdown = showModeDropdown,
                 onToggleDropdown = { showModeDropdown = true },

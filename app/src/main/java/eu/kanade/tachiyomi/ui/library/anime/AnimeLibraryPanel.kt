@@ -23,7 +23,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.util.fastAll
-import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -72,6 +71,8 @@ private suspend fun requestOpenSettingsSheet() = requestSettingsSheetEvent.send(
 
 @Composable
 fun AnimeLibraryPanel(
+    screenModel: AnimeLibraryScreenModel,
+    settingsScreenModel: AnimeLibrarySettingsScreenModel,
     libraryMode: LibraryViewMode? = null,
     showModeDropdown: Boolean = false,
     onToggleDropdown: () -> Unit = {},
@@ -79,12 +80,10 @@ fun AnimeLibraryPanel(
     onModeSelected: (LibraryViewMode) -> Unit = {},
 ) {
     val navigator = LocalNavigator.currentOrThrow
-        val context = LocalContext.current
+    val context = LocalContext.current
         val scope = rememberCoroutineScope()
         val haptic = LocalHapticFeedback.current
 
-        val screenModel = rememberScreenModel { AnimeLibraryScreenModel() }
-        val settingsScreenModel = rememberScreenModel { AnimeLibrarySettingsScreenModel() }
         val state by screenModel.state.collectAsState()
 
         val snackbarHostState = remember { SnackbarHostState() }
