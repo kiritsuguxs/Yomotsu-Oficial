@@ -102,7 +102,7 @@ class AnimeLibraryUpdateNotifier(
                 ),
             )
 
-        if (!securityPreferences.hideNotificationContent().get()) {
+        if (!securityPreferences.hideNotificationContent.get()) {
             val updatingText = anime.joinToString("\n") { it.title.chop(40) }
             progressNotificationBuilder.setStyle(NotificationCompat.BigTextStyle().bigText(updatingText))
         }
@@ -192,10 +192,10 @@ class AnimeLibraryUpdateNotifier(
         // Parent group notification
         context.notify(
             Notifications.ID_NEW_EPISODES,
-            Notifications.CHANNEL_NEW_CHAPTERS_EPISODES,
+            Notifications.CHANNEL_NEW_EPISODES,
         ) {
             setContentTitle(context.stringResource(AYMR.strings.notification_new_episodes))
-            if (updates.size == 1 && !securityPreferences.hideNotificationContent().get()) {
+            if (updates.size == 1 && !securityPreferences.hideNotificationContent.get()) {
                 setContentText(updates.first().first.title.chop(NOTIF_TITLE_MAX_LEN))
             } else {
                 setContentText(
@@ -206,7 +206,7 @@ class AnimeLibraryUpdateNotifier(
                     ),
                 )
 
-                if (!securityPreferences.hideNotificationContent().get()) {
+                if (!securityPreferences.hideNotificationContent.get()) {
                     setStyle(
                         NotificationCompat.BigTextStyle().bigText(
                             updates.joinToString("\n") {
@@ -230,7 +230,7 @@ class AnimeLibraryUpdateNotifier(
         }
 
         // Per-anime notification
-        if (!securityPreferences.hideNotificationContent().get()) {
+        if (!securityPreferences.hideNotificationContent.get()) {
             launchUI {
                 context.notify(
                     updates.map { (anime, episodes) ->
@@ -246,7 +246,7 @@ class AnimeLibraryUpdateNotifier(
 
     private suspend fun createNewEpisodesNotification(anime: Anime, episodes: Array<Episode>): Notification {
         val icon = getAnimeIcon(anime)
-        return context.notificationBuilder(Notifications.CHANNEL_NEW_CHAPTERS_EPISODES) {
+        return context.notificationBuilder(Notifications.ID_NEW_EPISODES) {
             setContentTitle(anime.title)
 
             val description = getNewEpisodesDescription(episodes)

@@ -211,6 +211,8 @@ class LibraryPreferences(
         emptySet(),
     )
 
+    fun newAnimeUpdatesCount() = preferenceStore.getInt("library_unseen_updates_count", 0)
+
     val animeUpdateCategories: Preference<Set<String>> = preferenceStore.getStringSet(
         "animelib_update_categories",
         emptySet(),
