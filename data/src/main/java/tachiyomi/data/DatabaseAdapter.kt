@@ -1,6 +1,7 @@
 package tachiyomi.data
 
 import app.cash.sqldelight.ColumnAdapter
+import eu.kanade.tachiyomi.animesource.model.FetchType
 import eu.kanade.tachiyomi.source.model.UpdateStrategy
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -38,4 +39,11 @@ object MemoColumnAdapter : ColumnAdapter<JsonObject, ByteArray> {
     override fun encode(value: JsonObject): ByteArray {
         return value.toString().encodeToByteArray()
     }
+}
+
+object FetchTypeColumnAdapter : ColumnAdapter<FetchType, Long> {
+    override fun decode(databaseValue: Long): FetchType =
+        FetchType.entries.getOrElse(databaseValue.toInt()) { FetchType.Episodes }
+
+    override fun encode(value: FetchType): Long = value.ordinal.toLong()
 }

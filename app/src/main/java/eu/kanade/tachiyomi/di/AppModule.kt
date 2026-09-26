@@ -29,9 +29,12 @@ import nl.adaptivity.xmlutil.XmlDeclMode
 import nl.adaptivity.xmlutil.core.XmlVersion
 import nl.adaptivity.xmlutil.serialization.XML
 import tachiyomi.core.common.storage.AndroidStorageFolderProvider
+import tachiyomi.data.Anime_history
+import tachiyomi.data.Animes
 import tachiyomi.data.Chapters
 import tachiyomi.data.Database
 import tachiyomi.data.DateColumnAdapter
+import tachiyomi.data.FetchTypeColumnAdapter
 import tachiyomi.data.History
 import tachiyomi.data.Mangas
 import tachiyomi.data.MemoColumnAdapter
@@ -86,6 +89,14 @@ class AppModule(val app: Application) : InjektModule {
                 ),
                 chaptersAdapter = Chapters.Adapter(
                     memoAdapter = MemoColumnAdapter,
+                ),
+                animesAdapter = Animes.Adapter(
+                    genreAdapter = StringListColumnAdapter,
+                    update_strategyAdapter = UpdateStrategyColumnAdapter,
+                    fetch_typeAdapter = FetchTypeColumnAdapter,
+                ),
+                anime_historyAdapter = Anime_history.Adapter(
+                    last_seenAdapter = DateColumnAdapter,
                 ),
             )
         }
