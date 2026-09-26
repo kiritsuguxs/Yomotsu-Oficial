@@ -39,6 +39,7 @@ fun LibraryToolbar(
     searchQuery: String?,
     onSearchQueryChange: (String?) -> Unit,
     scrollBehavior: TopAppBarScrollBehavior?,
+    titleContent: (@Composable () -> Unit)? = null,
 ) = when {
     selectedCount > 0 -> LibrarySelectionToolbar(
         selectedCount = selectedCount,
@@ -56,6 +57,7 @@ fun LibraryToolbar(
         onClickGlobalUpdate = onClickGlobalUpdate,
         onClickOpenRandomManga = onClickOpenRandomManga,
         scrollBehavior = scrollBehavior,
+        titleContent = titleContent,
     )
 }
 
@@ -70,10 +72,14 @@ private fun LibraryRegularToolbar(
     onClickGlobalUpdate: () -> Unit,
     onClickOpenRandomManga: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior?,
+    titleContent: (@Composable () -> Unit)? = null,
 ) {
     val pillAlpha = if (isSystemInDarkTheme()) 0.12f else 0.08f
     SearchToolbar(
         titleContent = {
+            if (titleContent != null) {
+                titleContent()
+            } else {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = title.text,
@@ -88,6 +94,7 @@ private fun LibraryRegularToolbar(
                         fontSize = 14.sp,
                     )
                 }
+            }
             }
         },
         searchQuery = searchQuery,

@@ -38,6 +38,9 @@ import eu.kanade.presentation.util.Tab
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.library.LibraryUpdateJob
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
+import eu.kanade.tachiyomi.ui.library.anime.AnimeLibraryPanel
+import eu.kanade.tachiyomi.ui.library.anime.LibraryViewModeDropdown
+import eu.kanade.tachiyomi.ui.library.anime.NovelsLibraryPanel
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
 import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.main.MainActivity
@@ -61,6 +64,12 @@ import tachiyomi.presentation.core.screens.EmptyScreenAction
 import tachiyomi.presentation.core.screens.LoadingScreen
 import tachiyomi.source.local.isLocal
 
+enum class LibraryViewMode {
+    Manga,
+    Anime,
+    Novels,
+}
+
 data object LibraryTab : Tab {
 
     override val options: TabOptions
@@ -68,9 +77,14 @@ data object LibraryTab : Tab {
         get() {
             val isSelected = LocalTabNavigator.current.current.key == key
             val image = AnimatedImageVector.animatedVectorResource(R.drawable.anim_library_enter)
+            val label = if (Injekt.get<eu.kanade.domain.ui.UiPreferences>().useConsolidatedLibrary().get()) {
+                MR.strings.label_library
+            } else {
+                MR.strings.label_manga
+            }
             return TabOptions(
                 index = 0u,
-                title = stringResource(MR.strings.label_library),
+                title = stringResource(label),
                 icon = rememberAnimatedVectorPainter(image, isSelected),
             )
         }
@@ -81,6 +95,64 @@ data object LibraryTab : Tab {
 
     @Composable
     override fun Content() {
+        val uiPreferences = remember { Injekt.get<eu.kanade.domain.ui.UiPreferences>() }
+        val useConsolidatedLibrary = remember { uiPreferences.useConsolidatedLibrary().get() }
+
+        if (!useConsolidatedLibrary) {
+            MangaLibraryContent()
+            return
+        }
+
+        var libraryMode by remember {
+            mutableStateOf(
+                LibraryViewMode.entries.getOrElse(uiPreferences.lastUsedLibraryMode().get()) {
+                    LibraryViewMode.Manga
+                },
+            )
+        }
+        var showModeDropdown by remember { mutableStateOf(false) }
+
+        fun selectMode(mode: LibraryViewMode) {
+            showModeDropdown = false
+            libraryMode = mode
+            uiPreferences.lastUsedLibraryMode().set(mode.ordinal)
+        }
+
+        when (libraryMode) {
+            LibraryViewMode.Manga -> MangaLibraryContent(
+                libraryMode = libraryMode,
+                showModeDropdown = showModeDropdown,
+                onToggleDropdown = { showModeDropdown = true },
+                onDismissDropdown = { showModeDropdown = false },
+                onModeSelected = { mode -> selectMode(mode) },
+            )
+
+            LibraryViewMode.Anime -> AnimeLibraryPanel(
+                libraryMode = libraryMode,
+                showModeDropdown = showModeDropdown,
+                onToggleDropdown = { showModeDropdown = true },
+                onDismissDropdown = { showModeDropdown = false },
+                onModeSelected = { mode -> selectMode(mode) },
+            )
+
+            LibraryViewMode.Novels -> NovelsLibraryPanel(
+                libraryMode = libraryMode,
+                showModeDropdown = showModeDropdown,
+                onToggleDropdown = { showModeDropdown = true },
+                onDismissDropdown = { showModeDropdown = false },
+                onModeSelected = { mode -> selectMode(mode) },
+            )
+        }
+    }
+
+    @Composable
+    private fun MangaLibraryContent(
+        libraryMode: LibraryViewMode? = null,
+        showModeDropdown: Boolean = false,
+        onToggleDropdown: () -> Unit = {},
+        onDismissDropdown: () -> Unit = {},
+        onModeSelected: (LibraryViewMode) -> Unit = {},
+    ) {
         val navigator = LocalNavigator.currentOrThrow
         val context = LocalContext.current
         val scope = rememberCoroutineScope()
@@ -113,6 +185,14 @@ data object LibraryTab : Tab {
                     page = state.coercedActiveCategoryIndex,
                 )
                 LibraryToolbar(
+                    titleContent = libraryMode?.let { mode ->
+                        {
+                            LibraryViewModeDropdown(
+                                current = mode,
+                                onSelected = onModeSelected,
+                            )
+                        }
+                    },
                     hasActiveFilters = state.hasActiveFilters,
                     selectedCount = state.selection.size,
                     title = title,
