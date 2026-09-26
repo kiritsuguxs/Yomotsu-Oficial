@@ -1,0 +1,331 @@
+-- 14.sqm — schema de anime (portado do Anikku)
+-- Tabelas: animes, episodes, animes_categories, anime_history, merged, excluded_anime_scanlators
+-- Nao ha dados de anime em instalacoes antigas, entao tudo e CREATE puro (sem backfill).
+
+CREATE TABLE animes(
+    _id INTEGER NOT NULL PRIMARY KEY,
+    source INTEGER NOT NULL,
+    url TEXT NOT NULL,
+    artist TEXT,
+    author TEXT,
+    description TEXT,
+    genre TEXT,
+    title TEXT NOT NULL,
+    status INTEGER NOT NULL,
+    thumbnail_url TEXT,
+    favorite INTEGER NOT NULL,
+    last_update INTEGER,
+    next_update INTEGER,
+    initialized INTEGER NOT NULL,
+    viewer INTEGER NOT NULL,
+    episode_flags INTEGER NOT NULL,
+    cover_last_modified INTEGER NOT NULL,
+    date_added INTEGER NOT NULL,
+    filtered_scanlators TEXT,
+    update_strategy INTEGER NOT NULL DEFAULT 0,
+    calculate_interval INTEGER DEFAULT 0 NOT NULL,
+    last_modified_at INTEGER NOT NULL DEFAULT 0,
+    favorite_modified_at INTEGER,
+    version INTEGER NOT NULL DEFAULT 0,
+    is_syncing INTEGER NOT NULL DEFAULT 0,
+    notes TEXT NOT NULL DEFAULT "",
+    fetch_type INTEGER NOT NULL DEFAULT 1,
+    parent_id INTEGER,
+    season_flags INTEGER NOT NULL,
+    season_number REAL NOT NULL,
+    season_source_order INTEGER NOT NULL,
+    background_url TEXT,
+    background_last_modified INTEGER NOT NULL
+);
+
+CREATE INDEX animes_library_favorite_index ON animes(favorite) WHERE favorite = 1;
+
+CREATE INDEX animes_url_index ON animes(url);
+
+CREATE INDEX animes_parent_id ON animes(parent_id);
+
+CREATE INDEX animes_fetch_type ON animes(fetch_type);
+
+CREATE TRIGGER update_last_favorite_at_animes
+AFTER UPDATE OF favorite ON animes
+BEGIN
+  UPDATE animes
+  SET favorite_modified_at = strftime('%s', 'now')
+  WHERE _id = new._id;
+END;
+
+CREATE TRIGGER update_last_modified_at_animes
+AFTER UPDATE ON animes
+FOR EACH ROW
+BEGIN
+  UPDATE animes
+  SET last_modified_at = strftime('%s', 'now')
+  WHERE _id = new._id;
+END;
+
+CREATE TRIGGER update_anime_version AFTER UPDATE ON animes
+BEGIN
+    UPDATE animes SET version = version + 1
+    WHERE _id = new._id AND new.is_syncing = 0 AND (
+        new.url != old.url OR
+        new.description != old.description OR
+        new.favorite != old.favorite
+    );
+END;
+
+CREATE TABLE episodes(
+    _id INTEGER NOT NULL PRIMARY KEY,
+    anime_id INTEGER NOT NULL,
+    url TEXT NOT NULL,
+    name TEXT NOT NULL,
+    scanlator TEXT,
+    seen INTEGER NOT NULL,
+    bookmark INTEGER NOT NULL,
+    fillermark INTEGER NOT NULL,
+    last_second_seen INTEGER NOT NULL,
+    total_seconds INTEGER NOT NULL,
+    episode_number REAL NOT NULL,
+    source_order INTEGER NOT NULL,
+    date_fetch INTEGER NOT NULL,
+    date_upload INTEGER NOT NULL,
+    last_modified_at INTEGER NOT NULL DEFAULT 0,
+    version INTEGER NOT NULL DEFAULT 0,
+    is_syncing INTEGER NOT NULL DEFAULT 0,
+    summary TEXT,
+    preview_url TEXT,
+    FOREIGN KEY(anime_id) REFERENCES animes (_id)
+    ON DELETE CASCADE
+);
+
+CREATE INDEX episodes_anime_id_index ON episodes(anime_id);
+
+CREATE INDEX episodes_unseen_by_anime_index ON episodes(anime_id, seen) WHERE seen = 0;
+
+CREATE TRIGGER update_last_modified_at_episodes
+AFTER UPDATE ON episodes
+FOR EACH ROW
+BEGIN
+  UPDATE episodes
+  SET last_modified_at = strftime('%s', 'now')
+  WHERE _id = new._id;
+END;
+
+CREATE TRIGGER update_episode_and_anime_version AFTER UPDATE ON episodes
+WHEN new.is_syncing = 0 AND (
+    new.seen != old.seen OR
+    new.bookmark != old.bookmark OR
+    new.last_second_seen != old.last_second_seen
+)
+BEGIN
+    -- Update the episode version
+    UPDATE episodes SET version = version + 1
+    WHERE _id = new._id;
+    -- Update the anime version
+    UPDATE animes SET version = version + 1
+    WHERE _id = new.anime_id AND (SELECT is_syncing FROM animes WHERE _id = new.anime_id) = 0;
+END;
+
+CREATE TABLE animes_categories(
+    _id INTEGER NOT NULL PRIMARY KEY,
+    anime_id INTEGER NOT NULL,
+    category_id INTEGER NOT NULL,
+    FOREIGN KEY(category_id) REFERENCES categories (_id)
+    ON DELETE CASCADE,
+    FOREIGN KEY(anime_id) REFERENCES animes (_id)
+    ON DELETE CASCADE
+);
+
+CREATE TRIGGER insert_anime_category_update_version AFTER INSERT ON animes_categories
+BEGIN
+    UPDATE animes
+    SET version = version + 1
+    WHERE _id = new.anime_id AND (SELECT is_syncing FROM animes WHERE _id = new.anime_id) = 0;
+END;
+
+CREATE TABLE anime_history(
+    _id INTEGER NOT NULL PRIMARY KEY,
+    episode_id INTEGER NOT NULL UNIQUE,
+    last_seen INTEGER,
+    time_watch INTEGER NOT NULL,
+    FOREIGN KEY(episode_id) REFERENCES episodes (_id)
+    ON DELETE CASCADE
+);
+
+CREATE INDEX anime_history_episode_id_index ON anime_history(episode_id);
+
+CREATE TABLE merged(
+    _id INTEGER NOT NULL PRIMARY KEY,
+    info_anime INTEGER NOT NULL,
+    get_episode_updates INTEGER NOT NULL,
+    episode_sort_mode INTEGER NOT NULL,
+    episode_priority INTEGER NOT NULL,
+    download_episodes INTEGER NOT NULL,
+    merge_id INTEGER NOT NULL, -- Point to the fake manga which was created as a merge entry
+    merge_url TEXT NOT NULL, -- URL of the merge entry, usually is the original first manga used to create a merge entry
+    anime_id INTEGER, -- Point to actual children manga entry which is a part of this merge entry
+    anime_url TEXT NOT NULL, -- URL of the actual children manga entry which is a part of this merge entry
+    anime_source INTEGER NOT NULL,
+    FOREIGN KEY(anime_id) REFERENCES animes (_id)
+    ON DELETE SET NULL,
+    FOREIGN KEY(merge_id) REFERENCES animes (_id)
+    ON DELETE CASCADE
+);
+
+CREATE INDEX merged_merge_id_index ON merged(merge_id);
+
+CREATE TABLE excluded_anime_scanlators(
+    anime_id INTEGER NOT NULL,
+    scanlator TEXT NOT NULL,
+    FOREIGN KEY(anime_id) REFERENCES animes (_id)
+    ON DELETE CASCADE
+);
+
+CREATE INDEX excluded_anime_scanlators_anime_id_index ON excluded_anime_scanlators(anime_id);
+
+CREATE INDEX idx_excluded_anime_scanlators_scanlator ON excluded_anime_scanlators(scanlator);
+
+CREATE VIEW animedeletableView AS
+SELECT
+    A._id,
+    A.source,
+    A.fetch_type
+FROM animes AS A
+WHERE A.favorite = 0
+AND A.parent_id IS NULL;
+
+CREATE VIEW episodestatsView AS
+SELECT
+    episodes.anime_id,
+    count(*) AS total,
+    sum(seen) AS seenCount,
+    max(episodes.date_upload) AS latestUpload,
+    max(episodes.date_fetch) AS fetchedAt,
+    sum(episodes.bookmark) AS bookmarkCount,
+    sum(CASE WHEN episodes.bookmark = 1 AND episodes.seen = 1 THEN 1 ELSE 0 END) AS bookmarkSeenCount,
+    excluded_anime_scanlators.scanlator AS ex_scanlator,
+    sum(episodes.fillermark) AS fillermarkCount
+FROM episodes
+LEFT JOIN excluded_anime_scanlators
+    ON episodes.anime_id = excluded_anime_scanlators.anime_id
+    AND episodes.scanlator = excluded_anime_scanlators.scanlator
+WHERE ex_scanlator IS NULL
+GROUP BY episodes.anime_id;
+
+CREATE VIEW episodemergestatsView AS
+SELECT
+    merged.merge_id,
+    count(*) AS total,
+    sum(seen) AS seenCount,
+    max(episodes.date_upload) AS latestUpload,
+    max(episodes.date_fetch) AS fetchedAt,
+    sum(episodes.bookmark) AS bookmarkCount,
+    sum(CASE WHEN episodes.bookmark = 1 AND episodes.seen = 1 THEN 1 ELSE 0 END) AS bookmarkSeenCount,
+    excluded_anime_scanlators.scanlator AS ex_scanlator,
+    sum(episodes.fillermark) AS fillermarkCount
+FROM episodes
+LEFT JOIN excluded_anime_scanlators
+    ON episodes.anime_id = excluded_anime_scanlators.anime_id
+    AND episodes.scanlator = excluded_anime_scanlators.scanlator
+LEFT JOIN merged
+ON merged.anime_id = episodes.anime_id
+WHERE ex_scanlator IS NULL
+GROUP BY merged.merge_id;
+
+CREATE VIEW historystatsView AS
+SELECT
+    episodes.anime_id,
+    max(anime_history.last_seen) AS lastSeen
+FROM episodes
+LEFT JOIN anime_history ON episodes._id = anime_history.episode_id
+GROUP BY episodes.anime_id;
+
+CREATE VIEW historymergestatsView AS
+SELECT
+    merged.merge_id,
+    max(anime_history.last_seen) AS lastSeen
+FROM episodes
+LEFT JOIN anime_history ON episodes._id = anime_history.episode_id
+LEFT JOIN merged ON merged.anime_id = episodes.anime_id
+GROUP BY merged.merge_id;
+
+CREATE VIEW animeseasonstatsView AS
+SELECT
+    season.parent_id,
+    count(*) AS child_count,
+    sum(CASE WHEN season.fetch_type = 1 AND
+                 coalesce(ES.total, 0) = coalesce(ES.seenCount, 0)
+            THEN 1 ELSE 0 END) AS fully_seen_seasons,
+    max(coalesce(ES.latestUpload, 0)) AS max_latest_upload,
+    max(coalesce(ES.fetchedAt, 0)) AS max_fetched_at,
+    max(coalesce(HS.lastSeen, 0)) AS max_last_seen,
+    sum(coalesce(ES.bookmarkCount, 0)) AS total_bookmarks,
+    sum(coalesce(ES.bookmarkSeenCount, 0)) AS total_bookmarksSeenCount,
+    sum(coalesce(ES.fillermarkCount, 0)) AS total_fillermarks
+FROM animes season
+LEFT JOIN episodestatsView ES ON season._id = ES.anime_id
+LEFT JOIN historystatsView HS ON season._id = HS.anime_id
+WHERE season.parent_id IS NOT NULL
+GROUP BY season.parent_id;
+
+CREATE VIEW animeseasonmergestatsView AS
+SELECT
+    season.parent_id,
+    count(*) AS child_count,
+    sum(CASE WHEN season.fetch_type = 1 AND
+                 coalesce(ES.total, 0) = coalesce(ES.seenCount, 0)
+            THEN 1 ELSE 0 END) AS fully_seen_seasons,
+    max(coalesce(ES.latestUpload, 0)) AS max_latest_upload,
+    max(coalesce(ES.fetchedAt, 0)) AS max_fetched_at,
+    max(coalesce(HS.lastSeen, 0)) AS max_last_seen,
+    sum(coalesce(ES.bookmarkCount, 0)) AS total_bookmarks,
+    sum(coalesce(ES.bookmarkSeenCount, 0)) AS total_bookmarksSeenCount,
+    sum(coalesce(ES.fillermarkCount, 0)) AS total_fillermarks
+FROM animes season
+LEFT JOIN episodemergestatsView ES ON season._id = ES.merge_id
+LEFT JOIN historymergestatsView HS ON season._id = HS.merge_id
+WHERE season.parent_id IS NOT NULL
+GROUP BY season.parent_id;
+
+CREATE VIEW animeseasonsView AS
+SELECT
+    A.*,
+    CASE A.fetch_type
+        WHEN 1 THEN coalesce(ES.total, 0)
+        WHEN 0 THEN coalesce(ASS.child_count, 0)
+    END AS totalCount,
+    CASE A.fetch_type
+        WHEN 1 THEN coalesce(ES.seenCount, 0)
+        WHEN 0 THEN coalesce(ASS.fully_seen_seasons, 0)
+    END AS seenCount,
+    CASE A.fetch_type
+        WHEN 1 THEN coalesce(ES.latestUpload, 0)
+        WHEN 0 THEN coalesce(ASS.max_latest_upload, 0)
+    END AS latestUpload,
+    CASE A.fetch_type
+        WHEN 1 THEN coalesce(ES.fetchedAt, 0)
+        WHEN 0 THEN coalesce(ASS.max_fetched_at, 0)
+    END AS episodeFetchedAt,
+    CASE A.fetch_type
+        WHEN 1 THEN coalesce(HS.lastSeen, 0)
+        WHEN 0 THEN coalesce(ASS.max_last_seen, 0)
+    END AS lastSeen,
+    CASE A.fetch_type
+        WHEN 1 THEN coalesce(ES.bookmarkCount, 0)
+        WHEN 0 THEN coalesce(ASS.total_bookmarks, 0)
+    END AS bookmarkCount,
+    CASE A.fetch_type
+        WHEN 1 THEN coalesce(ES.bookmarkSeenCount, 0)
+        WHEN 0 THEN coalesce(ASS.total_bookmarksSeenCount, 0)
+    END AS bookmarkedSeenCount,
+    CASE A.fetch_type
+        WHEN 1 THEN coalesce(ES.fillermarkCount, 0)
+        WHEN 0 THEN coalesce(ASS.total_fillermarks, 0)
+    END AS fillermarkCount
+FROM animes AS A
+LEFT JOIN episodestatsView AS ES
+ON A._id = ES.anime_id
+LEFT JOIN historystatsView AS HS
+ON A._id = HS.anime_id
+LEFT JOIN animeseasonstatsView AS ASS
+ON A._id = ASS.parent_id
+WHERE A.parent_id IS NOT NULL;
