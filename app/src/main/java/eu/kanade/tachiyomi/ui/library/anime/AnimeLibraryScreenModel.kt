@@ -3,12 +3,12 @@ package eu.kanade.tachiyomi.ui.library.anime
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastFilter
-import androidx.compose.ui.util.fastPartition
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.core.preference.PreferenceMutableState
 import eu.kanade.core.preference.asState
 import eu.kanade.core.util.fastFilterNot
+import eu.kanade.core.util.fastPartition
 import eu.kanade.domain.base.BasePreferences
 import eu.kanade.domain.entries.anime.interactor.UpdateAnime
 
@@ -202,7 +202,7 @@ class AnimeLibraryScreenModel(
         val filterFnTracking: (AnimeLibraryItem) -> Boolean = tracking@{ item ->
             if (isNotLoggedInAnyTrack || trackFiltersIsIgnored) return@tracking true
 
-            val tracks = trackMap[item.id].orEmpty().map { it.trackerId }
+            val tracks = trackMap[item.libraryAnime.id].orEmpty().map { it.trackerId }
 
             val isExcluded = excludedTracks.isNotEmpty() && tracks.fastAny { it in excludedTracks }
             val isIncluded = includedTracks.isEmpty() || tracks.fastAny { it in includedTracks }
@@ -229,7 +229,7 @@ class AnimeLibraryScreenModel(
     ): Map<Category, List</* AnimeLibraryItem */ Long>> {
         val groupCache = mutableMapOf</* AnimeLibraryItem */ Long, MutableList</* AnimeLibraryItem */ Long>>()
         forEach { item ->
-            groupCache.getOrPut(item.libraryAnime.category) { mutableListOf() }.add(item.id)
+            groupCache.getOrPut(item.libraryAnime.category) { mutableListOf() }.add(item.libraryAnime.id)
         }
         return categories.filter { showSystemCategory || !it.isSystemCategory }
             .associateWith { groupCache[it.id]?.toList().orEmpty() }
@@ -313,14 +313,13 @@ class AnimeLibraryScreenModel(
                 .let { if (sort.isAscending) it else it.reversed() }
                 .thenComparator(sortAlphabetically)
 
-            anime.sortedWith(comparator).map { it.id }
+            anime.sortedWith(comparator).map { it.libraryAnime.id }
         }
     }
 
     // endregion
 
     private fun getTrackingFiltersFlow(): Flow<Map<Long, TriState>> {
-        val allTriStates = TriState.entries.toList()
         return combine(
             trackerManager.loggedInTrackersFlow(),
             getTracksPerAnime.subscribe(),
@@ -329,12 +328,11 @@ class AnimeLibraryScreenModel(
                 val hasScoredAnime = tracksMap.values.any { tracks ->
                     tracks.any { it.trackerId == tracker.id && it.score != 0.0 }
                 }
-                tracker.id.toLong() to allTriStates.first { state ->
-                    when (state) {
-                        TriState.ENABLED_IS -> hasScoredAnime
-                        else -> state == TriState.ENABLED_NOT
-                    }
+                val filterState = when {
+                    hasScoredAnime -> TriState.ENABLED_IS
+                    else -> TriState.ENABLED_NOT
                 }
+                tracker.id.toLong() to filterState
             }.toMap()
         }
             .distinctUntilChanged()
@@ -418,7 +416,7 @@ class AnimeLibraryScreenModel(
     fun invertSelection() {
         val items = getLibraryForPage(currentPage).map { it.libraryAnime }
         mutableState.update { state ->
-            val inverted = items.fastFilterNot { item -> state.selection.any { it.id == item.id } }
+            val inverted = items.fastFilterNot { item -> state.selection.any { it.id == item.libraryAnime.id } }
             state.copy(selection = inverted, hasFilters = inverted.isNotEmpty())
         }
     }
@@ -507,14 +505,17 @@ class AnimeLibraryScreenModel(
 
     fun getLibraryForPage(page: Int): List<AnimeLibraryItem> {
         val category = state.activeCategory ?: return emptyList()
-        val entries = state.categories[category]?.let { state.libraryData.favoritesById[it] } ?: emptyList()
-        val pageLimit = (page + 1) * 50
-        return entries.take(pageLimit).drop(page * 50)
+        return state.categories[category]
+            ?.mapNotNull { state.libraryData.favoritesById[it] }
+            .orEmpty()
     }
 
     fun getLibraryForCategory(category: Category?): ImmutableList<AnimeLibraryItem> {
-        val entries = state.categories[category]?.let { state.libraryData.favoritesById[it] } ?: return persistentEmptyList()
-        return entries.map { state.libraryData.favoritesById[it]!! }.toImmutableList()
+        val entries = state.categories[category]
+            ?: return kotlinx.collections.immutable.persistentListOf()
+        return entries
+            .mapNotNull { state.libraryData.favoritesById[it] }
+            .toImmutableList()
     }
 
     fun getNumberOfItemsForCategory(category: Category): Int? {
@@ -540,7 +541,7 @@ class AnimeLibraryScreenModel(
             val activeCategory = state.activeCategory
             val items = getLibraryForCategory(activeCategory)
             if (items.isEmpty()) return@launchIO
-            items[Random.nextInt(0, items.size)].let { onRandomAnimeClick?.invoke(it.id) }
+            items[Random.nextInt(0, items.size)].let { onRandomAnimeClick?.invoke(it.libraryAnime.id) }
         }
     }
 
@@ -598,7 +599,7 @@ class AnimeLibraryScreenModel(
         val tracksMap: Map<Long, List<AnimeTrack>> = emptyMap(),
         val loggedInTrackerIds: Set<Long> = emptySet(),
     ) {
-        val favoritesById: Map<Long, AnimeLibraryItem> = favorites.associateBy { it.id }
+        val favoritesById: Map<Long, AnimeLibraryItem> = favorites.associateBy { it.libraryAnime.id }
     }
 
     data class ItemPreferences(
@@ -614,10 +615,6 @@ class AnimeLibraryScreenModel(
     )
 
     // endregion
-}
-
-private fun persistentEmptyList(): ImmutableList<AnimeLibraryItem> {
-    return kotlinx.collections.immutable.persistentListOf()
 }
 
 private const val SEARCH_DEBOUNCE_MILLIS = 250L
