@@ -78,7 +78,7 @@ data object AnimeLibraryTab : Tab {
                 R.drawable.anim_animelibrary_leave,
             )
             return TabOptions(
-                index = 0u,
+                index = 1u,
                 title = stringResource(title),
                 icon = rememberAnimatedVectorPainter(image, isSelected),
             )
