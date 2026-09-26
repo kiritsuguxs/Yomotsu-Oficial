@@ -67,15 +67,6 @@ class LibraryPreferences(
             ANIME_OUTSIDE_RELEASE_PERIOD,
         ),
     )
-    fun newAnimeUpdatesCount() = preferenceStore.getInt("library_unseen_updates_count", 0)
-    val animeUpdateCategories: Preference<Set<String>> = preferenceStore.getStringSet(
-        "animelib_update_categories",
-        emptySet(),
-    )
-    val animeUpdateCategoriesExclude: Preference<Set<String>> = preferenceStore.getStringSet(
-        "animelib_update_categories_exclude",
-        emptySet(),
-    )
     val autoUpdateMangaRestrictions: Preference<Set<String>> = preferenceStore.getStringSet(
         "library_update_manga_restriction",
         setOf(
