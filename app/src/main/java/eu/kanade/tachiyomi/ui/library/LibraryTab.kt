@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.util.fastAll
+import cafe.adriel.voyager.core.model.rememberScreenModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
@@ -134,8 +135,8 @@ data object LibraryTab : Tab {
             )
 
             LibraryViewMode.Anime -> AnimeLibraryPanel(
-                screenModel = androidx.lifecycle.viewmodel.compose.viewModel<AnimeLibraryScreenModel>(),
-                settingsScreenModel = androidx.lifecycle.viewmodel.compose.viewModel<AnimeLibrarySettingsScreenModel>(),
+                screenModel = rememberScreenModel { AnimeLibraryScreenModel() },
+                settingsScreenModel = rememberScreenModel { AnimeLibrarySettingsScreenModel() },
                 libraryMode = libraryMode,
                 showModeDropdown = showModeDropdown,
                 onToggleDropdown = { showModeDropdown = true },

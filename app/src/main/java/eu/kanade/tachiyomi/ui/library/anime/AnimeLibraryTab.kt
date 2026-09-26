@@ -23,6 +23,8 @@ data object AnimeLibraryTab {
 @Composable
 fun animeLibraryTabContent() {
     AnimeLibraryPanel(
+        screenModel = AnimeLibraryScreenModel(),
+        settingsScreenModel = AnimeLibrarySettingsScreenModel(),
         libraryMode = LibraryViewMode.Anime,
         onModeSelected = {},
     )
