@@ -13,7 +13,7 @@ import eu.kanade.core.util.fastFilterNot
 import eu.kanade.core.util.fastPartition
 import eu.kanade.domain.base.BasePreferences
 import eu.kanade.domain.entries.anime.interactor.UpdateAnime
-import eu.kanade.presentation.components.SEARCH_DEBOUNCE_MILLIS
+
 import eu.kanade.presentation.library.components.LibraryToolbarTitle
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.data.cache.AnimeCoverCache
@@ -73,17 +73,12 @@ class AnimeLibraryScreenModel(
     private val trackerManager: TrackerManager = Injekt.get(),
 ) : StateScreenModel<AnimeLibraryScreenModel.State>(State()) {
 
-    private val _state by mutableStateOf(State())
-
-    val state: State
-        get() = _state
-
     init {
         mutableState.update { state ->
             state.copy(activeCategoryIndex = libraryPreferences.lastUsedAnimeCategory.get())
         }
 
-        viewModelScope.launchIO {
+        screenModelScope.launchIO {
             combine(
                 state.map { it.searchQuery }.distinctUntilChanged().debounce(SEARCH_DEBOUNCE_MILLIS),
                 getCategories.subscribe(),
@@ -118,10 +113,10 @@ class AnimeLibraryScreenModel(
                         state.copy(libraryData = libraryData)
                     }
                 }
-                .launchIn(viewModelScope)
+                .launchIn(screenModelScope)
         }
 
-        viewModelScope.launchIO {
+        screenModelScope.launchIO {
             state
                 .map { it.libraryData }
                 .distinctUntilChanged()
@@ -137,19 +132,19 @@ class AnimeLibraryScreenModel(
                         )
                     }
                 }
-                .launchIn(viewModelScope)
+                .launchIn(screenModelScope)
         }
 
-        viewModelScope.launchIO {
+        screenModelScope.launchIO {
             getTrackingFiltersFlow()
                 .map { it.isNotEmpty() }
                 .onEach { hasFilters ->
                     mutableState.update { it.copy(hasActiveFilters = hasFilters) }
                 }
-                .launchIn(viewModelScope)
+                .launchIn(screenModelScope)
         }
 
-        viewModelScope.launchNonCancellable {
+        screenModelScope.launchNonCancellable {
             combine(
                 getLibraryItemPreferencesFlow(),
                 downloadCache.changes,
@@ -159,7 +154,7 @@ class AnimeLibraryScreenModel(
                         state.copy(hasFilters = state.selection.isNotEmpty())
                     }
                 }
-                .launchIn(viewModelScope)
+                .launchIn(screenModelScope)
         }
     }
 
@@ -459,7 +454,7 @@ class AnimeLibraryScreenModel(
     fun updateLibrary() {
         val ids = state.selection.map { it.id }
         if (ids.isEmpty()) return
-        viewModelScope.launchIO {
+        screenModelScope.launchIO {
             val defaultCategoryId = libraryPreferences.defaultAnimeCategory.get()
             if (defaultCategoryId == -1L) {
                 clearSelection()
@@ -473,7 +468,7 @@ class AnimeLibraryScreenModel(
     }
 
     fun removeFromLibrary(deleteFromLibrary: Boolean, deleteEpisodes: Boolean) {
-        viewModelScope.launchNonCancellable {
+        screenModelScope.launchNonCancellable {
             val animes = state.selection.map { it.anime }
             if (deleteFromLibrary) {
                 val toDelete = animes.map {
@@ -499,7 +494,7 @@ class AnimeLibraryScreenModel(
 
     fun downloadSelected() {
         val ids = state.selection.map { it.id }
-        viewModelScope.launchIO {
+        screenModelScope.launchIO {
             getLibraryAnime.await()
                 .filter { it.id in ids }
                 .forEach { libraryAnime ->
@@ -540,16 +535,16 @@ class AnimeLibraryScreenModel(
     }
 
     fun getDisplayMode(page: Int): PreferenceMutableState<LibraryDisplayMode> {
-        return libraryPreferences.animeDisplayMode.asState(viewModelScope)
+        return libraryPreferences.animeDisplayMode.asState(screenModelScope)
     }
 
     fun getColumnsForOrientation(isLandscape: Boolean): PreferenceMutableState<Int> {
         return (if (isLandscape) libraryPreferences.animeLandscapeColumns else libraryPreferences.animePortraitColumns)
-            .asState(viewModelScope)
+            .asState(screenModelScope)
     }
 
     fun openRandomAnime() {
-        viewModelScope.launchIO {
+        screenModelScope.launchIO {
             val activeCategory = state.activeCategory
             val items = getLibraryForCategory(activeCategory)
             if (items.isEmpty()) return@launchIO
@@ -632,3 +627,5 @@ class AnimeLibraryScreenModel(
 private fun persistentEmptyList(): ImmutableList<AnimeLibraryItem> {
     return kotlinx.collections.immutable.persistentListOf()
 }
+
+private const val SEARCH_DEBOUNCE_MILLIS = 250L
