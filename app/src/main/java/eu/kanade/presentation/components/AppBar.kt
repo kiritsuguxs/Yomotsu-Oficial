@@ -428,3 +428,5 @@ sealed interface AppBar {
         val onClick: () -> Unit,
     ) : AppBarAction
 }
+
+const val SEARCH_DEBOUNCE_MILLIS = 250L
