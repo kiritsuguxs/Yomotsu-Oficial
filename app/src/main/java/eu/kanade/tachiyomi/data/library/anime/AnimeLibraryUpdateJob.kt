@@ -55,10 +55,10 @@ import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.library.service.LibraryPreferences.Companion.DEVICE_CHARGING
 import tachiyomi.domain.library.service.LibraryPreferences.Companion.DEVICE_NETWORK_NOT_METERED
 import tachiyomi.domain.library.service.LibraryPreferences.Companion.DEVICE_ONLY_ON_WIFI
-import tachiyomi.domain.library.service.LibraryPreferences.Companion.ENTRY_HAS_UNVIEWED
-import tachiyomi.domain.library.service.LibraryPreferences.Companion.ENTRY_NON_COMPLETED
-import tachiyomi.domain.library.service.LibraryPreferences.Companion.ENTRY_NON_VIEWED
-import tachiyomi.domain.library.service.LibraryPreferences.Companion.ENTRY_OUTSIDE_RELEASE_PERIOD
+import tachiyomi.domain.library.service.LibraryPreferences.Companion.ANIME_HAS_UNSEEN
+import tachiyomi.domain.library.service.LibraryPreferences.Companion.ANIME_NON_COMPLETED
+import tachiyomi.domain.library.service.LibraryPreferences.Companion.ANIME_NON_SEEN
+import tachiyomi.domain.library.service.LibraryPreferences.Companion.ANIME_OUTSIDE_RELEASE_PERIOD
 import tachiyomi.domain.source.anime.model.AnimeSourceNotInstalledException
 import tachiyomi.domain.source.anime.service.AnimeSourceManager
 import tachiyomi.i18n.MR
@@ -207,28 +207,28 @@ class AnimeLibraryUpdateJob(private val context: Context, workerParams: WorkerPa
                         false
                     }
 
-                    ENTRY_NON_COMPLETED in restrictions && it.anime.status.toInt() == SAnime.COMPLETED -> {
+                    ANIME_NON_COMPLETED in restrictions && it.anime.status.toInt() == SAnime.COMPLETED -> {
                         skippedUpdates.add(
                             it.anime to context.stringResource(MR.strings.skipped_reason_completed),
                         )
                         false
                     }
 
-                    ENTRY_HAS_UNVIEWED in restrictions && it.unseenCount != 0L -> {
+                    ANIME_HAS_UNSEEN in restrictions && it.unseenCount != 0L -> {
                         skippedUpdates.add(
                             it.anime to context.stringResource(MR.strings.skipped_reason_not_caught_up),
                         )
                         false
                     }
 
-                    ENTRY_NON_VIEWED in restrictions && it.totalCount > 0L && !it.hasStarted -> {
+                    ANIME_NON_SEEN in restrictions && it.totalCount > 0L && !it.hasStarted -> {
                         skippedUpdates.add(
                             it.anime to context.stringResource(MR.strings.skipped_reason_not_started),
                         )
                         false
                     }
 
-                    ENTRY_OUTSIDE_RELEASE_PERIOD in restrictions && it.anime.nextUpdate > fetchWindowUpperBound -> {
+                    ANIME_OUTSIDE_RELEASE_PERIOD in restrictions && it.anime.nextUpdate > fetchWindowUpperBound -> {
                         skippedUpdates.add(
                             it.anime to context.stringResource(MR.strings.skipped_reason_not_in_release_period),
                         )

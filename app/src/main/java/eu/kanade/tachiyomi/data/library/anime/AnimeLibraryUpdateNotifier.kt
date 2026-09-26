@@ -246,7 +246,7 @@ class AnimeLibraryUpdateNotifier(
 
     private suspend fun createNewEpisodesNotification(anime: Anime, episodes: Array<Episode>): Notification {
         val icon = getAnimeIcon(anime)
-        return context.notificationBuilder(Notifications.ID_NEW_EPISODES) {
+        return context.notificationBuilder(Notifications.CHANNEL_NEW_EPISODES) {
             setContentTitle(anime.title)
 
             val description = getNewEpisodesDescription(episodes)
