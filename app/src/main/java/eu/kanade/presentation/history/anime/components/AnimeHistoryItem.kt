@@ -33,6 +33,8 @@ import tachiyomi.i18n.aniyomi.AYMR
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.stringResource
 
+
+
 private val HistoryItemHeight = 96.dp
 
 @Composable
