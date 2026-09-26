@@ -4,15 +4,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.components.relativeDateText
 import eu.kanade.presentation.history.anime.components.AnimeHistoryItem
-import eu.kanade.presentation.theme.TachiyomiPreviewTheme
-import eu.kanade.presentation.util.animateItemFastScroll
+import eu.kanade.tachiyomi.ui.history.anime.AnimeHistoryScreenModel
 import java.time.LocalDate
 import tachiyomi.domain.history.anime.model.AnimeHistoryWithRelations
 import tachiyomi.i18n.MR

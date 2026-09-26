@@ -1,56 +1,12 @@
-import tachiyomi.i18n.aniyomi.AYMR
-import tachiyomi.presentation.core.components.material.TabText
-import eu.kanade.tachiyomi.ui.entries.anime.AnimeScreen
-import eu.kanade.tachiyomi.ui.history.anime.AnimeHistoryScreenModel
-import eu.kanade.presentation.history.anime.AnimeHistoryScreen
 package eu.kanade.tachiyomi.ui.history
 
-import android.content.Context
-import androidx.compose.animation.graphics.res.animatedVectorResource
-import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
-import androidx.compose.animation.graphics.vector.AnimatedImageVector
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.navigator.currentOrThrow
-import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
-import cafe.adriel.voyager.navigator.tab.TabOptions
-import eu.kanade.presentation.category.components.ChangeCategoryDialog
-import eu.kanade.presentation.history.HistoryScreen
-import eu.kanade.presentation.history.components.HistoryDeleteAllDialog
-import eu.kanade.presentation.history.components.HistoryDeleteDialog
-import eu.kanade.presentation.manga.DuplicateMangaDialog
-import eu.kanade.presentation.util.Tab
-import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.ui.category.CategoryScreen
-import eu.kanade.tachiyomi.ui.main.MainActivity
-import eu.kanade.tachiyomi.ui.manga.MangaScreen
-import eu.kanade.tachiyomi.ui.reader.ReaderActivity
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.receiveAsFlow
-import mihon.feature.migration.dialog.MigrateMangaDialog
-import tachiyomi.core.common.i18n.stringResource
-import tachiyomi.domain.chapter.model.Chapter
-import tachiyomi.i18n.MR
-import tachiyomi.presentation.core.i18n.stringResource
+import eu.kanade.presentation.history.anime.AnimeHistoryScreen
+import eu.kanade.tachiyomi.ui.entries.anime.AnimeScreen
+import eu.kanade.tachiyomi.ui.history.anime.AnimeHistoryScreenModel
+import tachiyomi.i18n.aniyomi.AYMR
+import tachiyomi.presentation.core.components.material.TabText
+
+
 
 data object HistoryTab : Tab {
 
