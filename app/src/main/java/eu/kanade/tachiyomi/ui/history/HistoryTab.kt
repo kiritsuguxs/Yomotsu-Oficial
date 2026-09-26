@@ -1,3 +1,8 @@
+import tachiyomi.i18n.aniyomi.AYMR
+import tachiyomi.presentation.core.components.material.TabText
+import eu.kanade.tachiyomi.ui.entries.anime.AnimeScreen
+import eu.kanade.tachiyomi.ui.history.anime.AnimeHistoryScreenModel
+import eu.kanade.presentation.history.anime.AnimeHistoryScreen
 package eu.kanade.tachiyomi.ui.history
 
 import android.content.Context
@@ -5,12 +10,23 @@ import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -60,10 +76,79 @@ data object HistoryTab : Tab {
 
     @Composable
     override fun Content() {
-        val navigator = LocalNavigator.currentOrThrow
         val context = LocalContext.current
+        val navigator = LocalNavigator.currentOrThrow
+        val scope = rememberCoroutineScope()
+
         val viewModel = viewModel<HistoryViewModel>()
         val state by viewModel.state.collectAsState()
+
+        val animeScreenModel = rememberScreenModel { AnimeHistoryScreenModel() }
+        val animeState by animeScreenModel.state.collectAsState()
+
+        val pagerState = rememberPagerState { 2 }
+        val selectedTab = pagerState.currentPage
+        val layoutDirection = LocalLayoutDirection.current
+
+        Column(
+            modifier = Modifier.padding(
+                top = contentPadding.calculateTopPadding(),
+                start = contentPadding.calculateStartPadding(layoutDirection),
+                end = contentPadding.calculateEndPadding(layoutDirection),
+            ),
+        ) {
+            PrimaryTabRow(
+                selectedTabIndex = selectedTab,
+                modifier = Modifier.zIndex(1f),
+            ) {
+                Tab(
+                    selected = selectedTab == TAB_MANGA,
+                    onClick = { scope.launch { pagerState.animateScrollToPage(TAB_MANGA) } },
+                    text = { TabText(text = stringResource(MR.strings.manga)) },
+                )
+                Tab(
+                    selected = selectedTab == TAB_ANIME,
+                    onClick = { scope.launch { pagerState.animateScrollToPage(TAB_ANIME) } },
+                    text = { TabText(text = stringResource(AYMR.strings.label_anime)) },
+                )
+            }
+
+            HorizontalPager(
+                modifier = Modifier.fillMaxSize(),
+                state = pagerState,
+                verticalAlignment = Alignment.Top,
+            ) { page ->
+                val pagePadding = PaddingValues(bottom = contentPadding.calculateBottomPadding())
+                when (page) {
+                    TAB_ANIME -> AnimeHistoryScreen(
+                        state = animeState,
+                        contentPadding = pagePadding,
+                        onClickCover = { navigator.push(AnimeScreen(it)) },
+                        onClickResume = animeScreenModel::getNextEpisodeForAnime,
+                        onDialogChange = animeScreenModel::setDialog,
+                        onClickFavorite = animeScreenModel::addFavorite,
+                        snackbarHostState = remember { SnackbarHostState() },
+                        pagePadding = pagePadding,
+                    )
+                    else -> MangaHistoryPage(
+                        state = state,
+                        contentPadding = pagePadding,
+                        navigator = navigator,
+                        viewModel = viewModel,
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun MangaHistoryPage(
+        state: HistoryViewModel.State,
+        contentPadding: PaddingValues,
+        navigator: Navigator,
+        viewModel: HistoryViewModel,
+    ) {
+        val context = LocalContext.current
 
         HistoryScreen(
             state = state,
@@ -160,3 +245,7 @@ data object HistoryTab : Tab {
         }
     }
 }
+
+
+private const val TAB_MANGA = 0
+private const val TAB_ANIME = 1
