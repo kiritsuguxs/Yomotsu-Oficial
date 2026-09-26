@@ -69,7 +69,7 @@ fun AnimeLibraryContent(
             LibraryTabs(
                 categories = categories,
                 pagerState = pagerState,
-                getNumberOfItemsForCategory = getNumberOfAnimeForCategory,
+                getItemCountForCategory = getNumberOfAnimeForCategory,
             ) { scope.launch { pagerState.animateScrollToPage(it) } }
         }
 

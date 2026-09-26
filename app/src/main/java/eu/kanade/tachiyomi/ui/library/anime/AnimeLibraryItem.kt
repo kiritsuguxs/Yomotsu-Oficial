@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.ui.library.anime
 
-import tachiyomi.source.anime.getNameForAnimeInfo
+import eu.kanade.tachiyomi.source.anime.getNameForAnimeInfo
 import tachiyomi.domain.library.anime.LibraryAnime
 import tachiyomi.domain.source.anime.service.AnimeSourceManager
 import uy.kohesive.injekt.Injekt

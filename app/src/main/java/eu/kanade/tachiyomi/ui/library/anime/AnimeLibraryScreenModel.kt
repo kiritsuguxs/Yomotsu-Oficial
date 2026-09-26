@@ -506,13 +506,14 @@ class AnimeLibraryScreenModel(
      * Marks animes' episodes seen status.
      */
     fun markSeenSelection(seen: Boolean) {
-        val animes = state.value.selection.toList()
+        val libraryAnime = state.value.selection.toList()
         screenModelScope.launchNonCancellable {
-            animes.forEach { anime ->
-                setSeenStatus.await(
-                    anime = anime.anime,
-                    seen = seen,
-                )
+            libraryAnime.forEach { libraryAnimeItem ->
+                val anime = libraryAnimeItem.anime
+                val nextEpisodes = getNextEpisodes.await(anime.id)
+                if (nextEpisodes.isNotEmpty()) {
+                    setSeenStatus.await(seen = seen, episodes = nextEpisodes.toTypedArray())
+                }
             }
         }
         clearSelection()
